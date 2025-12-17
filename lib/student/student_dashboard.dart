@@ -1,5 +1,12 @@
 import 'package:campus_connect_malabar/student/attendence_view.dart';
+import 'package:campus_connect_malabar/student/stdent_home.dart';
 import 'package:flutter/material.dart';
+
+
+import 'view_notices.dart';
+import 'view_events.dart';
+
+import '../profile/profile_screen.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -13,62 +20,40 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   final screens = const [
     StudentHome(),
-    StudentAttendance(),
-    StudentLibrary(),
-    StudentProfile(),
+    StudentAttendanceView(),
+    ViewNotices(),
+    ViewEvents(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Student Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: screens[index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Attendance"),
-          BottomNavigationBarItem(icon: Icon(Icons.library_books), label: "Library"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notices"),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
         ],
       ),
-    );
-  }
-}
-
-class StudentHome extends StatelessWidget {
-  const StudentHome({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Student Dashboard")),
-      body: const Center(child: Text("Notices • Events • Placements")),
-    );
-  }
-}
-
-
-class StudentLibrary extends StatelessWidget {
-  const StudentLibrary({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Library")),
-      body: const Center(child: Text("Search • Reserve • Borrow")),
-    );
-  }
-}
-
-class StudentProfile extends StatelessWidget {
-  const StudentProfile({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: const Center(child: Text("Name • Department • Logout")),
     );
   }
 }

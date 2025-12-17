@@ -1,5 +1,10 @@
-import 'package:campus_connect_malabar/mentor/attendance_screen.dart';
+import 'package:campus_connect_malabar/mentor/mentor_home.dart';
 import 'package:flutter/material.dart';
+
+import 'attendance_screen.dart';
+import 'post_notice.dart';
+import 'post_event.dart';
+import '../profile/profile_screen.dart';
 
 class MentorDashboard extends StatefulWidget {
   const MentorDashboard({super.key});
@@ -13,62 +18,40 @@ class _MentorDashboardState extends State<MentorDashboard> {
 
   final screens = const [
     MentorHome(),
-    MentorAttendance(),
-    MentorNotices(),
-    MentorProfile(),
+    AttendanceScreen(),
+    PostNotice(),
+    MentorPostEvent(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Mentor Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: screens[index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.check), label: "Attendance"),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: "Attendance"),
           BottomNavigationBarItem(icon: Icon(Icons.campaign), label: "Notices"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
         ],
       ),
-    );
-  }
-}
-
-class MentorHome extends StatelessWidget {
-  const MentorHome({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Mentor Dashboard")),
-      body: const Center(child: Text("Assigned Students Overview")),
-    );
-  }
-}
-
-
-class MentorNotices extends StatelessWidget {
-  const MentorNotices({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Post Notices")),
-      body: const Center(child: Text("Create & Manage Notices")),
-    );
-  }
-}
-
-class MentorProfile extends StatelessWidget {
-  const MentorProfile({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: const Center(child: Text("Mentor Details • Logout")),
     );
   }
 }

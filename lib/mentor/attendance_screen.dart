@@ -1,67 +1,98 @@
-import 'package:campus_connect_malabar/services/attendence_service.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-
-class MentorAttendance extends StatefulWidget {
-  const MentorAttendance({super.key});
+class AttendanceScreen extends StatefulWidget {
+  const AttendanceScreen({super.key});
 
   @override
-  State<MentorAttendance> createState() => _MentorAttendanceState();
+  State<AttendanceScreen> createState() => _AttendanceScreenState();
 }
 
-class _MentorAttendanceState extends State<MentorAttendance> {
-  final studentId = TextEditingController();
-  final total = TextEditingController();
-  final attended = TextEditingController();
+class _AttendanceScreenState extends State<AttendanceScreen> {
+  late String department;
+  bool loading = true;
 
-  final service = AttendanceService();
+  final String today =
+      DateTime.now().toIso8601String().substring(0, 10);
 
-  void submit() async {
-    await service.updateAttendance(
-      studentId: studentId.text,
-      totalClasses: int.parse(total.text),
-      attendedClasses: int.parse(attended.text),
-    );
+  @override
+  void initState() {
+    super.initState();
+    loadMentorDepartment();
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Attendance Updated")),
-    );
+  Future<void> loadMentorDepartment() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
 
-    studentId.clear();
-    total.clear();
-    attended.clear();
+    department = doc['department'];
+    setState(() => loading = false);
+  }
+
+  Future<void> markAttendance(
+      String studentId, bool present) async {
+    await FirebaseFirestore.instance
+        .collection('attendance')
+        .doc(today)
+        .set({
+      studentId: {
+        'present': present,
+        'markedBy': FirebaseAuth.instance.currentUser!.uid,
+        'department': department,
+        'timestamp': Timestamp.now(),
+      }
+    }, SetOptions(merge: true));
   }
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Mark Attendance")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: studentId,
-              decoration: const InputDecoration(labelText: "Student UID"),
-            ),
-            TextField(
-              controller: total,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Total Classes"),
-            ),
-            TextField(
-              controller: attended,
-              keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: "Attended Classes"),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: submit,
-              child: const Text("Save Attendance"),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text("Attendance – $department"),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .where('role', isEqualTo: 'student')
+            .where('department', isEqualTo: department)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No students found"));
+          }
+
+          return ListView(
+            children: snapshot.data!.docs.map((doc) {
+              return Card(
+                child: ListTile(
+                  title: Text(doc['name']),
+                  trailing: Switch(
+                    value: true,
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.red,
+                    onChanged: (value) {
+                      markAttendance(doc.id, value);
+                    },
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }

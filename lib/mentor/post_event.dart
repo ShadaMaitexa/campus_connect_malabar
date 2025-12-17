@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class PostEvent extends StatefulWidget {
-  const PostEvent({super.key});
+class MentorPostEvent extends StatefulWidget {
+  const MentorPostEvent({super.key});
 
   @override
-  State<PostEvent> createState() => _PostEventState();
+  State<MentorPostEvent> createState() => _MentorPostEventState();
 }
 
-class _PostEventState extends State<PostEvent> {
+class _MentorPostEventState extends State<MentorPostEvent> {
   final title = TextEditingController();
   final description = TextEditingController();
   DateTime eventDate = DateTime.now();
 
   Future<void> postEvent() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final mentorDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
     await FirebaseFirestore.instance.collection('events').add({
       'title': title.text.trim(),
       'description': description.text.trim(),
       'date': Timestamp.fromDate(eventDate),
-      'department': 'ALL',
-      'postedBy': 'Admin',
-      'role': 'admin',
+      'department': mentorDoc['department'],
+      'postedBy': mentorDoc['name'],
+      'role': 'mentor',
       'createdAt': Timestamp.now(),
     });
 
@@ -28,14 +35,14 @@ class _PostEventState extends State<PostEvent> {
     description.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Event posted successfully")),
+      const SnackBar(content: Text("Event posted")),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Post Event (Admin)")),
+      appBar: AppBar(title: const Text("Post Event")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(

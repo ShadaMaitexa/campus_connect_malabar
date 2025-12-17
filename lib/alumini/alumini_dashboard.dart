@@ -1,4 +1,9 @@
+import 'package:campus_connect_malabar/screens/alumini_dashboard.dart';
 import 'package:flutter/material.dart';
+
+import 'post_job.dart';
+import '../student/view_events.dart';
+import '../profile/profile_screen.dart';
 
 class AlumniDashboard extends StatefulWidget {
   const AlumniDashboard({super.key});
@@ -12,73 +17,55 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
 
   final screens = const [
     AlumniHome(),
-    AlumniJobs(),
-    AlumniStories(),
-    AlumniProfile(),
+    PostJob(),
+    ViewEvents(),
+    AlumniJobsInfo(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Alumni Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: screens[index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.work), label: "Jobs"),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: "Stories"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.work), label: "Post Job"),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Impact"),
         ],
       ),
     );
   }
 }
 
-class AlumniHome extends StatelessWidget {
-  const AlumniHome({super.key});
+
+class AlumniJobsInfo extends StatelessWidget {
+  const AlumniJobsInfo({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Alumni Dashboard")),
-      body: const Center(child: Text("Alumni Engagement Overview")),
-    );
-  }
-}
-
-class AlumniJobs extends StatelessWidget {
-  const AlumniJobs({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Post Jobs")),
-      body: const Center(child: Text("Add Job Opportunities")),
-    );
-  }
-}
-
-class AlumniStories extends StatelessWidget {
-  const AlumniStories({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Success Stories")),
-      body: const Center(child: Text("Share Career Journey")),
-    );
-  }
-}
-
-class AlumniProfile extends StatelessWidget {
-  const AlumniProfile({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: const Center(child: Text("Alumni Details • Logout")),
+    return const Center(
+      child: Text(
+        "Your posted jobs help students\nbuild their careers",
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

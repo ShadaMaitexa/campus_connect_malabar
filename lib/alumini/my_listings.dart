@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LibraryScreen extends StatelessWidget {
-  const LibraryScreen({super.key});
+class MyListings extends StatelessWidget {
+  const MyListings({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Library")),
+      appBar: AppBar(title: const Text("My Listings")),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('books')
-            .orderBy('title')
+            .collection('marketplace')
+            .where('sellerId', isEqualTo: uid)
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -19,27 +22,25 @@ class LibraryScreen extends StatelessWidget {
           }
 
           if (snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No books available"));
+            return const Center(child: Text("No items posted yet"));
           }
 
           return ListView(
             children: snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
+
               return Card(
-                margin: const EdgeInsets.all(8),
                 child: ListTile(
                   title: Text(data['title']),
-                  subtitle: Text(
-                    "${data['author']} • ${data['category']}",
-                  ),
-                  trailing: Text(
-                    data['available'] ? "Available" : "Issued",
-                    style: TextStyle(
-                      color: data['available']
-                          ? Colors.green
-                          : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  subtitle:
+                      Text("₹${data['price']} • ${data['category']}"),
+                  trailing: Switch(
+                    value: data['available'],
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.red,
+                    onChanged: (value) {
+                      doc.reference.update({'available': value});
+                    },
                   ),
                 ),
               );
