@@ -16,213 +16,218 @@ class ViewEvents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [const Color(0xFF6366F1).withOpacity(0.05), Colors.white],
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        title: const Text(
+          "Events",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
         ),
       ),
-      child: FutureBuilder<String>(
-        future: getUserDepartment(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF4B6CB7).withOpacity(0.05),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: FutureBuilder<String>(
+          future: getUserDepartment(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final department = snapshot.data!;
+
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('events')
+                  .orderBy('date')
+                  .snapshots(),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final events = snap.data!.docs.where((doc) {
+                  return doc['department'] == 'ALL' ||
+                      doc['department'] == department;
+                }).toList();
+
+                if (events.isEmpty) {
+                  return _emptyState();
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: events.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 18),
+                  itemBuilder: (context, index) {
+                    final doc = events[index];
+                    final dateTime = (doc['date'] as Timestamp).toDate();
+                    final isUpcoming = dateTime.isAfter(DateTime.now());
+
+                    return _eventCard(doc, dateTime, isUpcoming);
+                  },
+                );
+              },
             );
-          }
+          },
+        ),
+      ),
+    );
+  }
 
-          final department = snapshot.data!;
+  // ---------------- EMPTY STATE ----------------
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.event_busy_rounded, size: 72, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            "No upcoming events",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
 
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('events')
-                .orderBy('date')
-                .snapshots(),
-            builder: (context, snap) {
-              if (!snap.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Color(0xFF6366F1),
-                    ),
-                  ),
-                );
-              }
+  // ---------------- EVENT CARD ----------------
+  Widget _eventCard(
+    QueryDocumentSnapshot doc,
+    DateTime dateTime,
+    bool isUpcoming,
+  ) {
+    final date =
+        "${dateTime.day.toString().padLeft(2, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.year}";
+    final role = doc['role'].toString().toUpperCase();
 
-              final events = snap.data!.docs.where((doc) {
-                return doc['department'] == 'ALL' ||
-                    doc['department'] == department;
-              }).toList();
-
-              if (events.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.event_busy_rounded,
-                        size: 80,
-                        color: Colors.grey.shade300,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No upcoming events",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: isUpcoming
+            ? const LinearGradient(
+                colors: [Color(0xFFEFF2FF), Color(0xFFE0E7FF)],
+              )
+            : LinearGradient(
+                colors: [Colors.grey.shade100, Colors.grey.shade50],
+              ),
+        border: Border.all(
+          color: isUpcoming
+              ? const Color(0xFF4B6CB7).withOpacity(0.35)
+              : Colors.grey.shade300,
+          width: 1.2,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: isUpcoming
+                      ? const LinearGradient(
+                          colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+                        )
+                      : LinearGradient(
+                          colors: [Colors.grey.shade400, Colors.grey.shade500],
                         ),
-                      ),
-                    ],
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.event, color: Colors.white, size: 24),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isUpcoming ? Colors.green : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  role,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        isUpcoming ? Colors.white : Colors.grey.shade700,
                   ),
-                );
-              }
+                ),
+              ),
+            ],
+          ),
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: events.length,
-                itemBuilder: (context, index) {
-                  final doc = events[index];
-                  final date = (doc['date'] as Timestamp)
-                      .toDate()
-                      .toString()
-                      .split(' ')[0];
-                  final dateTime = (doc['date'] as Timestamp).toDate();
-                  final now = DateTime.now();
-                  final isUpcoming = dateTime.isAfter(now);
+          const SizedBox(height: 16),
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isUpcoming
-                            ? [
-                                const Color(0xFF6366F1).withOpacity(0.1),
-                                const Color(0xFF8B5CF6).withOpacity(0.1),
-                              ]
-                            : [Colors.grey.shade100, Colors.grey.shade50],
-                      ),
-                      border: Border.all(
-                        color: isUpcoming
-                            ? const Color(0xFF6366F1).withOpacity(0.3)
-                            : Colors.grey.shade300,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: isUpcoming
-                                        ? [
-                                            const Color(0xFF6366F1),
-                                            const Color(0xFF8B5CF6),
-                                          ]
-                                        : [
-                                            Colors.grey.shade400,
-                                            Colors.grey.shade500,
-                                          ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.event_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isUpcoming
-                                      ? const Color(0xFF10B981)
-                                      : Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  doc['role'].toString().toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: isUpcoming
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            doc['title'],
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1F2937),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            doc['description'],
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 16,
-                                color: Colors.grey.shade600,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                date,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+          // Title
+          Text(
+            doc['title'],
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Description
+          Text(
+            doc['description'],
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: Colors.grey.shade700,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Date
+          Row(
+            children: [
+              Icon(Icons.calendar_today,
+                  size: 16, color: Colors.grey.shade600),
+              const SizedBox(width: 8),
+              Text(
+                date,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

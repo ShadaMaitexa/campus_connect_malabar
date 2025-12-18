@@ -1,3 +1,4 @@
+import 'package:campus_connect_malabar/library/library_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,15 +23,33 @@ class StudentHome extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.all(16),
-          child: GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _attendanceCard(uid),
-              _todayStatusCard(uid),
-              _noticeCountCard(department),
-              _eventCountCard(department),
+              const Text(
+                "Overview",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+
+              Expanded(
+                child: GridView(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.05,
+                  ),
+                  children: [
+                    _attendanceCard(uid),
+                    _todayStatusCard(uid),
+                    _noticeCountCard(department),
+                    _eventCountCard(department),
+                    _libraryCard(context),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -38,12 +57,19 @@ class StudentHome extends StatelessWidget {
     );
   }
 
-  /// ---------- ATTENDANCE PERCENT ----------
+  // -------------------- ATTENDANCE --------------------
   Widget _attendanceCard(String uid) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('attendance').snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData) return _card("Attendance", "--", Icons.bar_chart);
+        if (!snap.hasData) {
+          return _dashboardCard(
+            title: "Attendance",
+            value: "--",
+            icon: Icons.bar_chart,
+            gradient: _blueGradient,
+          );
+        }
 
         int total = 0;
         int present = 0;
@@ -57,17 +83,18 @@ class StudentHome extends StatelessWidget {
         }
 
         final percent = total == 0 ? 0 : ((present / total) * 100).round();
-        return _card(
-          "Attendance",
-          "$percent%",
-          Icons.bar_chart,
-          color: percent >= 75 ? Colors.green : Colors.orange,
+
+        return _dashboardCard(
+          title: "Attendance",
+          value: "$percent%",
+          icon: Icons.bar_chart,
+          gradient: percent >= 75 ? _greenGradient : _orangeGradient,
         );
       },
     );
   }
 
-  /// ---------- TODAY STATUS ----------
+  // -------------------- TODAY STATUS --------------------
   Widget _todayStatusCard(String uid) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
@@ -76,26 +103,37 @@ class StudentHome extends StatelessWidget {
           .get(),
       builder: (context, snap) {
         if (!snap.hasData || !snap.data!.exists) {
-          return _card("Today", "Not Marked", Icons.help);
+          return _dashboardCard(
+            title: "Today",
+            value: "Not Marked",
+            icon: Icons.help_outline,
+            gradient: _greyGradient,
+          );
         }
 
         final data = snap.data!.data() as Map<String, dynamic>;
         if (!data.containsKey(uid)) {
-          return _card("Today", "Not Marked", Icons.help);
+          return _dashboardCard(
+            title: "Today",
+            value: "Not Marked",
+            icon: Icons.help_outline,
+            gradient: _greyGradient,
+          );
         }
 
         final present = data[uid]['present'];
-        return _card(
-          "Today",
-          present ? "Present" : "Absent",
-          present ? Icons.check_circle : Icons.cancel,
-          color: present ? Colors.green : Colors.red,
+
+        return _dashboardCard(
+          title: "Today",
+          value: present ? "Present" : "Absent",
+          icon: present ? Icons.check_circle : Icons.cancel,
+          gradient: present ? _greenGradient : _redGradient,
         );
       },
     );
   }
 
-  /// ---------- NOTICE COUNT ----------
+  // -------------------- NOTICES --------------------
   Widget _noticeCountCard(String dept) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -104,47 +142,133 @@ class StudentHome extends StatelessWidget {
           .snapshots(),
       builder: (context, snap) {
         final count = snap.hasData ? snap.data!.docs.length : 0;
-        return _card("Notices", "$count", Icons.notifications);
+
+        return _dashboardCard(
+          title: "Notices",
+          value: "$count",
+          icon: Icons.notifications,
+          gradient: _purpleGradient,
+        );
       },
     );
   }
 
-  /// ---------- EVENT COUNT ----------
+  // -------------------- EVENTS --------------------
   Widget _eventCountCard(String dept) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('events').snapshots(),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return _card("Events", "0", Icons.event);
+          return _dashboardCard(
+            title: "Events",
+            value: "0",
+            icon: Icons.event,
+            gradient: _blueGradient,
+          );
         }
 
         final count = snap.data!.docs.where((d) {
           return d['department'] == 'ALL' || d['department'] == dept;
         }).length;
 
-        return _card("Events", "$count", Icons.event);
+        return _dashboardCard(
+          title: "Events",
+          value: "$count",
+          icon: Icons.event,
+          gradient: _blueGradient,
+        );
       },
     );
   }
-
-  Widget _card(String title, String value, IconData icon,
-      {Color color = Colors.blue}) {
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 36, color: color),
-            const SizedBox(height: 10),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(title),
-          ],
+Widget _libraryCard(BuildContext context) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LibraryScreen(),
         ),
+      );
+    },
+    child: _dashboardCard(
+      title: "Library",
+      value: "Books",
+      icon: Icons.library_books,
+      gradient: const LinearGradient(
+        colors: [Color(0xFF0F2027), Color(0xFF203A43)],
+      ),
+    ),
+  );
+}
+
+  // -------------------- CARD UI --------------------
+  Widget _dashboardCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Gradient gradient,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 36),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  // -------------------- GRADIENTS --------------------
+  static const _blueGradient = LinearGradient(
+    colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+  );
+
+  static const _greenGradient = LinearGradient(
+    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+  );
+
+  static const _orangeGradient = LinearGradient(
+    colors: [Color(0xFFF7971E), Color(0xFFFFD200)],
+  );
+
+  static const _redGradient = LinearGradient(
+    colors: [Color(0xFFCB2D3E), Color(0xFFEF473A)],
+  );
+
+  static const _purpleGradient = LinearGradient(
+    colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+  );
+
+  static const _greyGradient = LinearGradient(
+    colors: [Color(0xFF757F9A), Color(0xFF283048)],
+  );
 }

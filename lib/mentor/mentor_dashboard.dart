@@ -1,10 +1,10 @@
 import 'package:campus_connect_malabar/mentor/mentor_home.dart';
+import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:flutter/material.dart';
 
 import 'attendance_screen.dart';
 import 'post_notice.dart';
 import 'post_event.dart';
-import '../profile/profile_screen.dart';
 
 class MentorDashboard extends StatefulWidget {
   const MentorDashboard({super.key});
@@ -27,29 +27,54 @@ class _MentorDashboardState extends State<MentorDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mentor Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
+        elevation: 0,
+        title: const Text(
+          "Mentor Dashboard",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+            ),
+          ),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: ProfileMenu(),
           ),
         ],
       ),
-      body: screens[index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: index,
-        onTap: (i) => setState(() => index = i),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: "Attendance"),
-          BottomNavigationBarItem(icon: Icon(Icons.campaign), label: "Notices"),
-          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: screens[index],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (i) => setState(() => index = i),
+        height: 70,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: "Home",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.check_circle_outline),
+            selectedIcon: Icon(Icons.check_circle),
+            label: "Attendance",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.campaign_outlined),
+            selectedIcon: Icon(Icons.campaign),
+            label: "Notices",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.event_outlined),
+            selectedIcon: Icon(Icons.event),
+            label: "Events",
+          ),
         ],
       ),
     );

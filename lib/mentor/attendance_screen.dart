@@ -33,8 +33,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     setState(() => loading = false);
   }
 
-  Future<void> markAttendance(
-      String studentId, bool present) async {
+  Future<void> markAttendance(String studentId, bool present) async {
     await FirebaseFirestore.instance
         .collection('attendance')
         .doc(today)
@@ -58,7 +57,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Attendance – $department"),
+        elevation: 0,
+        title: Text(
+          "Attendance – $department",
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+            ),
+          ),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -72,27 +82,100 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           }
 
           if (snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No students found"));
+            return _emptyState();
           }
 
-          return ListView(
-            children: snapshot.data!.docs.map((doc) {
-              return Card(
-                child: ListTile(
-                  title: Text(doc['name']),
-                  trailing: Switch(
-                    value: true,
-                    activeColor: Colors.green,
-                    inactiveThumbColor: Colors.red,
-                    onChanged: (value) {
-                      markAttendance(doc.id, value);
-                    },
-                  ),
-                ),
-              );
-            }).toList(),
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: snapshot.data!.docs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
+              return _studentAttendanceCard(doc);
+            },
           );
         },
+      ),
+    );
+  }
+
+  // ---------------- EMPTY STATE ----------------
+  Widget _emptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.group_off, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            "No students found",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- STUDENT CARD ----------------
+  Widget _studentAttendanceCard(QueryDocumentSnapshot doc) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: const Color(0xFF4B6CB7).withOpacity(0.15),
+            child: Text(
+              doc['name'][0].toUpperCase(),
+              style: const TextStyle(
+                color: Color(0xFF4B6CB7),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Text(
+              doc['name'],
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          Switch(
+            value: true,
+            activeColor: Colors.green,
+            inactiveThumbColor: Colors.red,
+            onChanged: (value) {
+              markAttendance(doc.id, value);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    value
+                        ? "Marked ${doc['name']} as PRESENT"
+                        : "Marked ${doc['name']} as ABSENT",
+                  ),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

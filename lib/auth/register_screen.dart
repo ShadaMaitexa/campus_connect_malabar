@@ -109,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       body: Stack(
-          children: [
+        children: [
           Positioned(
             bottom: 0,
             left: 0,
@@ -118,9 +118,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               "assets/images/login_bg.png",
               width: size.width,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-              ),
+              errorBuilder: (_, __, ___) =>
+                  Container(color: AppTheme.primaryColor.withOpacity(0.1)),
             ),
           ),
           SafeArea(
@@ -156,7 +155,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppTheme.primaryColor.withOpacity(0.2),
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.2),
                                         blurRadius: 15,
                                         spreadRadius: 2,
                                       ),
@@ -167,9 +167,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     size: 40,
                                     color: AppTheme.primaryColor,
                                   ),
-            ),
+                                ),
                               ),
-            const SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               Text(
                                 "campus",
                                 style: GoogleFonts.poppins(
@@ -290,13 +290,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusL,
+                                    ),
                                     border: Border.all(
-                                      color: AppTheme.primaryColor.withOpacity(0.3),
+                                      color: AppTheme.primaryColor.withOpacity(
+                                        0.3,
+                                      ),
                                       width: 1.5,
                                     ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: _role.toUpperCase(),
@@ -310,7 +316,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                       ),
-              items: const [
+                                      items: const [
                                         DropdownMenuItem(
                                           value: 'STUDENT',
                                           child: Text('STUDENT'),
@@ -323,13 +329,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           value: 'ALUMNI',
                                           child: Text('ALUMNI'),
                                         ),
-              ],
+                                      ],
                                       onChanged: (v) {
                                         setState(() {
                                           _role = v!.toLowerCase();
                                         });
                                       },
-            ),
+                                    ),
                                   ),
                                 ),
                                 if (_departments.isNotEmpty) ...[
@@ -337,13 +343,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusL,
+                                      ),
                                       border: Border.all(
-                                        color: AppTheme.primaryColor.withOpacity(0.3),
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.3),
                                         width: 1.5,
                                       ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
                                     child: DropdownButtonHideUnderline(
                                       child: DropdownButton<String>(
                                         value: _department,
@@ -363,19 +374,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ),
                                         ),
                                         items: _departments
-                  .map(
-                    (d) => DropdownMenuItem(
-                      value: d,
-                      child: Text(d),
-                    ),
-                  )
-                  .toList(),
+                                            .map(
+                                              (d) => DropdownMenuItem(
+                                                value: d,
+                                                child: Text(d),
+                                              ),
+                                            )
+                                            .toList(),
                                         onChanged: (v) {
                                           setState(() {
                                             _department = v;
                                           });
                                         },
-            ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -385,7 +396,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusM,
+                                      ),
                                       border: Border.all(
                                         color: AppTheme.primaryColor,
                                         width: 1.5,
@@ -394,8 +407,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: authProvider.isLoading ? null : _handleRegister,
-                                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                        onTap: authProvider.isLoading
+                                            ? null
+                                            : _handleRegister,
+                                        borderRadius: BorderRadius.circular(
+                                          AppTheme.radiusM,
+                                        ),
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 24,
@@ -407,15 +424,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   height: 20,
                                                   child: CircularProgressIndicator(
                                                     strokeWidth: 2,
-                                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                                      AppTheme.primaryColor,
-                                                    ),
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                          Color
+                                                        >(
+                                                          AppTheme.primaryColor,
+                                                        ),
                                                   ),
                                                 )
                                               : Text(
                                                   'Register',
                                                   style: GoogleFonts.poppins(
-                                                    color: AppTheme.primaryColor,
+                                                    color:
+                                                        AppTheme.primaryColor,
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
@@ -454,9 +475,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                             ),
                           ),
-                  ),
-          ],
-        ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

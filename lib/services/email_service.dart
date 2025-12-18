@@ -2,29 +2,32 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class EmailService {
-  static Future sendApprovalMail(
-      String email, String name) async {
-    const serviceId = 'YOUR_SERVICE_ID';
-    const templateId = 'YOUR_TEMPLATE_ID';
-    const publicKey = 'YOUR_PUBLIC_KEY';
+  static const String _emailJsUrl =
+      'https://api.emailjs.com/api/v1.0/email/send';
 
-    final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
-
-    await http.post(
-      url,
+  static Future<void> sendMentorApprovalEmail({
+    required String mentorName,
+    required String mentorEmail,
+  }) async {
+    final response = await http.post(
+      Uri.parse(_emailJsUrl),
       headers: {
         'origin': 'http://localhost',
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'service_id': serviceId,
-        'template_id': templateId,
-        'user_id': publicKey,
+        'service_id': 'service_kzcfqpu',
+        'template_id': 'template_gw3t7xn',
+        'user_id': 'dIGm53WkqVsUlfDrm',
         'template_params': {
-          'to_email': email,
-          'name': name,
-        }
+          'mentor_name': mentorName,
+          'mentor_email': mentorEmail,
+        },
       }),
     );
+
+    if (response.statusCode != 200) {
+      throw Exception('EmailJS Error: ${response.body}');
+    }
   }
 }

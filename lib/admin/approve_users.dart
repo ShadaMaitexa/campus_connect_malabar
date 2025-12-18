@@ -1,3 +1,4 @@
+import 'package:campus_connect_malabar/services/approve_user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
@@ -34,7 +35,9 @@ class ApproveUsers extends StatelessWidget {
                     children: List.generate(
                       3,
                       (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                        padding: const EdgeInsets.only(
+                          bottom: AppTheme.spacingM,
+                        ),
                         child: LoadingShimmer(
                           width: double.infinity,
                           height: 100,
@@ -58,7 +61,8 @@ class ApproveUsers extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: docs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppTheme.spacingM),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppTheme.spacingM),
                   itemBuilder: (context, index) {
                     final user = docs[index];
                     return _UserApprovalCard(user: user);
@@ -170,7 +174,13 @@ class _UserApprovalCard extends StatelessWidget {
 
   Future<void> _approveUser(BuildContext context) async {
     try {
-      await user.reference.update({'approved': true});
+      await ApproveUserService.approveUser(
+        userId: user.id,
+        role: user['role'],
+        name: user['name'],
+        email: user['email'],
+      );
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -187,12 +197,8 @@ class _UserApprovalCard extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: $e'),
             backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            ),
           ),
         );
       }

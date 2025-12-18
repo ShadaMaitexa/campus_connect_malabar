@@ -1,3 +1,4 @@
+import 'package:campus_connect_malabar/library/library_admin_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,75 +33,85 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
+Future<void> _handleLogin() async {
+  if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+  // 🔐 Hard coded SUPER ADMIN login
+  if (email == "admin@campusconnect.com" && password == "admin123") {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminDashboard()),
+    );
+    return;
+  }
 
-    // Hard coded admin login
-    if (email == "admin@campusconnect.com" && password == "admin123") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminDashboard()),
-      );
-      return;
-    }
+  // 📚 Hard coded LIBRARY ADMIN login
+  if (email == "library@campusconnect.com" && password == "library123") {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LibraryAdminDashboard()),
+    );
+    return;
+  }
 
-    final success = await authProvider.login(email, password);
+  // 🔑 Normal user login
+  final success = await authProvider.login(email, password);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.error ?? 'Login failed'),
-          backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-          ),
+  if (!success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(authProvider.error ?? 'Login failed'),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
         ),
-      );
-      return;
-    }
-
-    final userModel = authProvider.userModel;
-    if (userModel == null) return;
-
-    // Approval check
-    if ((userModel.role == 'mentor' || userModel.role == 'alumni') &&
-        !userModel.approved) {
-      await authProvider.logout();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Waiting for admin approval'),
-          backgroundColor: AppTheme.warningColor,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    // Profile completion check
-    if (!userModel.profileCompleted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-        );
-        return;
-      }
-
-    // Navigate to dashboard
-        Navigator.pushReplacement(
-          context,
-      MaterialPageRoute(
-        builder: (_) => RoleRouter(role: userModel.role),
       ),
     );
+    return;
   }
+
+  final userModel = authProvider.userModel;
+  if (userModel == null) return;
+
+  // ⛔ Approval check
+  if ((userModel.role == 'mentor' || userModel.role == 'alumni') &&
+      !userModel.approved) {
+    await authProvider.logout();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Waiting for admin approval'),
+        backgroundColor: AppTheme.warningColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
+
+  // 🧾 Profile completion check
+  if (!userModel.profileCompleted) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+    return;
+  }
+
+  // 🚀 Role-based dashboard
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => RoleRouter(role: userModel.role),
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
