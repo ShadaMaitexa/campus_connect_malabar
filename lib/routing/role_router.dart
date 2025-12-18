@@ -13,7 +13,7 @@ class RoleRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (role) {
+    switch (role.toLowerCase()) {
       case 'admin':
         return const AdminDashboard();
 

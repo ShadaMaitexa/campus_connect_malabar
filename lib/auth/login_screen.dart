@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
+import '../utils/animations.dart';
+import '../widgets/app_text_field.dart';
+import '../providers/auth_provider.dart';
+import '../routing/role_router.dart';
+import '../profile/profile_screen.dart';
 import 'forgot_screen.dart';
 import 'register_screen.dart';
-
 import '../admin/admin_dashboard.dart';
-import '../mentor/mentor_dashboard.dart';
-import '../student/student_dashboard.dart';
-import '../alumini/alumini_dashboard.dart';
-
-import '../profile/profile_screen.dart';
-import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? message;
@@ -22,20 +21,27 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final email = TextEditingController();
-  final password = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
-  final auth = AuthService();
-  final firestore = FirestoreService();
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-  bool loading = false;
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  Future<void> login() async {
-    setState(() => loading = true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    // 🔴 HARD CODED ADMIN LOGIN
-    if (email.text.trim() == "admin@campusconnect.com" &&
-        password.text.trim() == "admin123") {
+    // Hard coded admin login
+    if (email == "admin@campusconnect.com" && password == "admin123") {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminDashboard()),
@@ -43,27 +49,43 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    try {
-      // Firebase login
-      User? user = await auth.login(email.text.trim(), password.text.trim());
+    final success = await authProvider.login(email, password);
 
-      if (user == null) throw Exception("Login failed");
+    if (!mounted) return;
 
-      // Fetch user document
-      final userData = await firestore.getUserData(user.uid);
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Login failed'),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
+        ),
+      );
+      return;
+    }
 
-      final role = userData['role'];
-      final approved = userData['approved'];
-      final profileCompleted = userData['profileCompleted'];
+    final userModel = authProvider.userModel;
+    if (userModel == null) return;
 
-      // 🚫 Approval check (Mentor & Alumni)
-      if ((role == 'mentor' || role == 'alumni') && approved == false) {
-        await FirebaseAuth.instance.signOut();
-        throw Exception("Waiting for admin approval");
-      }
+    // Approval check
+    if ((userModel.role == 'mentor' || userModel.role == 'alumni') &&
+        !userModel.approved) {
+      await authProvider.logout();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Waiting for admin approval'),
+          backgroundColor: AppTheme.warningColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
-      // 📝 Mandatory profile completion
-      if (!profileCompleted) {
+    // Profile completion check
+    if (!userModel.profileCompleted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -71,89 +93,296 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // 🔀 Role-based dashboard
-      if (role == 'student') {
+    // Navigate to dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const StudentDashboard()),
-        );
-      } else if (role == 'mentor') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MentorDashboard()),
-        );
-      } else if (role == 'alumni') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AlumniDashboard()),
-        );
-      } else {
-        throw Exception("Invalid role");
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-      );
-    } finally {
-      setState(() => loading = false);
-    }
+      MaterialPageRoute(
+        builder: (_) => RoleRouter(role: userModel.role),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Campus Connect Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: Stack(
+        children: [
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              "assets/images/login_bg.png",
+              width: size.width,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(Responsive.padding(context)),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: Responsive.maxContentWidth(context),
+                  ),
+                  child: AppAnimations.fadeIn(
+                    key: const ValueKey('login_fade'),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+                        const SizedBox(height: 40),
+                        AppAnimations.slideInFromBottom(
+                          key: const ValueKey('login_logo'),
+                          offset: 50,
+                          child: Column(
+                            children: [
+                              AppAnimations.bounce(
+                                key: const ValueKey('login_icon'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.primaryColor.withOpacity(0.2),
+                                        AppTheme.accentColor.withOpacity(0.1),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primaryColor.withOpacity(0.2),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.school,
+                                    size: 40,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "campus",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.lightTextPrimary,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "connect",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w300,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Your digital campus hub",
+                                style: GoogleFonts.poppins(
+                                  color: AppTheme.lightTextSecondary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 60),
+                        AppAnimations.slideInFromBottom(
+                          key: const ValueKey('login_form'),
+                          offset: 30,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AppAnimations.scaleIn(
+                                  key: const ValueKey('login_title'),
+                                  child: Text(
+                                    'Login',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: -1,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
             if (widget.message != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.errorColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                      border: Border.all(
+                                        color: AppTheme.errorColor.withOpacity(0.3),
+                                      ),
+                                    ),
                 child: Text(
                   widget.message!,
-                  style: const TextStyle(color: Colors.red),
+                                      style: TextStyle(color: AppTheme.errorColor),
                 ),
               ),
-
-            TextField(
-              controller: email,
-              decoration: const InputDecoration(labelText: "Email"),
+                                AppTextField(
+                                  controller: _emailController,
+                                  label: 'Email',
+                                  hint: 'Enter your email',
+                                  prefixIcon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your email';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Please enter a valid email';
+                                    }
+                                    return null;
+                                  },
             ),
-            TextField(
-              controller: password,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
-
             const SizedBox(height: 20),
-
-            loading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: login,
-                    child: const Text("Login"),
-                  ),
-
+                                AppTextField(
+                                  controller: _passwordController,
+                                  label: 'Password',
+                                  hint: 'Enter your password',
+                                  prefixIcon: Icons.lock_outline,
+                                  obscureText: _obscurePassword,
+                                  suffixIcon: _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  onSuffixTap: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your password';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
             TextButton(
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const ForgotPasswordScreen()),
+                                          builder: (_) => const ForgotPasswordScreen(),
+                                        ),
               ),
-              child: const Text("Forgot Password?"),
+                                      child: Text(
+                                        'Forgot Password?',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
             ),
-            TextButton(
-              onPressed: () => Navigator.push(
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                        border: Border.all(
+                                          color: AppTheme.primaryColor,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: authProvider.isLoading ? null : _handleLogin,
+                                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                              vertical: 12,
+                                            ),
+                                            child: authProvider.isLoading
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                                        AppTheme.primaryColor,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Text(
+                                                    'Login',
+                                                    style: GoogleFonts.poppins(
+                                                      color: AppTheme.primaryColor,
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 40),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const RegisterScreen()),
+                                          builder: (_) => const RegisterScreen(),
+                                        ),
               ),
-              child: const Text("Create Account"),
+                                      child: Text(
+                                        "Register",
+                                        style: GoogleFonts.poppins(
+                                          color: AppTheme.accentColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 40),
+                              ],
+                            ),
+                          ),
             ),
           ],
         ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
