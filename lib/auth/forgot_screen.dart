@@ -54,8 +54,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final authProvider = Provider.of<AuthProvider>(context);
+    
   final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
@@ -97,7 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 "Your digital campus hub",
                 style: TextStyle(color: Colors.grey),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height:120),
 
               /// Forgot Password Form
               Expanded(
