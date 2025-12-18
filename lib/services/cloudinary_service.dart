@@ -21,4 +21,5 @@ class CloudinaryService {
 
     return json['secure_url'];
   }
+  
 }

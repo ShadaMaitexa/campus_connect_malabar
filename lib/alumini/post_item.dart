@@ -1,102 +1,182 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/cloudinary_service.dart';
 
-class PostItem extends StatefulWidget {
-  const PostItem({super.key});
+class PostItemScreen extends StatefulWidget {
+  const PostItemScreen({super.key});
 
   @override
-  State<PostItem> createState() => _PostItemState();
+  State<PostItemScreen> createState() => _PostItemScreenState();
 }
 
-class _PostItemState extends State<PostItem> {
+class _PostItemScreenState extends State<PostItemScreen> {
   final title = TextEditingController();
   final description = TextEditingController();
   final price = TextEditingController();
 
-  String category = 'Book';
+  File? image;
   bool loading = false;
 
-  Future<void> postItem() async {
+  Future<void> pickImage() async {
+    final picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) setState(() => image = File(picked.path));
+  }
+
+  Future<void> postMaterial() async {
+    if (title.text.isEmpty ||
+        description.text.isEmpty ||
+        price.text.isEmpty ||
+        image == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      return;
+    }
+
     setState(() => loading = true);
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final imageUrl = await CloudinaryService.upload(image!);
 
     await FirebaseFirestore.instance.collection('marketplace').add({
+      'type': 'material',
       'title': title.text.trim(),
       'description': description.text.trim(),
-      'price': price.text.trim(),
-      'category': category,
-      'sellerId': uid,
-      'sellerName': userDoc['name'],
-      'sellerRole': userDoc['role'],
-      'contactEmail': userDoc['email'],
-      'available': true,
+      'price': int.parse(price.text),
+      'imageUrl': imageUrl,
+      'sellerId': FirebaseAuth.instance.currentUser!.uid,
       'createdAt': Timestamp.now(),
     });
 
-    title.clear();
-    description.clear();
-    price.clear();
-
     setState(() => loading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Item posted successfully")),
-    );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Post Item")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
+      appBar: _appBar("Post Study Material"),
+      body: _page(
+        child: _card(
           children: [
-            TextField(
-              controller: title,
-              decoration: const InputDecoration(labelText: "Item Title"),
-            ),
-            TextField(
-              controller: description,
-              decoration:
-                  const InputDecoration(labelText: "Description"),
-              maxLines: 3,
-            ),
-            TextField(
-              controller: price,
-              decoration: const InputDecoration(labelText: "Price (₹)"),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: category,
-              decoration:
-                  const InputDecoration(labelText: "Category"),
-              items: const [
-                DropdownMenuItem(value: "Book", child: Text("Book")),
-                DropdownMenuItem(value: "Notes", child: Text("Notes")),
-                DropdownMenuItem(
-                    value: "Electronics",
-                    child: Text("Electronics")),
-              ],
-              onChanged: (v) => setState(() => category = v!),
+            GestureDetector(
+              onTap: pickImage,
+              child: Container(
+                height: 160,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.grey.shade200,
+                  image: image != null
+                      ? DecorationImage(
+                          image: FileImage(image!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: image == null
+                    ? const Center(
+                        child: Icon(Icons.upload, size: 42),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(height: 20),
+            _input(title, "Material Title", Icons.menu_book),
+            _input(description, "Description", Icons.description,
+                maxLines: 3),
+            _input(price, "Price (₹)", Icons.currency_rupee,
+                type: TextInputType.number),
+            const SizedBox(height: 24),
             loading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: postItem,
-                    child: const Text("Post Item"),
-                  ),
+                ? const CircularProgressIndicator()
+                : _button("Post Material", postMaterial),
           ],
         ),
       ),
     );
   }
 }
+PreferredSizeWidget _appBar(String title) => AppBar(
+      elevation: 0,
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          ),
+        ),
+      ),
+    );
+
+Widget _page({required Widget child}) => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF6366F1).withOpacity(0.06),
+            Colors.white,
+          ],
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: child,
+      ),
+    );
+
+Widget _card({required List<Widget> children}) => Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+
+Widget _input(
+  TextEditingController c,
+  String label,
+  IconData icon, {
+  int maxLines = 1,
+  TextInputType type = TextInputType.text,
+}) =>
+    Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: c,
+        maxLines: maxLines,
+        keyboardType: type,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+
+Widget _button(String label, VoidCallback onTap) => SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6366F1),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child:
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
+    );

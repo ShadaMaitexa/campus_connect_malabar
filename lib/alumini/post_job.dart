@@ -2,204 +2,148 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class PostJob extends StatefulWidget {
-  const PostJob({super.key});
+class PostJobScreen extends StatefulWidget {
+  const PostJobScreen({super.key});
 
   @override
-  State<PostJob> createState() => _PostJobState();
+  State<PostJobScreen> createState() => _PostJobScreenState();
 }
 
-class _PostJobState extends State<PostJob> {
+class _PostJobScreenState extends State<PostJobScreen> {
+  final title = TextEditingController();
   final company = TextEditingController();
-  final role = TextEditingController();
   final description = TextEditingController();
-  final location = TextEditingController();
+  final link = TextEditingController();
 
   bool loading = false;
 
   Future<void> postJob() async {
+    if (title.text.isEmpty ||
+        company.text.isEmpty ||
+        description.text.isEmpty ||
+        link.text.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      return;
+    }
+
     setState(() => loading = true);
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final alumniDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
-    await FirebaseFirestore.instance.collection('jobs').add({
+    await FirebaseFirestore.instance.collection('marketplace').add({
+      'type': 'job',
+      'title': title.text.trim(),
       'company': company.text.trim(),
-      'role': role.text.trim(),
       'description': description.text.trim(),
-      'location': location.text.trim(),
-      'postedBy': alumniDoc['name'],
-      'alumniEmail': alumniDoc['email'],
+      'applyLink': link.text.trim(),
+      'postedBy': FirebaseAuth.instance.currentUser!.uid,
       'createdAt': Timestamp.now(),
     });
 
-    company.clear();
-    role.clear();
-    description.clear();
-    location.clear();
-
     setState(() => loading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Job posted successfully")),
-    );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Scaffold(
+      appBar: _appBar("Post Job Opening"),
+      body: _page(
+        child: _card(
+          children: [
+            _input(title, "Job Title", Icons.work_outline),
+            _input(company, "Company Name", Icons.business),
+            _input(description, "Job Description", Icons.description,
+                maxLines: 3),
+            _input(link, "Apply Link / Contact", Icons.link),
+            const SizedBox(height: 24),
+            loading
+                ? const CircularProgressIndicator()
+                : _button("Post Job", postJob),
+          ],
+        ),
+      ),
+    );
+  }
+}
+PreferredSizeWidget _appBar(String title) => AppBar(
+      elevation: 0,
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          ),
+        ),
+      ),
+    );
+
+Widget _page({required Widget child}) => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF6366F1).withOpacity(0.05),
+            const Color(0xFF6366F1).withOpacity(0.06),
             Colors.white,
           ],
         ),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.work_rounded,
-                        size: 48,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Help Students Build Careers",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Share opportunities and make a difference",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: company,
-                decoration: InputDecoration(
-                  labelText: "Company Name",
-                  prefixIcon: const Icon(Icons.business_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: role,
-                decoration: const InputDecoration(
-                  labelText: "Job Role",
-                  prefixIcon: Icon(Icons.badge_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: location,
-                decoration: const InputDecoration(
-                  labelText: "Location",
-                  prefixIcon: Icon(Icons.location_on_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: description,
-                decoration: const InputDecoration(
-                  labelText: "Job Description",
-                  prefixIcon: Icon(Icons.description_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                maxLines: 6,
-              ),
-              const SizedBox(height: 32),
-              loading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6366F1).withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: postJob,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                        ),
-                        child: const Text(
-                          "Post Job",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-          ],
+        child: child,
+      ),
+    );
+
+Widget _card({required List<Widget> children}) => Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+
+Widget _input(
+  TextEditingController c,
+  String label,
+  IconData icon, {
+  int maxLines = 1,
+  TextInputType type = TextInputType.text,
+}) =>
+    Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: c,
+        maxLines: maxLines,
+        keyboardType: type,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
-  }
-}
+
+Widget _button(String label, VoidCallback onTap) => SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6366F1),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child:
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
+    );

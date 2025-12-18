@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/responsive.dart';
-import '../widgets/app_text_field.dart';
-import '../widgets/app_button.dart';
+
 import '../providers/auth_provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -58,80 +56,130 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context);
-
+  final size = MediaQuery.of(context).size;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Reset Password', style: AppTheme.heading3),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(Responsive.padding(context)),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: Responsive.maxContentWidth(context),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          /// --- Background Blue Shape ---
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              "assets/images/login_bg.png", // same background as login/register
+              width: size.width,
+              fit: BoxFit.cover,
+            ),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: AppTheme.spacingXXL),
-                Icon(
-                  Icons.lock_reset_rounded,
-                  size: 80,
-                  color: AppTheme.primaryColor,
+
+          /// --- Content on top ---
+          Column(
+            children: [
+              const SizedBox(height: 60),
+
+              /// Top logo + tagline
+              const Text(
+                "campus",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  letterSpacing: 1.2,
                 ),
-                const SizedBox(height: AppTheme.spacingXL),
-                Text(
-                  'Forgot Password?',
-                  style: AppTheme.heading1,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppTheme.spacingM),
-                Text(
-                  'Enter your email address and we\'ll send you a link to reset your password.',
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppTheme.spacingXXL),
-                AppTextField(
-                  controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppTheme.spacingXL),
-                AppButton(
-                  label: 'Send Reset Link',
-                  onPressed: authProvider.isLoading ? null : _handleReset,
-                  isLoading: authProvider.isLoading,
-                  width: Responsive.isMobile(context) ? double.infinity : null,
-                ),
-                const SizedBox(height: AppTheme.spacingL),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Back to Login',
-                    style: AppTheme.bodyMedium.copyWith(
-                      color: AppTheme.primaryColor,
+              ),
+              const Text(
+                "connect",
+                style: TextStyle(fontSize: 24, color: Color(0xFF0096FF)),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Your digital campus hub",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              /// Forgot Password Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 90),
+                        const Text(
+                          'Forgot Password',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                        const SizedBox(height: 16),
+
+                        /// Email Input
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            hintText: 'Email',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Please enter your email'
+                              : null,
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /// Send Reset Button
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF0096FF),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _handleReset,
+                          child: const Text(
+                            'Send Reset Link',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        /// Back to Login
+                        Align(
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Text(
+                              "Back to Login",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }

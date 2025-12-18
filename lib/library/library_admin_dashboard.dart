@@ -6,6 +6,7 @@ import 'manage_books.dart';
 
 import 'library_analytics_screen.dart';
 
+
 class LibraryAdminDashboard extends StatelessWidget {
   const LibraryAdminDashboard({super.key});
 
@@ -13,78 +14,81 @@ class LibraryAdminDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
         title: const Text(
-          "Library Admin Panel",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          "Library Admin",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
             ),
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: GridView(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 18,
-            mainAxisSpacing: 18,
-            childAspectRatio: 1.2,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF6366F1).withOpacity(0.05),
+              Colors.white,
+            ],
           ),
-          children: [
-            _card(context, "Manage Books", Icons.library_add,
-                const ManageBooks()),
-
-            _card(context, "Return Approvals", Icons.assignment_turned_in,
-                const IssuedBooksScreen()),
-
-            _card(context, "Fine Payments", Icons.payments,
-                const FinePaymentsScreen()),
-
-            _card(context, "Library Analytics", Icons.bar_chart,
-                const LibraryAnalyticsScreen()),
-
-            _card(context, "Issue History", Icons.history,
-                const IssueHistoryScreen()),
-          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: 1.15,
+            children: [
+              _card(context, "Manage Books", Icons.library_add, const ManageBooks()),
+              _card(context, "Return Approval", Icons.assignment_turned_in, const IssuedBooksScreen()),
+              _card(context, "Fine Payments", Icons.payments_rounded, const FinePaymentsScreen()),
+              _card(context, "Analytics", Icons.bar_chart_rounded, const LibraryAnalyticsScreen()),
+              _card(context, "Issue History", Icons.history_rounded, const IssueHistoryScreen()),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _card(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Widget page,
-  ) {
+  Widget _card(BuildContext context, String title, IconData icon, Widget page) {
     return InkWell(
+      borderRadius: BorderRadius.circular(24),
       onTap: () =>
           Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
-      borderRadius: BorderRadius.circular(22),
       child: Container(
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
           gradient: const LinearGradient(
-            colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
           ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 12,
-              offset: Offset(0, 8),
+              color: const Color(0xFF6366F1).withOpacity(0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: Colors.white),
-            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              child: Icon(icon, size: 36, color: Colors.white),
+            ),
+            const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,

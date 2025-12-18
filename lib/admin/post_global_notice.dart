@@ -1,164 +1,169 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../theme/app_theme.dart';
-import '../utils/responsive.dart';
-import '../widgets/app_card.dart';
-import '../widgets/app_text_field.dart';
-import '../widgets/app_button.dart';
-import '../services/firestore_service.dart';
+import 'package:flutter/material.dart';
 
-class AdminPostNotice extends StatefulWidget {
-  const AdminPostNotice({super.key});
+class AdminNotices extends StatefulWidget {
+  const AdminNotices({super.key});
 
   @override
-  State<AdminPostNotice> createState() => _AdminPostNoticeState();
+  State<AdminNotices> createState() => _AdminNoticesState();
 }
 
-class _AdminPostNoticeState extends State<AdminPostNotice> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _messageController = TextEditingController();
-  final _firestore = FirestoreService();
-  
-  String _selectedDepartment = 'ALL';
-  List<String> _departments = [];
-  bool _isLoading = false;
+class _AdminNoticesState extends State<AdminNotices> {
+  final TextEditingController title = TextEditingController();
+  final TextEditingController message = TextEditingController();
+
+  bool loading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadDepartments();
+  void dispose() {
+    title.dispose();
+    message.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadDepartments() async {
-    final depts = await _firestore.getDepartments();
-    setState(() {
-      _departments = ['ALL', ...depts];
-    });
-  }
-
-  Future<void> _postNotice() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      final userData = user != null ? await _firestore.getUserData(user.uid) : null;
-
-      await FirebaseFirestore.instance.collection('notices').add({
-        'title': _titleController.text.trim(),
-        'message': _messageController.text.trim(),
-        'department': _selectedDepartment,
-        'postedBy': userData?['name'] ?? 'Admin',
-        'role': 'admin',
-        'createdAt': Timestamp.now(),
-      });
-
-      _titleController.clear();
-      _messageController.clear();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Notice posted successfully'),
-            backgroundColor: AppTheme.successColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+  Future<void> postNotice() async {
+    if (title.text.trim().isEmpty || message.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Title and message cannot be empty")),
+      );
+      return;
     }
+
+    setState(() => loading = true);
+
+    await FirebaseFirestore.instance.collection('notices').add({
+      'title': title.text.trim(),
+      'message': message.text.trim(),
+      'department': 'ALL',
+      'role': 'admin',
+      'createdAt': Timestamp.now(),
+    });
+
+    setState(() => loading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Global notice posted successfully")),
+    );
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(Responsive.padding(context)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: Responsive.maxContentWidth(context),
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Post Notice', style: AppTheme.heading1),
-              const SizedBox(height: AppTheme.spacingXL),
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppTextField(
-                      controller: _titleController,
-                      label: 'Notice Title',
-                      hint: 'Enter notice title',
-                      prefixIcon: Icons.title_rounded,
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Please enter notice title' : null,
-                    ),
-                    const SizedBox(height: AppTheme.spacingL),
-                    AppTextField(
-                      controller: _messageController,
-                      label: 'Notice Message',
-                      hint: 'Enter notice message',
-                      prefixIcon: Icons.message_rounded,
-                      maxLines: 6,
-                      validator: (value) => value?.isEmpty ?? true
-                          ? 'Please enter notice message'
-                          : null,
-                    ),
-                    const SizedBox(height: AppTheme.spacingL),
-                    DropdownButtonFormField<String>(
-                      value: _selectedDepartment,
-                      decoration: InputDecoration(
-                        labelText: 'Department',
-                        prefixIcon: Icon(Icons.apartment_rounded),
-                      ),
-                      items: _departments
-                          .map((dept) => DropdownMenuItem(
-                                value: dept,
-                                child: Text(dept),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedDepartment = value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppTheme.spacingXL),
-                    AppButton(
-                      label: 'Post Notice',
-                      onPressed: _isLoading ? null : _postNotice,
-                      isLoading: _isLoading,
-                      width: Responsive.isMobile(context) ? double.infinity : 200,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return Scaffold(
+      appBar: _appBar("Post Global Notice"),
+      body: _page(
+        child: _card(
+          children: [
+            _input(
+              title,
+              "Notice Title",
+              Icons.title,
+            ),
+            _input(
+              message,
+              "Notice Message",
+              Icons.message,
+              maxLines: 4,
+            ),
+            const SizedBox(height: 20),
+            loading
+                ? const Center(child: CircularProgressIndicator())
+                : _button("Post Notice", postNotice),
+          ],
         ),
       ),
     );
   }
 }
+
+/* ================= PREMIUM SHARED UI ================= */
+
+PreferredSizeWidget _appBar(String title) => AppBar(
+      elevation: 0,
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          ),
+        ),
+      ),
+    );
+
+Widget _page({required Widget child}) => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF6366F1).withOpacity(0.06),
+            Colors.white,
+          ],
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: SingleChildScrollView(child: child),
+      ),
+    );
+
+Widget _card({required List<Widget> children}) => Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24), // ✅ premium radius
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+
+Widget _input(
+  TextEditingController c,
+  String label,
+  IconData icon, {
+  int maxLines = 1,
+  TextInputType type = TextInputType.text,
+}) =>
+    Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: c,
+        maxLines: maxLines,
+        keyboardType: type,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+
+Widget _button(String label, VoidCallback onTap) => SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6366F1),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );

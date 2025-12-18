@@ -11,7 +11,12 @@ import 'change_password.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isFirstTime;
-  const ProfileScreen({super.key, this.isFirstTime = false});
+  final String? userId;
+ const ProfileScreen({
+    super.key,
+    this.isFirstTime = false,
+    this.userId,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
