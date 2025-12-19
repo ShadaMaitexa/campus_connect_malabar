@@ -8,14 +8,14 @@ class FirestoreService {
     required String name,
     required String email,
     required String role,
-    required String department,
+    
   }) async {
     try {
       await _db.collection('users').doc(uid).set({
         'name': name,
         'email': email,
         'role': role,
-        'department': department,
+     
         'approved': role == 'student',
         'profileCompleted': false,
         'createdAt': FieldValue.serverTimestamp(),

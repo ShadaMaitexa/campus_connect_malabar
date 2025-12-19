@@ -20,19 +20,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _firestore = FirestoreService();
+
 
   String _role = 'student';
-  String? _department;
+ 
   bool _obscurePassword = true;
-  List<String> _departments = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDepartments();
-  }
-
+ 
   @override
   void dispose() {
     _nameController.dispose();
@@ -41,35 +34,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _loadDepartments() async {
-    final list = await _firestore.getDepartments();
-    setState(() {
-      _departments = list;
-      if (list.isNotEmpty) _department = list.first;
-    });
-  }
-
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_department == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Please select a department"),
-          backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.register(
       _emailController.text.trim(),
       _passwordController.text.trim(),
       _nameController.text.trim(),
-      _role,
-      _department!,
+      _role
+     
     );
 
     if (!mounted) return;
@@ -338,58 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                   ),
                                 ),
-                                if (_departments.isNotEmpty) ...[
-                                  const SizedBox(height: 20),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusL,
-                                      ),
-                                      border: Border.all(
-                                        color: AppTheme.primaryColor
-                                            .withOpacity(0.3),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: _department,
-                                        isExpanded: true,
-                                        icon: Icon(
-                                          Icons.arrow_drop_down,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                        style: GoogleFonts.poppins(
-                                          color: AppTheme.lightTextPrimary,
-                                          fontSize: 16,
-                                        ),
-                                        hint: Text(
-                                          'Department',
-                                          style: GoogleFonts.poppins(
-                                            color: AppTheme.lightTextSecondary,
-                                          ),
-                                        ),
-                                        items: _departments
-                                            .map(
-                                              (d) => DropdownMenuItem(
-                                                value: d,
-                                                child: Text(d),
-                                              ),
-                                            )
-                                            .toList(),
-                                        onChanged: (v) {
-                                          setState(() {
-                                            _department = v;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            
                                 const SizedBox(height: 32),
                                 Align(
                                   alignment: Alignment.centerRight,

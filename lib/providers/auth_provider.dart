@@ -67,7 +67,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> register(String email, String password, String name, String role, String department) async {
+  Future<bool> register(String email, String password, String name, String role) async {
     try {
       _isLoading = true;
       _error = null;
@@ -84,7 +84,7 @@ class AuthProvider extends ChangeNotifier {
           name: name,
           email: email,
           role: role,
-          department: department,
+         
         );
         await _loadUserData(result.user!.uid);
         _isLoading = false;

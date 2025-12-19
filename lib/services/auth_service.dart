@@ -1,35 +1,43 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<User?> register(String email, String password) async {
-    try {
-      final result = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return result.user;
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    } catch (e) {
-      throw Exception('Registration failed: $e');
-    }
+  Future<User?> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final result = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(result.user!.uid)
+        .set({
+      'uid': result.user!.uid,
+      'name': name,
+      'email': email,
+      'role': role,
+      'profileCompleted': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    return result.user;
   }
 
   Future<User?> login(String email, String password) async {
-    try {
-      final result = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return result.user;
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    } catch (e) {
-      throw Exception('Login failed: $e');
-    }
+    final result =
+        await _auth.signInWithEmailAndPassword(email: email, password: password);
+    return result.user;
   }
+
 
   Future<void> resetPassword(String email) async {
     try {
