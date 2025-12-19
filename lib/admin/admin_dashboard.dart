@@ -2,7 +2,9 @@ import 'package:campus_connect_malabar/admin/admin_users.dart';
 import 'package:campus_connect_malabar/admin/post_event.dart';
 import 'package:campus_connect_malabar/admin/post_global_notice.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../auth/login_screen.dart';
 import 'admin_jobs.dart';
 import 'approve_users.dart';
 import 'admin_library.dart';
@@ -13,11 +15,11 @@ class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appBar("Admin Control Panel"),
+      appBar: _appBar(context, "Admin Control Panel"),
       body: _page(
         child: GridView.count(
-          shrinkWrap: true, // ✅ VERY IMPORTANT
-          physics: const NeverScrollableScrollPhysics(), // ✅ VERY IMPORTANT
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -40,13 +42,28 @@ class AdminDashboard extends StatelessWidget {
   }
 }
 
-// -------------------- APP BAR --------------------
-PreferredSizeWidget _appBar(String title) => AppBar(
+// -------------------- APP BAR WITH LOGOUT --------------------
+PreferredSizeWidget _appBar(BuildContext context, String title) => AppBar(
       elevation: 0,
       title: Text(
         title,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
+      actions: [
+        IconButton(
+          tooltip: "Logout",
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (_) => false,
+            );
+          },
+        ),
+      ],
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

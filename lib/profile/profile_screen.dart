@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
-
 class ProfileScreen extends StatefulWidget {
-  /// OPTIONAL — keeps compatibility with old navigation
   final bool? isFirstTime;
   final String? userId;
 
@@ -23,27 +20,28 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
+  // Common controllers
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
   final departmentController = TextEditingController();
   final dobController = TextEditingController();
 
+  // Student-only
+  final semesterController = TextEditingController();
+  final durationController = TextEditingController();
+
   String? gender;
   DateTime? selectedDob;
   bool isSaving = false;
 
   late final String uid;
+  String? role;
 
   @override
   void initState() {
     super.initState();
-
-    /// SAFELY resolve UID
-    uid = widget.userId ??
-        FirebaseAuth.instance.currentUser!.uid;
-
+    uid = widget.userId ?? FirebaseAuth.instance.currentUser!.uid;
     _loadProfile();
   }
 
@@ -54,25 +52,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     addressController.dispose();
     departmentController.dispose();
     dobController.dispose();
+    semesterController.dispose();
+    durationController.dispose();
     super.dispose();
   }
 
   // ---------------- LOAD PROFILE ----------------
   Future<void> _loadProfile() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
     if (!doc.exists) return;
 
     final data = doc.data()!;
 
     setState(() {
+      role = data['role'];
       nameController.text = data['name'] ?? '';
       phoneController.text = data['phone'] ?? '';
       addressController.text = data['address'] ?? '';
       departmentController.text = data['department'] ?? '';
+      semesterController.text = data['semester'] ?? '';
+      durationController.text = data['duration'] ?? '';
       gender = data['gender'];
       dobController.text = data['dob'] ?? '';
     });
@@ -99,19 +100,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ---------------- SAVE PROFILE ----------------
   Future<void> saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (gender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Select gender")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Select gender")));
       return;
     }
 
     setState(() => isSaving = true);
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({
+    final data = {
       "name": nameController.text.trim(),
       "phone": phoneController.text.trim(),
       "address": addressController.text.trim(),
@@ -119,11 +117,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       "gender": gender,
       "dob": dobController.text,
       "profileCompleted": true,
-    }, SetOptions(merge: true));
+    };
+
+    // Student-only fields
+    if (role == 'student') {
+      data["semester"] = semesterController.text.trim();
+      data["duration"] = durationController.text.trim();
+    }
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set(data, SetOptions(merge: true));
 
     setState(() => isSaving = false);
 
-    /// REDIRECT ONLY IF FIRST TIME
     if (widget.isFirstTime == true) {
       _redirectToDashboard();
     } else {
@@ -133,19 +141,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ---------------- REDIRECT ----------------
   Future<void> _redirectToDashboard() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final role = doc['role'];
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => RoleRouter(role: role),
-      ),
+      MaterialPageRoute(builder: (_) => RoleRouter(role: role)),
       (_) => false,
+    );
+  }
+
+  // ---------------- CHANGE PASSWORD ----------------
+  Future<void> _changePassword() async {
+    await FirebaseAuth.instance.sendPasswordResetEmail(
+      email: FirebaseAuth.instance.currentUser!.email!,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Password reset email sent"),
+      ),
     );
   }
 
@@ -161,38 +177,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _field(nameController, "Name", required: true),
+              _field(phoneController, "Phone", required: true),
+              _field(addressController, "Address"),
+              _field(departmentController, "Department"),
 
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Name"),
-                validator: (v) => v!.isEmpty ? "Required" : null,
-              ),
-              const SizedBox(height: 12),
+              // -------- STUDENT ONLY --------
+              if (role == 'student') ...[
+                _field(semesterController, "Semester"),
+                _field(durationController, "Course Duration"),
+              ],
 
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: "Phone"),
-                keyboardType: TextInputType.phone,
-                validator: (v) => v!.isEmpty ? "Required" : null,
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: addressController,
-                decoration: const InputDecoration(labelText: "Address"),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: departmentController,
-                decoration: const InputDecoration(labelText: "Department"),
-              ),
               const SizedBox(height: 16),
-
-              const Text(
-                "Gender",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              const Text("Gender",
+                  style: TextStyle(fontWeight: FontWeight.w600)),
               Row(
                 children: [
                   _genderRadio("Male"),
@@ -200,27 +198,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _genderRadio("Other"),
                 ],
               ),
-              const SizedBox(height: 12),
 
-              TextFormField(
-                controller: dobController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: "Date of Birth",
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                onTap: pickDob,
-              ),
+              _dobField(),
               const SizedBox(height: 24),
 
+              // -------- SAVE BUTTON (FIXED) --------
               SizedBox(
                 width: double.infinity,
-                height: 48,
                 child: ElevatedButton(
                   onPressed: isSaving ? null : saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                   child: isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Save Profile"),
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Save Profile",
+                          style: TextStyle(fontSize: 16),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // -------- CHANGE PASSWORD --------
+              Center(
+                child: TextButton.icon(
+                  onPressed: _changePassword,
+                  icon: const Icon(Icons.lock_reset),
+                  label: const Text("Change Password"),
                 ),
               ),
             ],
@@ -230,7 +243,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ---------------- GENDER RADIO ----------------
+  // ---------------- HELPERS ----------------
+  Widget _field(TextEditingController c, String label,
+      {bool required = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: c,
+        decoration: InputDecoration(labelText: label),
+        validator: required ? (v) => v!.isEmpty ? "Required" : null : null,
+      ),
+    );
+  }
+
+  Widget _dobField() {
+    return TextFormField(
+      controller: dobController,
+      readOnly: true,
+      decoration: const InputDecoration(
+        labelText: "Date of Birth",
+        suffixIcon: Icon(Icons.calendar_today),
+      ),
+      onTap: pickDob,
+    );
+  }
+
   Widget _genderRadio(String value) {
     return Expanded(
       child: RadioListTile<String>(
