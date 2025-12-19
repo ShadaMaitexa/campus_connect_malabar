@@ -1,192 +1,165 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/library_service.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
-class ManageBooks extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../services/cloudinary_service.dart';
+import '../services/library_service.dart';
+import '../widgets/book_image_picker.dart';
+
+class ManageBooks extends StatefulWidget {
   const ManageBooks({super.key});
 
-  int fine(DateTime returnDate) {
-    if (DateTime.now().isBefore(returnDate)) return 0;
-    return DateTime.now().difference(returnDate).inDays * 10;
+  @override
+  State<ManageBooks> createState() => _ManageBooksState();
+}
+
+class _ManageBooksState extends State<ManageBooks> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _copiesController = TextEditingController();
+
+  Uint8List? _bookImageBytes;
+  XFile? _pickedImage;
+
+  bool _isLoading = false;
+
+  // ================= IMAGE PICK =================
+  Future<void> _pickImage() async {
+    final XFile? file =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (file != null) {
+      final bytes = await file.readAsBytes();
+      setState(() {
+        _pickedImage = file;
+        _bookImageBytes = bytes;
+      });
+    }
   }
 
+  // ================= SAVE BOOK =================
+  Future<void> _saveBook() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_pickedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload book cover image")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      /// 1️⃣ Upload image to Cloudinary (FIXED)
+      final String imageUrl =
+          await CloudinaryService.uploadBookImage(
+        File(_pickedImage!.path),
+      );
+
+      /// 2️⃣ Save book data to Firestore
+      await LibraryService.addBook(
+        title: _titleController.text.trim(),
+        author: _authorController.text.trim(),
+        imageUrl: imageUrl,
+        totalCopies: int.parse(_copiesController.text.trim()),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Book added successfully")),
+      );
+
+      _formKey.currentState!.reset();
+      setState(() {
+        _bookImageBytes = null;
+        _pickedImage = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Library Management",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-            ),
-          ),
-        ),
+        title: const Text("Manage Books"),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _addEdit(context),
-        icon: const Icon(Icons.add),
-        label: const Text("Add Book"),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('books').snapshots(),
-        builder: (context, bookSnap) {
-          if (!bookSnap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: bookSnap.data!.docs.map((book) {
-              return _bookRow(context, book);
-            }).toList(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _bookRow(BuildContext context, QueryDocumentSnapshot book) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('issued_books')
-          .where('bookId', isEqualTo: book.id)
-          .where('returned', isEqualTo: false)
-          .snapshots(),
-      builder: (context, issueSnap) {
-        final issued = issueSnap.hasData && issueSnap.data!.docs.isNotEmpty;
-        int bookFine = 0;
-
-        if (issued) {
-          final issue = issueSnap.data!.docs.first;
-          bookFine = fine((issue['returnDate'] as Timestamp).toDate());
-        }
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: const [
-              BoxShadow(color: Colors.black12, blurRadius: 10),
-            ],
-          ),
-          child: Row(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  book['imageUrl'],
-                  width: 60,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.menu_book, size: 60),
+              BookImagePicker(
+                imageBytes: _bookImageBytes,
+                onPick: _pickImage,
+              ),
+
+              const SizedBox(height: 24),
+
+              _inputField(
+                controller: _titleController,
+                label: "Book Title",
+              ),
+
+              const SizedBox(height: 16),
+
+              _inputField(
+                controller: _authorController,
+                label: "Author",
+              ),
+
+              const SizedBox(height: 16),
+
+              _inputField(
+                controller: _copiesController,
+                label: "Total Copies",
+                isNumber: true,
+              ),
+
+              const SizedBox(height: 28),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveBook,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Save Book"),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(book['title'],
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600)),
-                    Text(book['author'],
-                        style: const TextStyle(color: Colors.black54)),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        _chip(
-                          issued ? "Issued" : "Available",
-                          issued ? Colors.orange : Colors.green,
-                        ),
-                        if (bookFine > 0)
-                          _chip("Fine ₹$bookFine", Colors.red),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () => _addEdit(context, book: book),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () =>
-                    LibraryService.deleteBook(book.id),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  Widget _chip(String t, Color c) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration:
-            BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
-        child: Text(t,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600)),
-      );
-
-  void _addEdit(BuildContext context, {QueryDocumentSnapshot? book}) {
-    final title = TextEditingController(text: book?['title']);
-    final author = TextEditingController(text: book?['author']);
-    final image = TextEditingController(text: book?['imageUrl']);
-    final copies = TextEditingController(
-        text: book != null ? book['totalCopies'].toString() : '');
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(book == null ? "Add Book" : "Edit Book"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: title, decoration: const InputDecoration(labelText: "Title")),
-            TextField(controller: author, decoration: const InputDecoration(labelText: "Author")),
-            TextField(controller: image, decoration: const InputDecoration(labelText: "Image URL")),
-            TextField(controller: copies, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Total Copies")),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () async {
-              if (book == null) {
-                await LibraryService.addBook(
-                  title: title.text,
-                  author: author.text,
-                  imageUrl: image.text,
-                  totalCopies: int.parse(copies.text),
-                );
-              } else {
-                await LibraryService.updateBook(
-                  bookId: book.id,
-                  title: title.text,
-                  author: author.text,
-                  imageUrl: image.text,
-                  totalCopies: int.parse(copies.text),
-                  availableCopies: book['availableCopies'],
-                );
-              }
-              Navigator.pop(context);
-            },
-            child: const Text("Save"),
-          ),
-        ],
+  // ================= REUSABLE FIELD =================
+  Widget _inputField({
+    required TextEditingController controller,
+    required String label,
+    bool isNumber = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      validator: (v) => v == null || v.isEmpty ? "Required field" : null,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
     );
   }

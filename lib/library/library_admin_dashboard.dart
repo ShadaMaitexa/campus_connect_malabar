@@ -1,6 +1,8 @@
+import 'package:campus_connect_malabar/auth/login_screen.dart';
 import 'package:campus_connect_malabar/library/fine_payment_screen.dart';
 import 'package:campus_connect_malabar/library/issue_history.dart';
 import 'package:campus_connect_malabar/library/issued_book_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'manage_books.dart';
 
@@ -14,19 +16,27 @@ class LibraryAdminDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Library Admin",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            ),
-          ),
-        ),
+  title: const Text(
+    "Library Admin",
+    style: TextStyle(fontWeight: FontWeight.bold),
+  ),
+  elevation: 0,
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.logout),
+      tooltip: "Logout",
+      onPressed: () => _confirmLogout(context),
+    ),
+  ],
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
       ),
+    ),
+  ),
+),
+
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -102,5 +112,41 @@ class LibraryAdminDashboard extends StatelessWidget {
         ),
       ),
     );
-  }
+  }void _confirmLogout(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: const Text("Confirm Logout"),
+      content: const Text("Are you sure you want to logout?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+          ),
+          onPressed: () async {
+            Navigator.pop(context);
+
+            await FirebaseAuth.instance.signOut();
+
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          },
+          child: const Text("Logout"),
+        ),
+      ],
+    ),
+  );
+}
+
 }
