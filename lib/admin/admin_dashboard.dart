@@ -2,11 +2,10 @@ import 'package:campus_connect_malabar/admin/admin_users.dart';
 import 'package:campus_connect_malabar/admin/post_event.dart';
 import 'package:campus_connect_malabar/admin/post_global_notice.dart';
 import 'package:flutter/material.dart';
-import 'admin_jobs.dart';
 
+import 'admin_jobs.dart';
 import 'approve_users.dart';
 import 'admin_library.dart';
-
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -17,6 +16,8 @@ class AdminDashboard extends StatelessWidget {
       appBar: _appBar("Admin Control Panel"),
       body: _page(
         child: GridView.count(
+          shrinkWrap: true, // ✅ VERY IMPORTANT
+          physics: const NeverScrollableScrollPhysics(), // ✅ VERY IMPORTANT
           crossAxisCount: 2,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -38,9 +39,14 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 }
+
+// -------------------- APP BAR --------------------
 PreferredSizeWidget _appBar(String title) => AppBar(
       elevation: 0,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -50,6 +56,7 @@ PreferredSizeWidget _appBar(String title) => AppBar(
       ),
     );
 
+// -------------------- PAGE BACKGROUND --------------------
 Widget _page({required Widget child}) => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -63,9 +70,13 @@ Widget _page({required Widget child}) => Container(
       ),
       padding: const EdgeInsets.all(20),
       child: Center(
-        child: SingleChildScrollView(child: child),
+        child: SingleChildScrollView(
+          child: child,
+        ),
       ),
     );
+
+// -------------------- DASHBOARD CARD --------------------
 Widget _card(
   BuildContext context,
   String title,
