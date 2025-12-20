@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/custom_app_bar.dart';
+import '../widgets/dashboard_card.dart';
+import '../theme/app_theme.dart';
+import '../utils/animations.dart';
 
 class ViewEvents extends StatelessWidget {
   const ViewEvents({super.key});
@@ -16,22 +21,14 @@ class ViewEvents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Events",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      appBar: CustomAppBar(
+        title: "Events",
+        gradient: AppGradients.info,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -39,8 +36,8 @@ class ViewEvents extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF4B6CB7).withOpacity(0.05),
-              Colors.white,
+              AppTheme.primaryColor.withOpacity(0.03),
+              isDark ? AppTheme.darkBackground : Colors.white,
             ],
           ),
         ),
@@ -73,15 +70,19 @@ class ViewEvents extends StatelessWidget {
                 }
 
                 return ListView.separated(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   itemCount: events.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 18),
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final doc = events[index];
                     final dateTime = (doc['date'] as Timestamp).toDate();
                     final isUpcoming = dateTime.isAfter(DateTime.now());
 
-                    return _eventCard(doc, dateTime, isUpcoming);
+                    return AppAnimations.slideInFromBottom(
+                      delay: Duration(milliseconds: 100 + (index * 50)),
+                      child: _eventCard(context, doc, dateTime, isUpcoming, isDark),
+                    );
                   },
                 );
               },
@@ -111,9 +112,11 @@ class ViewEvents extends StatelessWidget {
 
   // ---------------- EVENT CARD ----------------
   Widget _eventCard(
+    BuildContext context,
     QueryDocumentSnapshot doc,
     DateTime dateTime,
     bool isUpcoming,
+    bool isDark,
   ) {
     final date =
         "${dateTime.day.toString().padLeft(2, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.year}";
