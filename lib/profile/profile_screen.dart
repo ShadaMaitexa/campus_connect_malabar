@@ -1,14 +1,18 @@
-import 'package:campus_connect_malabar/profile/change_password.dart';
-import 'package:campus_connect_malabar/routing/role_router.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final bool? isFirstTime;
   final String? userId;
+  final String? role;
+  final bool isFirstTime;
 
-  const ProfileScreen({super.key, this.isFirstTime, this.userId});
+  const ProfileScreen({
+    super.key,
+    this.userId,
+    this.role,
+    this.isFirstTime = false,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -17,264 +21,295 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Common controllers
+  // 🔹 resolved values
+  late final String _userId;
+  late String _role;
+
+  // 🔹 Common fields
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
-  final departmentController = TextEditingController();
-  final dobController = TextEditingController();
 
-  // Student-only
-  final semesterController = TextEditingController();
-  final durationController = TextEditingController();
+  String gender = 'Male';
+  DateTime? dob;
 
-  String? gender;
-  DateTime? selectedDob;
-  bool isSaving = false;
+  // 🔹 Alumni fields
+  final currentPositionController = TextEditingController();
+  final workingAddressController = TextEditingController();
+  final passoutYearController = TextEditingController();
 
-  late final String uid;
-  String? role;
+  // 🔹 Mentor fields
+  final designationController = TextEditingController();
+  final semesterInChargeController = TextEditingController();
+
+  // 🔹 Change password
+  final oldPasswordController = TextEditingController();
+  final newPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    uid = widget.userId ?? FirebaseAuth.instance.currentUser!.uid;
+
+    _userId =
+        widget.userId ?? FirebaseAuth.instance.currentUser!.uid;
+
+    _role = widget.role ?? 'student';
+
     _loadProfile();
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
-    departmentController.dispose();
-    dobController.dispose();
-    semesterController.dispose();
-    durationController.dispose();
-    super.dispose();
-  }
-
-  // ---------------- LOAD PROFILE ----------------
   Future<void> _loadProfile() async {
     final doc = await FirebaseFirestore.instance
         .collection('users')
-        .doc(uid)
+        .doc(_userId)
         .get();
 
     if (!doc.exists) return;
 
     final data = doc.data()!;
 
-    setState(() {
-      role = data['role'];
-      nameController.text = data['name'] ?? '';
-      phoneController.text = data['phone'] ?? '';
-      addressController.text = data['address'] ?? '';
-      departmentController.text = data['department'] ?? '';
-      semesterController.text = data['semester'] ?? '';
-      durationController.text = data['duration'] ?? '';
-      gender = data['gender'];
-      dobController.text = data['dob'] ?? '';
-    });
-  }
+    nameController.text = data['name'] ?? '';
+    phoneController.text = data['phone'] ?? '';
+    addressController.text = data['address'] ?? '';
+    gender = data['gender'] ?? 'Male';
 
-  // ---------------- DOB PICKER ----------------
-  Future<void> pickDob() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDob ?? DateTime(2005),
-      firstDate: DateTime(1990),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      setState(() {
-        selectedDob = picked;
-        dobController.text = "${picked.day}-${picked.month}-${picked.year}";
-      });
+    if (data['dob'] != null) {
+      dob = (data['dob'] as Timestamp).toDate();
     }
+
+    // 🔹 If role not passed, read from Firestore
+    _role = widget.role ?? data['role'] ?? 'student';
+
+    // Alumni
+    currentPositionController.text =
+        data['currentPosition'] ?? '';
+    workingAddressController.text =
+        data['workingAddress'] ?? '';
+    passoutYearController.text = data['passoutYear'] ?? '';
+
+    // Mentor
+    designationController.text = data['designation'] ?? '';
+    semesterInChargeController.text =
+        data['semesterInCharge'] ?? '';
+
+    setState(() {});
   }
 
-  // ---------------- SAVE PROFILE ----------------
-  Future<void> saveProfile() async {
+  Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (gender == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Select gender")));
-      return;
-    }
-
-    setState(() => isSaving = true);
-
-    final data = {
-      "name": nameController.text.trim(),
-      "phone": phoneController.text.trim(),
-      "address": addressController.text.trim(),
-      "department": departmentController.text.trim(),
-      "gender": gender,
-      "dob": dobController.text,
-      "profileCompleted": true,
+    final Map<String, dynamic> data = {
+      'name': nameController.text.trim(),
+      'phone': phoneController.text.trim(),
+      'address': addressController.text.trim(),
+      'gender': gender,
+      'dob': dob,
+      'role': _role,
     };
 
-    // Student-only fields
-    if (role == 'student') {
-      data["semester"] = semesterController.text.trim();
-      data["duration"] = durationController.text.trim();
+    if (_role == 'alumni') {
+      data.addAll({
+        'currentPosition':
+            currentPositionController.text.trim(),
+        'workingAddress':
+            workingAddressController.text.trim(),
+        'passoutYear':
+            passoutYearController.text.trim(),
+      });
+    }
+
+    if (_role == 'mentor') {
+      data.addAll({
+        'designation':
+            designationController.text.trim(),
+        'semesterInCharge':
+            semesterInChargeController.text.trim(),
+      });
     }
 
     await FirebaseFirestore.instance
         .collection('users')
-        .doc(uid)
-        .set(data, SetOptions(merge: true));
+        .doc(_userId)
+        .update(data);
 
-    setState(() => isSaving = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile updated')),
+    );
+  }
 
-    if (widget.isFirstTime == true) {
-      _redirectToDashboard();
-    } else {
-      Navigator.pop(context);
+  Future<void> _changePassword() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: oldPasswordController.text.trim(),
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(
+        newPasswordController.text.trim(),
+      );
+
+      oldPasswordController.clear();
+      newPasswordController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password changed successfully'),
+        ),
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password change failed'),
+        ),
+      );
     }
   }
 
-  // ---------------- REDIRECT ----------------
-  Future<void> _redirectToDashboard() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    final role = doc['role'];
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => RoleRouter(role: role)),
-      (_) => false,
-    );
-  }
-
-  // ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _field(nameController, "Name", required: true),
-              _field(phoneController, "Phone", required: true),
-              _field(addressController, "Address"),
-              _field(departmentController, "Department"),
+      appBar: AppBar(title: const Text('Profile')),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            /// 🔹 BASIC DETAILS
+            TextFormField(
+              controller: nameController,
+              decoration:
+                  const InputDecoration(labelText: 'Name'),
+              validator: (v) =>
+                  v == null || v.isEmpty ? 'Required' : null,
+            ),
+            TextFormField(
+              controller: phoneController,
+              decoration:
+                  const InputDecoration(labelText: 'Phone'),
+            ),
+            TextFormField(
+              controller: addressController,
+              decoration:
+                  const InputDecoration(labelText: 'Address'),
+            ),
 
-              // -------- STUDENT ONLY --------
-              if (role == 'student') ...[
-                _field(semesterController, "Semester"),
-                _field(durationController, "Course Duration"),
+            const SizedBox(height: 10),
+
+            /// 🔹 GENDER
+            const Text('Gender'),
+            Row(
+              children: [
+                Radio<String>(
+                  value: 'Male',
+                  groupValue: gender,
+                  onChanged: (v) =>
+                      setState(() => gender = v!),
+                ),
+                const Text('Male'),
+                Radio<String>(
+                  value: 'Female',
+                  groupValue: gender,
+                  onChanged: (v) =>
+                      setState(() => gender = v!),
+                ),
+                const Text('Female'),
               ],
+            ),
 
-              const SizedBox(height: 16),
-              const Text(
-                "Gender",
-                style: TextStyle(fontWeight: FontWeight.w600),
+            /// 🔹 DOB
+            ListTile(
+              title: Text(
+                dob == null
+                    ? 'Select Date of Birth'
+                    : 'DOB: ${dob!.day}/${dob!.month}/${dob!.year}',
               ),
-              Row(
-                children: [
-                  _genderRadio("Male"),
-                  _genderRadio("Female"),
-                  _genderRadio("Other"),
-                ],
+              trailing:
+                  const Icon(Icons.calendar_today),
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime(2005),
+                  firstDate: DateTime(1960),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) {
+                  setState(() => dob = picked);
+                }
+              },
+            ),
+
+            /// 🔹 ALUMNI EXTRA
+            if (_role == 'alumni') ...[
+              TextFormField(
+                controller: currentPositionController,
+                decoration: const InputDecoration(
+                    labelText: 'Current Position'),
               ),
-
-              _dobField(),
-              const SizedBox(height: 24),
-
-              // -------- SAVE BUTTON (FIXED) --------
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isSaving ? null : saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: isSaving
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          "Save Profile",
-                          style: TextStyle(fontSize: 16),
-                        ),
-                ),
+              TextFormField(
+                controller: workingAddressController,
+                decoration: const InputDecoration(
+                    labelText: 'Working Address'),
               ),
-
-              const SizedBox(height: 16),
-
-              // -------- CHANGE PASSWORD --------
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => ChangePasswordScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.lock_reset),
-                  label: const Text("Change Password"),
-                ),
+              TextFormField(
+                controller: passoutYearController,
+                decoration: const InputDecoration(
+                    labelText: 'Passout Year'),
+                keyboardType: TextInputType.number,
               ),
             ],
-          ),
+
+            /// 🔹 MENTOR EXTRA
+            if (_role == 'mentor') ...[
+              TextFormField(
+                controller: designationController,
+                decoration: const InputDecoration(
+                    labelText: 'Designation'),
+              ),
+              TextFormField(
+                controller: semesterInChargeController,
+                decoration: const InputDecoration(
+                    labelText: 'Semester In Charge'),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            /// 🔹 SAVE PROFILE
+            ElevatedButton(
+              onPressed: _saveProfile,
+              child: const Text('Save Profile'),
+            ),
+
+            const Divider(height: 40),
+
+            /// 🔹 CHANGE PASSWORD
+            const Text(
+              'Change Password',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: oldPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'Current Password'),
+            ),
+            TextField(
+              controller: newPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'New Password'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _changePassword,
+              child: const Text('Change Password'),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  // ---------------- HELPERS ----------------
-  Widget _field(
-    TextEditingController c,
-    String label, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: c,
-        decoration: InputDecoration(labelText: label),
-        validator: required ? (v) => v!.isEmpty ? "Required" : null : null,
-      ),
-    );
-  }
-
-  Widget _dobField() {
-    return TextFormField(
-      controller: dobController,
-      readOnly: true,
-      decoration: const InputDecoration(
-        labelText: "Date of Birth",
-        suffixIcon: Icon(Icons.calendar_today),
-      ),
-      onTap: pickDob,
-    );
-  }
-
-  Widget _genderRadio(String value) {
-    return Expanded(
-      child: RadioListTile<String>(
-        value: value,
-        groupValue: gender,
-        title: Text(value),
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        onChanged: (val) => setState(() => gender = val),
       ),
     );
   }

@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ViewNotices extends StatelessWidget {
   const ViewNotices({super.key});
-
-  Future<String> getStudentDepartment() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    return doc['department'];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,39 +23,33 @@ class ViewNotices extends StatelessWidget {
           ),
         ),
       ),
-      body: FutureBuilder<String>(
-        future: getStudentDepartment(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+
+      /// 🔹 DIRECT STREAM (NO FUTURE BUILDER)
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notices')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final department = snapshot.data!;
+          if (snap.hasError) {
+            return Center(child: Text("Error: ${snap.error}"));
+          }
 
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('notices')
-                .where('department', isEqualTo: department)
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snap) {
-              if (!snap.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          if (!snap.hasData || snap.data!.docs.isEmpty) {
+            return _emptyState();
+          }
 
-              if (snap.data!.docs.isEmpty) {
-                return _emptyState();
-              }
-
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: snap.data!.docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, index) {
-                  final doc = snap.data!.docs[index];
-                  return _noticeCard(doc);
-                },
-              );
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: snap.data!.docs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 14),
+            itemBuilder: (context, index) {
+              final doc = snap.data!.docs[index];
+              return _noticeCard(doc);
             },
           );
         },
@@ -93,7 +77,7 @@ class ViewNotices extends StatelessWidget {
 
   // ---------------- NOTICE CARD ----------------
   Widget _noticeCard(QueryDocumentSnapshot doc) {
-    final role = doc['role'].toString().toUpperCase();
+    final role = (doc['role'] ?? 'ADMIN').toString().toUpperCase();
     final isAdmin = role == 'ADMIN';
 
     return Container(
@@ -115,12 +99,12 @@ class ViewNotices extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Role badge
+            // 🔹 Role badge
             Align(
               alignment: Alignment.topRight,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isAdmin ? Colors.red : Colors.indigo,
                   borderRadius: BorderRadius.circular(20),
@@ -138,9 +122,9 @@ class ViewNotices extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Title
+            // 🔹 Title
             Text(
-              doc['title'],
+              doc['title'] ?? '',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -149,9 +133,9 @@ class ViewNotices extends StatelessWidget {
 
             const SizedBox(height: 6),
 
-            // Message
+            // 🔹 Message
             Text(
-              doc['message'],
+              doc['message'] ?? '',
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.black87,

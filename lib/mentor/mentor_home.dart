@@ -1,3 +1,4 @@
+import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +12,28 @@ class MentorHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return FutureBuilder<DocumentSnapshot>(
+    return Scaffold( appBar: AppBar(
+        elevation: 0,
+        title: const Text(
+          "Mentor Dashboard",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+            ),
+          ),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: ProfileMenu(),
+          ),
+        ],
+      ),
+    
+    body: FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
       builder: (context, snap) {
         if (!snap.hasData) {
@@ -52,7 +74,7 @@ class MentorHome extends StatelessWidget {
           ),
         );
       },
-    );
+    ));
   }
 
   // ---------------- STUDENTS ----------------

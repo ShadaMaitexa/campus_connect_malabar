@@ -15,7 +15,6 @@ class PostItemScreen extends StatefulWidget {
 class _PostItemScreenState extends State<PostItemScreen> {
   final title = TextEditingController();
   final description = TextEditingController();
-  final price = TextEditingController();
 
   File? image;
   bool loading = false;
@@ -23,35 +22,62 @@ class _PostItemScreenState extends State<PostItemScreen> {
   Future<void> pickImage() async {
     final picked =
         await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => image = File(picked.path));
+    if (picked != null) {
+      setState(() => image = File(picked.path));
+    }
   }
 
   Future<void> postMaterial() async {
-    if (title.text.isEmpty ||
-        description.text.isEmpty ||
-        price.text.isEmpty ||
+    if (loading) return;
+
+    if (title.text.trim().isEmpty ||
+        description.text.trim().isEmpty ||
         image == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Fill all fields")),
+      );
       return;
     }
 
     setState(() => loading = true);
 
-    final imageUrl = await CloudinaryService.upload(image!);
+    try {
+      // 🔹 Upload image
+      final imageUrl = await CloudinaryService.upload(image!);
 
-    await FirebaseFirestore.instance.collection('marketplace').add({
-      'type': 'material',
-      'title': title.text.trim(),
-      'description': description.text.trim(),
-      'price': int.parse(price.text),
-      'imageUrl': imageUrl,
-      'sellerId': FirebaseAuth.instance.currentUser!.uid,
-      'createdAt': Timestamp.now(),
-    });
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw Exception("Image upload failed");
+      }
 
-    setState(() => loading = false);
-    Navigator.pop(context);
+      // 🔹 Save to Firestore
+      await FirebaseFirestore.instance.collection('marketplace').add({
+        'type': 'material',
+        'title': title.text.trim(),
+        'description': description.text.trim(),
+        'imageUrl': imageUrl,
+        'sellerId': FirebaseAuth.instance.currentUser!.uid,
+        'status': 'available',
+        'createdAt': Timestamp.now(),
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Material posted successfully")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to post material")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
   }
 
   @override
@@ -84,10 +110,12 @@ class _PostItemScreenState extends State<PostItemScreen> {
             ),
             const SizedBox(height: 20),
             _input(title, "Material Title", Icons.menu_book),
-            _input(description, "Description", Icons.description,
-                maxLines: 3),
-            _input(price, "Price (₹)", Icons.currency_rupee,
-                type: TextInputType.number),
+            _input(
+              description,
+              "Description",
+              Icons.description,
+              maxLines: 3,
+            ),
             const SizedBox(height: 24),
             loading
                 ? const CircularProgressIndicator()
@@ -98,6 +126,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
     );
   }
 }
+
+/// ---------------- UI HELPERS (UNCHANGED) ----------------
+
 PreferredSizeWidget _appBar(String title) => AppBar(
       elevation: 0,
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -173,10 +204,13 @@ Widget _button(String label, VoidCallback onTap) => SizedBox(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6366F1),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
-        child:
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
     );

@@ -1,4 +1,6 @@
+import 'package:campus_connect_malabar/alumini/community_screen.dart';
 import 'package:campus_connect_malabar/library/library_screen.dart';
+import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -70,6 +72,7 @@ class StudentHome extends StatelessWidget {
                     _noticeCountCard(department),
                     _eventCountCard(department),
                     _libraryCard(context),
+                    _marketplaceCard(context),
                   ],
                 ),
               ),
@@ -77,7 +80,23 @@ class StudentHome extends StatelessWidget {
           ),
         );
       },
-    ));
+    ),floatingActionButton: FloatingActionButton.extended(
+  backgroundColor: const Color(0xFF6366F1),
+  icon: const Icon(Icons.people, color: Colors.white),
+  label: const Text(
+    "Community",
+    style: TextStyle(color: Colors.white),
+  ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CommunityScreen(),
+      ),
+    );
+  },
+),
+);
   }
 
   // -------------------- ATTENDANCE --------------------
@@ -219,6 +238,26 @@ Widget _libraryCard(BuildContext context) {
       icon: Icons.library_books,
       gradient: const LinearGradient(
         colors: [Color(0xFF0F2027), Color(0xFF203A43)],
+      ),
+    ),
+  );
+}
+Widget _marketplaceCard(BuildContext context) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MarketplaceScreen(),
+        ),
+      );
+    },
+    child: _dashboardCard(
+      title: "Marketplace",
+      value: "Jobs & Materials",
+      icon: Icons.storefront,
+      gradient: const LinearGradient(
+        colors: [Color(0xFF8360c3), Color(0xFF2ebf91)],
       ),
     ),
   );

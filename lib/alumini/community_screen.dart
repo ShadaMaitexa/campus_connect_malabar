@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_screen.dart';
 
 class CommunityScreen extends StatelessWidget {
@@ -7,6 +8,8 @@ class CommunityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -18,26 +21,33 @@ class CommunityScreen extends StatelessWidget {
           ],
         ),
       ),
-      child:StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('users')
-      .where('role', whereIn: ['student', 'alumni'])
-      .snapshots(),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .where('role', whereIn: ['student', 'alumni'])
+            .snapshots(),
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snap.data!.docs.isEmpty) {
-            return const Center(child: Text("No students found"));
+          /// 🔹 FILTER OUT LOGGED-IN USER
+          final users = snap.data!.docs
+              .where((doc) => doc.id != currentUserId)
+              .toList();
+
+          if (users.isEmpty) {
+            return const Center(
+              child: Text("No other users found"),
+            );
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemCount: snap.data!.docs.length,
+            itemCount: users.length,
             itemBuilder: (context, index) {
-              final student = snap.data!.docs[index];
+              final student = users[index];
 
               return InkWell(
                 onTap: () {
@@ -71,7 +81,7 @@ class CommunityScreen extends StatelessWidget {
                         radius: 26,
                         backgroundColor: const Color(0xFF6366F1),
                         child: Text(
-                          student['name'][0],
+                          student['name'][0].toString().toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -91,7 +101,7 @@ class CommunityScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              student['department'],
+                              student['department'] ?? '',
                               style: const TextStyle(
                                 color: Colors.black54,
                               ),
@@ -99,8 +109,10 @@ class CommunityScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chat_bubble_outline,
-                          color: Color(0xFF6366F1)),
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: Color(0xFF6366F1),
+                      ),
                     ],
                   ),
                 ),

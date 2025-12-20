@@ -26,26 +26,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Mentor Dashboard",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-            ),
-          ),
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: ProfileMenu(),
-          ),
-        ],
-      ),
+     
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: screens[index],
