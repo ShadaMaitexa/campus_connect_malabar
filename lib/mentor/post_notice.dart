@@ -1,6 +1,14 @@
+import 'package:campus_connect_malabar/widgets/app_text_field.dart';
+import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../widgets/custom_app_bar.dart';
+
+import '../theme/app_theme.dart';
+import '../utils/animations.dart';
+
 
 class PostNotice extends StatefulWidget {
   const PostNotice({super.key});
@@ -17,9 +25,9 @@ class _PostNoticeState extends State<PostNotice> {
 
   Future<void> postNotice() async {
     if (title.text.isEmpty || message.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
@@ -45,29 +53,26 @@ class _PostNoticeState extends State<PostNotice> {
 
     setState(() => loading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Notice posted successfully")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Notice posted successfully")));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Post Notice",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-            ),
-          ),
-        ),
+      backgroundColor: AppTheme.lightBackground,
+      appBar: CustomAppBar(
+        title: "Post Notice",
+        gradient: AppGradients.blue,
       ),
-      body: Padding(
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverToBoxAdapter(
+              child: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
@@ -90,45 +95,34 @@ class _PostNoticeState extends State<PostNotice> {
                 children: [
                   const Text(
                     "Create a Notice",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     "This notice will be visible to students of your department.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                   const SizedBox(height: 20),
 
                   // TITLE FIELD
-                  TextField(
-                    controller: title,
-                    decoration: InputDecoration(
-                      labelText: "Notice Title",
-                      prefixIcon: const Icon(Icons.title),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  AppAnimations.slideInFromBottom(
+                    delay: const Duration(milliseconds: 200),
+                    child: AppTextField(
+                      controller: title,
+                      label: "Notice Title",
+                      prefixIcon: Icons.title,
                     ),
                   ),
                   const SizedBox(height: 16),
 
                   // MESSAGE FIELD
-                  TextField(
-                    controller: message,
-                    maxLines: 5,
-                    decoration: InputDecoration(
-                      labelText: "Notice Message",
-                      prefixIcon: const Icon(Icons.message),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  AppAnimations.slideInFromBottom(
+                    delay: const Duration(milliseconds: 400),
+                    child: AppTextField(
+                      controller: message,
+                      label: "Notice Message",
+                      prefixIcon: Icons.message,
+                      maxLines: 5,
                     ),
                   ),
                 ],
@@ -154,6 +148,6 @@ class _PostNoticeState extends State<PostNotice> {
           ],
         ),
       ),
-    );
+    ))]));
   }
 }

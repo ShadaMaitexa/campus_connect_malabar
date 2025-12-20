@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/custom_app_bar.dart';
+import '../widgets/dashboard_card.dart';
+import '../theme/app_theme.dart';
+import '../utils/animations.dart';
+import '../widgets/loading_shimmer.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -13,8 +19,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   late String department;
   bool loading = true;
 
-  final String today =
-      DateTime.now().toIso8601String().substring(0, 10);
+  final String today = DateTime.now().toIso8601String().substring(0, 10);
 
   @override
   void initState() {
@@ -34,69 +39,66 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> markAttendance(String studentId, bool present) async {
-    await FirebaseFirestore.instance
-        .collection('attendance')
-        .doc(today)
-        .set({
+    await FirebaseFirestore.instance.collection('attendance').doc(today).set({
       studentId: {
         'present': present,
         'markedBy': FirebaseAuth.instance.currentUser!.uid,
         'department': department,
         'timestamp': Timestamp.now(),
-      }
+      },
     }, SetOptions(merge: true));
   }
 
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: Text(
-          "Attendance – $department",
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+      backgroundColor: AppTheme.lightBackground,
+      appBar: CustomAppBar(
+        title: "Attendance",
+        subtitle: department,
+        gradient: AppGradients.blue,
+      ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverToBoxAdapter(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .where('role', isEqualTo: 'student')
+                    .where('department', isEqualTo: department)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.data!.docs.isEmpty) {
+                    return const EmptyStateWidget(
+                      icon: Icons.group_off,
+                      title: "No students found",
+                      subtitle: "No students are registered in this department",
+                    );
+                  }
+
+                  return AppAnimations.staggeredList(
+                    children: snapshot.data!.docs
+                        .map((doc) => _studentAttendanceCard(doc))
+                        .toList(),
+                    staggerDelay: const Duration(milliseconds: 100),
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .where('role', isEqualTo: 'student')
-            .where('department', isEqualTo: department)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.data!.docs.isEmpty) {
-            return _emptyState();
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: snapshot.data!.docs.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final doc = snapshot.data!.docs[index];
-              return _studentAttendanceCard(doc);
-            },
-          );
-        },
-      ),
-    );
+        ],
+      ),    );
   }
 
   // ---------------- EMPTY STATE ----------------
@@ -149,10 +151,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           Expanded(
             child: Text(
               doc['name'],
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           ),
 

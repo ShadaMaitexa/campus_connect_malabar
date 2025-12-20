@@ -1,7 +1,8 @@
 import 'package:campus_connect_malabar/services/admin_service.dart';
+import 'package:campus_connect_malabar/utils/animations.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 
 class AdminUsers extends StatelessWidget {
   const AdminUsers({super.key});
@@ -9,38 +10,56 @@ class AdminUsers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appBar("Manage Alumni"),
-      body: _page(
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .where('role', isEqualTo: 'alumni')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      appBar: CustomAppBar(title: "Manage Alumni", showBackButton: true),
+      body: CustomScrollView(
+        slivers: [
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .where('role', isEqualTo: 'alumni')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
 
-            if (snapshot.data!.docs.isEmpty) {
-              return _empty("No alumni found");
-            }
+              if (snapshot.data!.docs.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: EmptyStateWidget(
+                    icon: Icons.group_off,
+                    title: "No Alumni Found",
+                    subtitle: "No alumni users are registered yet.",
+                  ),
+                );
+              }
 
-            return ListView.separated(
-              itemCount: snapshot.data!.docs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final user = snapshot.data!.docs[index];
-                return _userCard(context, user);
-              },
-            );
-          },
-        ),
+              return SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final user = snapshot.data!.docs[index];
+                    return AppAnimations.slideInFromBottom(
+                      child: Column(
+                        children: [
+                          _userCard(context, user),
+                          if (index < snapshot.data!.docs.length - 1)
+                            const SizedBox(height: 16),
+                        ],
+                      ),
+                    );
+                  }, childCount: snapshot.data!.docs.length),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _userCard(
-      BuildContext context, QueryDocumentSnapshot user) {
+  Widget _userCard(BuildContext context, QueryDocumentSnapshot user) {
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(18),
@@ -69,8 +88,7 @@ class AdminUsers extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   user['email'],
-                  style:
-                      const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -85,8 +103,7 @@ class AdminUsers extends StatelessWidget {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content:
-                        Text("Alumni blocked and data removed"),
+                    content: Text("Alumni blocked and data removed"),
                   ),
                 );
               }
@@ -114,9 +131,7 @@ class AdminUsers extends StatelessWidget {
                 child: const Text("Cancel"),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text("Block"),
               ),
@@ -127,53 +142,14 @@ class AdminUsers extends StatelessWidget {
   }
 }
 
-/* ================= PREMIUM SHARED UI ================= */
-
-PreferredSizeWidget _appBar(String title) => AppBar(
-      elevation: 0,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-          ),
-        ),
-      ),
-    );
-
-Widget _page({required Widget child}) => Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF6366F1).withOpacity(0.06),
-            Colors.white,
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: child,
-    );
-
 Decoration _cardDecoration() => BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 16,
-          offset: const Offset(0, 10),
-        ),
-      ],
-    );
-
-Widget _empty(String text) => Center(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 60),
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.grey),
-        ),
-      ),
-    );
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(24),
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.08),
+      blurRadius: 16,
+      offset: const Offset(0, 10),
+    ),
+  ],
+);

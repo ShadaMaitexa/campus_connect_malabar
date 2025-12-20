@@ -1,74 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
+import 'package:campus_connect_malabar/utils/animations.dart';
+import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 
 class ViewNotices extends StatelessWidget {
   const ViewNotices({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Notices",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      backgroundColor: isDark
+          ? AppTheme.darkBackground
+          : AppTheme.lightBackground,
+      appBar: CustomAppBar(title: "Notices", showBackButton: true),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverToBoxAdapter(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('notices')
+                    .orderBy('createdAt', descending: true)
+                    .snapshots(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const ShimmerList(itemCount: 3);
+                  }
+
+                  if (snap.hasError) {
+                    return Center(
+                      child: Text(
+                        "Error: ${snap.error}",
+                        style: GoogleFonts.poppins(color: AppTheme.errorColor),
+                      ),
+                    );
+                  }
+
+                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                    return const EmptyStateWidget(
+                      icon: Icons.notifications_off_outlined,
+                      title: "No notices available",
+                      subtitle: "Check back later for new announcements",
+                    );
+                  }
+
+                  return AppAnimations.staggeredList(
+                    children: snap.data!.docs
+                        .map((doc) => _noticeCard(doc, isDark))
+                        .toList(),
+                    staggerDelay: const Duration(milliseconds: 100),
+                  );
+                },
+              ),
             ),
-          ),
-        ),
-      ),
-
-      /// 🔹 DIRECT STREAM (NO FUTURE BUILDER)
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notices')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snap.hasError) {
-            return Center(child: Text("Error: ${snap.error}"));
-          }
-
-          if (!snap.hasData || snap.data!.docs.isEmpty) {
-            return _emptyState();
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: snap.data!.docs.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (context, index) {
-              final doc = snap.data!.docs[index];
-              return _noticeCard(doc);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  // ---------------- EMPTY STATE ----------------
-  Widget _emptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.notifications_off_outlined,
-              size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            "No notices available",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ],
       ),
@@ -76,21 +68,31 @@ class ViewNotices extends StatelessWidget {
   }
 
   // ---------------- NOTICE CARD ----------------
-  Widget _noticeCard(QueryDocumentSnapshot doc) {
+  Widget _noticeCard(QueryDocumentSnapshot doc, bool isDark) {
     final role = (doc['role'] ?? 'ADMIN').toString().toUpperCase();
     final isAdmin = role == 'ADMIN';
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF8FAFF), Color(0xFFE9EEFF)],
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        gradient: isDark
+            ? LinearGradient(
+                colors: [
+                  AppTheme.darkSurface,
+                  AppTheme.darkSurface.withOpacity(0.8),
+                ],
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFF8FAFF), Color(0xFFE9EEFF)],
+              ),
+        border: Border.all(
+          color: isDark ? AppTheme.darkBorder : Colors.transparent,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 10,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -104,14 +106,16 @@ class ViewNotices extends StatelessWidget {
               alignment: Alignment.topRight,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: isAdmin ? Colors.red : Colors.indigo,
+                  color: isAdmin ? AppTheme.errorColor : AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   role,
-                  style: const TextStyle(
+                  style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -125,9 +129,12 @@ class ViewNotices extends StatelessWidget {
             // 🔹 Title
             Text(
               doc['title'] ?? '',
-              style: const TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppTheme.darkTextPrimary
+                    : AppTheme.lightTextPrimary,
               ),
             ),
 
@@ -136,9 +143,11 @@ class ViewNotices extends StatelessWidget {
             // 🔹 Message
             Text(
               doc['message'] ?? '',
-              style: const TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: Colors.black87,
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
               ),
             ),
           ],

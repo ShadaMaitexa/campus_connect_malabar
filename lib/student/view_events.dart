@@ -6,6 +6,8 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/dashboard_card.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import '../widgets/loading_shimmer.dart';
+import '../widgets/loading_shimmer.dart';
 
 class ViewEvents extends StatelessWidget {
   const ViewEvents({super.key});
@@ -25,11 +27,10 @@ class ViewEvents extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-      appBar: CustomAppBar(
-        title: "Events",
-        gradient: AppGradients.info,
-      ),
+      backgroundColor: isDark
+          ? AppTheme.darkBackground
+          : AppTheme.lightBackground,
+      appBar: CustomAppBar(title: "Events", gradient: AppGradients.info),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -66,7 +67,11 @@ class ViewEvents extends StatelessWidget {
                 }).toList();
 
                 if (events.isEmpty) {
-                  return _emptyState();
+                  return const EmptyStateWidget(
+                    icon: Icons.event_busy_rounded,
+                    title: "No upcoming events",
+                    subtitle: "Check back later for new announcements",
+                  );
                 }
 
                 return ListView.separated(
@@ -81,7 +86,13 @@ class ViewEvents extends StatelessWidget {
 
                     return AppAnimations.slideInFromBottom(
                       delay: Duration(milliseconds: 100 + (index * 50)),
-                      child: _eventCard(context, doc, dateTime, isUpcoming, isDark),
+                      child: _eventCard(
+                        context,
+                        doc,
+                        dateTime,
+                        isUpcoming,
+                        isDark,
+                      ),
                     );
                   },
                 );
@@ -169,8 +180,10 @@ class ViewEvents extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: isUpcoming ? Colors.green : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(20),
@@ -180,8 +193,7 @@ class ViewEvents extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color:
-                        isUpcoming ? Colors.white : Colors.grey.shade700,
+                    color: isUpcoming ? Colors.white : Colors.grey.shade700,
                   ),
                 ),
               ),
@@ -217,8 +229,7 @@ class ViewEvents extends StatelessWidget {
           // Date
           Row(
             children: [
-              Icon(Icons.calendar_today,
-                  size: 16, color: Colors.grey.shade600),
+              Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
               const SizedBox(width: 8),
               Text(
                 date,

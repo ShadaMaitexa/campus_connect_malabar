@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/custom_app_bar.dart';
+import '../utils/animations.dart';
 
 class LibraryAnalyticsScreen extends StatelessWidget {
   const LibraryAnalyticsScreen({super.key});
@@ -14,7 +16,8 @@ class LibraryAnalyticsScreen extends StatelessWidget {
           FirebaseFirestore.instance.collection('issued_books').get(),
         ]),
         builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
 
           final books = (snap.data![0] as QuerySnapshot).docs.length;
           final issued = (snap.data![1] as QuerySnapshot).docs.length;
@@ -48,13 +51,15 @@ class LibraryAnalyticsScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold)),
-            Text(title,
-                style: const TextStyle(color: Colors.white70)),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(title, style: const TextStyle(color: Colors.white70)),
           ],
         ),
       ),

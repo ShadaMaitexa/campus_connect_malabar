@@ -6,6 +6,7 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/dashboard_card.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import '../widgets/loading_shimmer.dart';
 
 class StudentAttendanceView extends StatelessWidget {
   const StudentAttendanceView({super.key});
@@ -67,9 +68,14 @@ class StudentAttendanceView extends StatelessWidget {
 
             if (!snapshot.hasData ||
                 !snapshot.data!.exists ||
-                !(snapshot.data!.data() as Map<String, dynamic>)
-                    .containsKey(uid)) {
-              return _buildEmptyState();
+                !(snapshot.data!.data() as Map<String, dynamic>).containsKey(
+                  uid,
+                )) {
+              return const EmptyStateWidget(
+                icon: Icons.event_busy_rounded,
+                title: "Not Marked Yet",
+                subtitle: "Your attendance has not been marked for today",
+              );
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -190,9 +196,7 @@ class _AttendanceStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gradient = present ? AppGradients.success : AppGradients.danger;
-    final icon = present
-        ? Icons.check_circle_rounded
-        : Icons.cancel_rounded;
+    final icon = present ? Icons.check_circle_rounded : Icons.cancel_rounded;
     final status = present ? 'PRESENT' : 'ABSENT';
     final message = present
         ? 'You were marked present today'
@@ -238,11 +242,7 @@ class _AttendanceStatusCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 80,
-                color: Colors.white,
-              ),
+              child: Icon(icon, size: 80, color: Colors.white),
             ),
           ),
           const SizedBox(height: 24),
@@ -294,10 +294,7 @@ class _AttendanceInfo extends StatelessWidget {
   final DateTime date;
   final bool present;
 
-  const _AttendanceInfo({
-    required this.date,
-    required this.present,
-  });
+  const _AttendanceInfo({required this.date, required this.present});
 
   @override
   Widget build(BuildContext context) {
@@ -383,8 +380,18 @@ class _AttendanceInfo extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
@@ -420,11 +427,7 @@ class _InfoRow extends StatelessWidget {
             color: AppTheme.primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: AppTheme.primaryColor,
-          ),
+          child: Icon(icon, size: 18, color: AppTheme.primaryColor),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -443,10 +446,9 @@ class _InfoRow extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: valueColor ??
-                (isDark
-                    ? AppTheme.darkTextPrimary
-                    : AppTheme.lightTextPrimary),
+            color:
+                valueColor ??
+                (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
           ),
         ),
       ],

@@ -1,4 +1,6 @@
 import 'package:campus_connect_malabar/services/approve_user_service.dart';
+import 'package:campus_connect_malabar/utils/animations.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -15,26 +17,13 @@ class ApproveUsers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Pending User Approvals',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            ),
-          ),
-        ),
+      appBar: CustomAppBar(
+        title: "Pending User Approvals",
+        showBackButton: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(Responsive.padding(context)),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: Responsive.maxContentWidth(context),
-          ),
-          child: StreamBuilder<QuerySnapshot>(
+      body: CustomScrollView(
+        slivers: [
+          StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('approved', isEqualTo: false)
@@ -42,18 +31,25 @@ class ApproveUsers extends StatelessWidget {
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Column(
-                  children: List.generate(
-                    3,
-                    (index) => Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: AppTheme.spacingM,
+                return SliverPadding(
+                  padding: EdgeInsets.all(Responsive.padding(context)),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      Column(
+                        children: List.generate(
+                          3,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppTheme.spacingM,
+                            ),
+                            child: LoadingShimmer(
+                              width: double.infinity,
+                              height: 100,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: LoadingShimmer(
-                        width: double.infinity,
-                        height: 100,
-                      ),
-                    ),
+                    ]),
                   ),
                 );
               }
@@ -61,26 +57,34 @@ class ApproveUsers extends StatelessWidget {
               final docs = snapshot.data!.docs;
 
               if (docs.isEmpty) {
-                return const EmptyState(
-                  icon: Icons.verified_user_rounded,
-                  title: 'No pending approvals',
-                  message: 'All mentors and alumni are approved',
+                return SliverToBoxAdapter(
+                  child: EmptyStateWidget(
+                    icon: Icons.verified_user_rounded,
+                    title: "No Pending Approvals",
+                    subtitle: "All mentors and alumni are approved.",
+                  ),
                 );
               }
 
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: docs.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppTheme.spacingM),
-                itemBuilder: (context, index) {
-                  return _UserApprovalCard(user: docs[index]);
-                },
+              return SliverPadding(
+                padding: EdgeInsets.all(Responsive.padding(context)),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return AppAnimations.slideInFromBottom(
+                      child: Column(
+                        children: [
+                          _UserApprovalCard(user: docs[index]),
+                          if (index < docs.length - 1)
+                            const SizedBox(height: AppTheme.spacingM),
+                        ],
+                      ),
+                    );
+                  }, childCount: docs.length),
+                ),
               );
             },
           ),
-        ),
+        ],
       ),
     );
   }
@@ -97,7 +101,6 @@ class _UserApprovalCard extends StatelessWidget {
     final role = user['role'] ?? '';
     final name = user['name'] ?? 'Unknown';
     final email = user['email'] ?? '';
-  
 
     return AppCard(
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -107,11 +110,8 @@ class _UserApprovalCard extends StatelessWidget {
               children: [
                 _header(name, email),
                 const SizedBox(height: AppTheme.spacingM),
-              
-                AppButton(
-                  label: 'Approve',
-                  onPressed: () => _approve(context),
-                ),
+
+                AppButton(label: 'Approve', onPressed: () => _approve(context)),
               ],
             )
           : Row(
@@ -125,50 +125,46 @@ class _UserApprovalCard extends StatelessWidget {
                       Text(name, style: AppTheme.heading3),
                       Text(email, style: AppTheme.bodyMedium),
                       const SizedBox(height: AppTheme.spacingXS),
-                     
                     ],
                   ),
                 ),
-                AppButton(
-                  label: 'Approve',
-                  onPressed: () => _approve(context),
-                ),
+                AppButton(label: 'Approve', onPressed: () => _approve(context)),
               ],
             ),
     );
   }
 
   Widget _avatar(String name) => CircleAvatar(
-        backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : 'U',
-          style: TextStyle(color: AppTheme.primaryColor),
-        ),
-      );
+    backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+    child: Text(
+      name.isNotEmpty ? name[0].toUpperCase() : 'U',
+      style: TextStyle(color: AppTheme.primaryColor),
+    ),
+  );
 
   Widget _header(String name, String email) => Row(
-        children: [
-          _avatar(name),
-          const SizedBox(width: AppTheme.spacingM),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: AppTheme.heading3),
-                Text(email, style: AppTheme.bodyMedium),
-              ],
-            ),
-          ),
-        ],
-      );
+    children: [
+      _avatar(name),
+      const SizedBox(width: AppTheme.spacingM),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(name, style: AppTheme.heading3),
+            Text(email, style: AppTheme.bodyMedium),
+          ],
+        ),
+      ),
+    ],
+  );
 
   Widget _chips(String role, String dept) => Row(
-        children: [
-          _InfoChip(label: role.toUpperCase()),
-          const SizedBox(width: AppTheme.spacingS),
-          if (dept.isNotEmpty) _InfoChip(label: dept),
-        ],
-      );
+    children: [
+      _InfoChip(label: role.toUpperCase()),
+      const SizedBox(width: AppTheme.spacingS),
+      if (dept.isNotEmpty) _InfoChip(label: dept),
+    ],
+  );
 
   Future<void> _approve(BuildContext context) async {
     await ApproveUserService.approveUser(
