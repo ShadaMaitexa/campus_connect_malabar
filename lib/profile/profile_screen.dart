@@ -1,3 +1,4 @@
+import 'package:campus_connect_malabar/profile/change_password.dart';
 import 'package:campus_connect_malabar/routing/role_router.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,11 +8,7 @@ class ProfileScreen extends StatefulWidget {
   final bool? isFirstTime;
   final String? userId;
 
-  const ProfileScreen({
-    super.key,
-    this.isFirstTime,
-    this.userId,
-  });
+  const ProfileScreen({super.key, this.isFirstTime, this.userId});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -59,8 +56,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ---------------- LOAD PROFILE ----------------
   Future<void> _loadProfile() async {
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
 
     if (!doc.exists) return;
 
@@ -91,8 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (picked != null) {
       setState(() {
         selectedDob = picked;
-        dobController.text =
-            "${picked.day}-${picked.month}-${picked.year}";
+        dobController.text = "${picked.day}-${picked.month}-${picked.year}";
       });
     }
   }
@@ -102,8 +100,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (gender == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Select gender")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Select gender")));
       return;
     }
 
@@ -141,27 +140,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ---------------- REDIRECT ----------------
   Future<void> _redirectToDashboard() async {
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
     final role = doc['role'];
 
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => RoleRouter(role: role)),
       (_) => false,
-    );
-  }
-
-  // ---------------- CHANGE PASSWORD ----------------
-  Future<void> _changePassword() async {
-    await FirebaseAuth.instance.sendPasswordResetEmail(
-      email: FirebaseAuth.instance.currentUser!.email!,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Password reset email sent"),
-      ),
     );
   }
 
@@ -189,8 +177,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
 
               const SizedBox(height: 16),
-              const Text("Gender",
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                "Gender",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               Row(
                 children: [
                   _genderRadio("Male"),
@@ -231,7 +221,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // -------- CHANGE PASSWORD --------
               Center(
                 child: TextButton.icon(
-                  onPressed: _changePassword,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ChangePasswordScreen()),
+                    );
+                  },
                   icon: const Icon(Icons.lock_reset),
                   label: const Text("Change Password"),
                 ),
@@ -244,8 +239,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ---------------- HELPERS ----------------
-  Widget _field(TextEditingController c, String label,
-      {bool required = false}) {
+  Widget _field(
+    TextEditingController c,
+    String label, {
+    bool required = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(

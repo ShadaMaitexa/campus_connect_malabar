@@ -57,7 +57,7 @@ class LibraryAdminDashboard extends StatelessWidget {
             childAspectRatio: 1.15,
             children: [
               _card(context, "Manage Books", Icons.library_add, const ManageBooks()),
-              _card(context, "Return Approval", Icons.assignment_turned_in, const IssuedBooksScreen()),
+              _card(context, "Return Approval", Icons.assignment_turned_in, const IssuedBookScreen()),
               _card(context, "Fine Payments", Icons.payments_rounded, const FinePaymentsScreen()),
               _card(context, "Analytics", Icons.bar_chart_rounded, const LibraryAnalyticsScreen()),
               _card(context, "Issue History", Icons.history_rounded, const IssueHistoryScreen()),

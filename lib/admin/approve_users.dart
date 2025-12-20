@@ -97,7 +97,7 @@ class _UserApprovalCard extends StatelessWidget {
     final role = user['role'] ?? '';
     final name = user['name'] ?? 'Unknown';
     final email = user['email'] ?? '';
-    final department = user['department'] ?? '';
+  
 
     return AppCard(
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -107,8 +107,7 @@ class _UserApprovalCard extends StatelessWidget {
               children: [
                 _header(name, email),
                 const SizedBox(height: AppTheme.spacingM),
-                _chips(role, department),
-                const SizedBox(height: AppTheme.spacingM),
+              
                 AppButton(
                   label: 'Approve',
                   onPressed: () => _approve(context),
@@ -126,7 +125,7 @@ class _UserApprovalCard extends StatelessWidget {
                       Text(name, style: AppTheme.heading3),
                       Text(email, style: AppTheme.bodyMedium),
                       const SizedBox(height: AppTheme.spacingXS),
-                      _chips(role, department),
+                     
                     ],
                   ),
                 ),
