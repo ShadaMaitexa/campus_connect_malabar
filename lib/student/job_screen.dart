@@ -14,11 +14,7 @@ class JobsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Job Openings',
-        gradient: AppGradients.purple,
-        showBackButton: true,
-      ),
+     
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -34,13 +30,11 @@ class JobsScreen extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('marketplace')
               .where('type', isEqualTo: 'job')
-              .orderBy('createdAt', descending: true)
+             
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -208,7 +202,9 @@ class _JobCardState extends State<_JobCard> {
                           Text(
                             data['description'] ?? 'No description',
                             maxLines: _isExpanded ? null : 3,
-                            overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                            overflow: _isExpanded
+                                ? null
+                                : TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               height: 1.5,
@@ -267,13 +263,15 @@ class _JobCardState extends State<_JobCard> {
                                   child: CircleAvatar(
                                     radius: 24,
                                     backgroundColor: Colors.transparent,
-                                    backgroundImage: user['photoUrl'] != null &&
+                                    backgroundImage:
+                                        user['photoUrl'] != null &&
                                             user['photoUrl']
                                                 .toString()
                                                 .isNotEmpty
                                         ? NetworkImage(user['photoUrl'])
                                         : null,
-                                    child: (user['photoUrl'] == null ||
+                                    child:
+                                        (user['photoUrl'] == null ||
                                             user['photoUrl'].toString().isEmpty)
                                         ? Text(
                                             user['name'][0].toUpperCase(),
@@ -316,13 +314,12 @@ class _JobCardState extends State<_JobCard> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        user['role']
-                                            .toString()
-                                            .toUpperCase(),
+                                        user['role'].toString().toUpperCase(),
                                         style: GoogleFonts.poppins(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w600,
-                                          color: AppGradients.purple.colors.first,
+                                          color:
+                                              AppGradients.purple.colors.first,
                                         ),
                                       ),
                                     ),
@@ -430,11 +427,7 @@ class _ActionButtonState extends State<_ActionButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                widget.icon,
-                color: Colors.white,
-                size: 18,
-              ),
+              Icon(widget.icon, color: Colors.white, size: 18),
               const SizedBox(width: 6),
               Text(
                 widget.label,

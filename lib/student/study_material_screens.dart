@@ -1,4 +1,5 @@
 import 'package:campus_connect_malabar/alumini/chat_screen.dart';
+import 'package:campus_connect_malabar/student/chatbot_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,52 +14,66 @@ class StudyMaterialsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppGradients.teal.colors.first.withOpacity(0.05),
-            Colors.white,
-          ],
-        ),
+    return Scaffold(floatingActionButton: FloatingActionButton(
+  backgroundColor: const Color(0xFF6366F1),
+  child: const Icon(Icons.smart_toy, color: Colors.white),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const StudyChatbotScreen(),
       ),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('marketplace')
-            .where('type', isEqualTo: 'material')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+    );
+  },
+),
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const EmptyStateWidget(
-              icon: Icons.menu_book_rounded,
-              title: 'No Study Materials',
-              subtitle: 'Check back later for new materials',
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              return AnimatedListItem(
-                index: index,
-                child: _MaterialCard(
-                  doc: snapshot.data!.docs[index],
-                  index: index,
-                ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppGradients.teal.colors.first.withOpacity(0.05),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('marketplace')
+              .where('type', isEqualTo: 'material')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(),
               );
-            },
-          );
-        },
+            }
+      
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const EmptyStateWidget(
+                icon: Icons.menu_book_rounded,
+                title: 'No Study Materials',
+                subtitle: 'Check back later for new materials',
+              );
+            }
+      
+            return ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                return AnimatedListItem(
+                  index: index,
+                  child: _MaterialCard(
+                    doc: snapshot.data!.docs[index],
+                    index: index,
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

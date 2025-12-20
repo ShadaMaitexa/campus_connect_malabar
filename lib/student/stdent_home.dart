@@ -1,5 +1,6 @@
 import 'package:campus_connect_malabar/alumini/community_screen.dart';
 import 'package:campus_connect_malabar/library/library_screen.dart';
+import 'package:campus_connect_malabar/student/attendenceprogress_card.dart';
 import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
@@ -198,6 +199,7 @@ class _StudentHomeState extends State<StudentHome>
                 childAspectRatio: 1.0,
               ),
               children: [
+                 AttendanceProgressCard(),
                 _buildAttendanceCard(uid, 0),
                 _buildTodayStatusCard(uid, 1),
                 _buildNoticeCountCard(_department!, 2),
