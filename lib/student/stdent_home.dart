@@ -2,114 +2,228 @@ import 'package:campus_connect_malabar/alumini/community_screen.dart';
 import 'package:campus_connect_malabar/library/library_screen.dart';
 import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import 'package:campus_connect_malabar/widgets/profile_menu.dart';
+import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
+import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
+import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class StudentHome extends StatelessWidget {
+class StudentHome extends StatefulWidget {
   const StudentHome({super.key});
 
+  @override
+  State<StudentHome> createState() => _StudentHomeState();
+}
+
+class _StudentHomeState extends State<StudentHome>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  String? _userName;
+  String? _department;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   String today() => DateTime.now().toIso8601String().substring(0, 10);
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  Future<void> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (mounted && doc.exists) {
+      setState(() {
+        _userName = doc.data()?['name'] ?? 'Student';
+        _department = doc.data()?['department'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
 
-    return Scaffold(      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Dashboard",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+    return Scaffold(
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Custom Header
+          SliverToBoxAdapter(
+            child: _buildHeader(context),
           ),
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: ProfileMenu(),
+
+          // Content
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _userName == null || _department == null
+                  ? const ShimmerGrid(itemCount: 6, childAspectRatio: 1.05)
+                  : _buildDashboardContent(uid),
+            ),
           ),
         ],
       ),
-    body: FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
-      builder: (context, userSnap) {
-        if (!userSnap.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      floatingActionButton: AppAnimations.scaleIn(
+        delay: const Duration(milliseconds: 500),
+        child: _buildCommunityFAB(context),
+      ),
+    );
+  }
 
-        final department = userSnap.data!['department'];
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        return Padding(
-          padding: const EdgeInsets.all(16),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppGradients.blue,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Overview",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-
-              Expanded(
-                child: GridView(
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.05,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  AppAnimations.slideInFromLeft(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getGreeting(),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _userName ?? 'Student',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (_department != null) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _department!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  children: [
-                    _attendanceCard(uid),
-                    _todayStatusCard(uid),
-                    _noticeCountCard(department),
-                    _eventCountCard(department),
-                    _libraryCard(context),
-                    _marketplaceCard(context),
-                  ],
-                ),
+                  AppAnimations.scaleIn(
+                    child: const ProfileMenu(),
+                  ),
+                ],
               ),
             ],
           ),
-        );
-      },
-    ),floatingActionButton: FloatingActionButton.extended(
-  backgroundColor: const Color(0xFF6366F1),
-  icon: const Icon(Icons.people, color: Colors.white),
-  label: const Text(
-    "Community",
-    style: TextStyle(color: Colors.white),
-  ),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const CommunityScreen(),
+        ),
       ),
     );
-  },
-),
-);
   }
 
-  // -------------------- ATTENDANCE --------------------
-  Widget _attendanceCard(String uid) {
+  Widget _buildDashboardContent(String uid) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppAnimations.slideInFromBottom(
+          delay: const Duration(milliseconds: 100),
+          child: const SectionHeader(
+            title: 'Overview',
+          ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+            return GridView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.0,
+              ),
+              children: [
+                _buildAttendanceCard(uid, 0),
+                _buildTodayStatusCard(uid, 1),
+                _buildNoticeCountCard(_department!, 2),
+                _buildEventCountCard(_department!, 3),
+                _buildLibraryCard(context, 4),
+                _buildMarketplaceCard(context, 5),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // -------------------- ATTENDANCE CARD --------------------
+  Widget _buildAttendanceCard(String uid, int index) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('attendance').snapshots(),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return _dashboardCard(
+          return DashboardCard(
             title: "Attendance",
             value: "--",
-            icon: Icons.bar_chart,
-            gradient: _blueGradient,
+            icon: Icons.bar_chart_rounded,
+            gradient: AppGradients.blue,
+            index: index,
           );
         }
 
@@ -126,18 +240,20 @@ class StudentHome extends StatelessWidget {
 
         final percent = total == 0 ? 0 : ((present / total) * 100).round();
 
-        return _dashboardCard(
+        return DashboardCard(
           title: "Attendance",
           value: "$percent%",
-          icon: Icons.bar_chart,
-          gradient: percent >= 75 ? _greenGradient : _orangeGradient,
+          icon: Icons.bar_chart_rounded,
+          gradient: percent >= 75 ? AppGradients.green : AppGradients.orange,
+          subtitle: "$present/$total days",
+          index: index,
         );
       },
     );
   }
 
-  // -------------------- TODAY STATUS --------------------
-  Widget _todayStatusCard(String uid) {
+  // -------------------- TODAY STATUS CARD --------------------
+  Widget _buildTodayStatusCard(String uid, int index) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('attendance')
@@ -145,38 +261,41 @@ class StudentHome extends StatelessWidget {
           .get(),
       builder: (context, snap) {
         if (!snap.hasData || !snap.data!.exists) {
-          return _dashboardCard(
+          return DashboardCard(
             title: "Today",
             value: "Not Marked",
-            icon: Icons.help_outline,
-            gradient: _greyGradient,
+            icon: Icons.help_outline_rounded,
+            gradient: AppGradients.grey,
+            index: index,
           );
         }
 
         final data = snap.data!.data() as Map<String, dynamic>;
         if (!data.containsKey(uid)) {
-          return _dashboardCard(
+          return DashboardCard(
             title: "Today",
             value: "Not Marked",
-            icon: Icons.help_outline,
-            gradient: _greyGradient,
+            icon: Icons.help_outline_rounded,
+            gradient: AppGradients.grey,
+            index: index,
           );
         }
 
         final present = data[uid]['present'];
 
-        return _dashboardCard(
+        return DashboardCard(
           title: "Today",
           value: present ? "Present" : "Absent",
-          icon: present ? Icons.check_circle : Icons.cancel,
-          gradient: present ? _greenGradient : _redGradient,
+          icon: present ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          gradient: present ? AppGradients.green : AppGradients.red,
+          index: index,
         );
       },
     );
   }
 
-  // -------------------- NOTICES --------------------
-  Widget _noticeCountCard(String dept) {
+  // -------------------- NOTICES CARD --------------------
+  Widget _buildNoticeCountCard(String dept, int index) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('notices')
@@ -185,27 +304,30 @@ class StudentHome extends StatelessWidget {
       builder: (context, snap) {
         final count = snap.hasData ? snap.data!.docs.length : 0;
 
-        return _dashboardCard(
+        return DashboardCard(
           title: "Notices",
           value: "$count",
-          icon: Icons.notifications,
-          gradient: _purpleGradient,
+          icon: Icons.notifications_rounded,
+          gradient: AppGradients.purple,
+          subtitle: "Active notices",
+          index: index,
         );
       },
     );
   }
 
-  // -------------------- EVENTS --------------------
-  Widget _eventCountCard(String dept) {
+  // -------------------- EVENTS CARD --------------------
+  Widget _buildEventCountCard(String dept, int index) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('events').snapshots(),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return _dashboardCard(
+          return DashboardCard(
             title: "Events",
             value: "0",
-            icon: Icons.event,
-            gradient: _blueGradient,
+            icon: Icons.event_rounded,
+            gradient: AppGradients.blue,
+            index: index,
           );
         }
 
@@ -213,124 +335,98 @@ class StudentHome extends StatelessWidget {
           return d['department'] == 'ALL' || d['department'] == dept;
         }).length;
 
-        return _dashboardCard(
+        return DashboardCard(
           title: "Events",
           value: "$count",
-          icon: Icons.event,
-          gradient: _blueGradient,
+          icon: Icons.event_rounded,
+          gradient: AppGradients.info,
+          subtitle: "Upcoming events",
+          index: index,
         );
       },
     );
   }
-Widget _libraryCard(BuildContext context) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LibraryScreen(),
-        ),
-      );
-    },
-    child: _dashboardCard(
+
+  // -------------------- LIBRARY CARD --------------------
+  Widget _buildLibraryCard(BuildContext context, int index) {
+    return DashboardCard(
       title: "Library",
       value: "Books",
-      icon: Icons.library_books,
-      gradient: const LinearGradient(
-        colors: [Color(0xFF0F2027), Color(0xFF203A43)],
-      ),
-    ),
-  );
-}
-Widget _marketplaceCard(BuildContext context) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MarketplaceScreen(),
-        ),
-      );
-    },
-    child: _dashboardCard(
-      title: "Marketplace",
-      value: "Jobs & Materials",
-      icon: Icons.storefront,
-      gradient: const LinearGradient(
-        colors: [Color(0xFF8360c3), Color(0xFF2ebf91)],
-      ),
-    ),
-  );
-}
-
-  // -------------------- CARD UI --------------------
-  Widget _dashboardCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Gradient gradient,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 36),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+      icon: Icons.library_books_rounded,
+      gradient: AppGradients.dark,
+      showArrow: true,
+      index: index,
+      onTap: () {
+        Navigator.push(
+          context,
+          PageTransitions.slideUp(page: const LibraryScreen()),
+        );
+      },
     );
   }
 
-  // -------------------- GRADIENTS --------------------
-  static const _blueGradient = LinearGradient(
-    colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
-  );
+  // -------------------- MARKETPLACE CARD --------------------
+  Widget _buildMarketplaceCard(BuildContext context, int index) {
+    return DashboardCard(
+      title: "Marketplace",
+      value: "Explore",
+      icon: Icons.storefront_rounded,
+      gradient: AppGradients.teal,
+      showArrow: true,
+      index: index,
+      onTap: () {
+        Navigator.push(
+          context,
+          PageTransitions.slideUp(page: const MarketplaceScreen()),
+        );
+      },
+    );
+  }
 
-  static const _greenGradient = LinearGradient(
-    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
-  );
-
-  static const _orangeGradient = LinearGradient(
-    colors: [Color(0xFFF7971E), Color(0xFFFFD200)],
-  );
-
-  static const _redGradient = LinearGradient(
-    colors: [Color(0xFFCB2D3E), Color(0xFFEF473A)],
-  );
-
-  static const _purpleGradient = LinearGradient(
-    colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
-  );
-
-  static const _greyGradient = LinearGradient(
-    colors: [Color(0xFF757F9A), Color(0xFF283048)],
-  );
+  // -------------------- COMMUNITY FAB --------------------
+  Widget _buildCommunityFAB(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.secondary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.secondaryColor.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransitions.slideUp(page: const CommunityScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.people_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  "Community",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
