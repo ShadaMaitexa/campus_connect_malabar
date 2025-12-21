@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
-import '../utils/responsive.dart';
+
 import '../utils/animations.dart';
 import '../widgets/app_text_field.dart';
+import '../widgets/dashboard_card.dart';
 import '../providers/auth_provider.dart';
 import '../routing/role_router.dart';
 import '../profile/profile_screen.dart';
@@ -115,280 +116,298 @@ Future<void> _handleLogin() async {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final authProvider = Provider.of<AuthProvider>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              "assets/images/login_bg.png",
-              width: size.width,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Header with logo
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppGradients.blue,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(Responsive.padding(context)),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: Responsive.maxContentWidth(context),
-                  ),
-                  child: AppAnimations.fadeIn(
-                    key: const ValueKey('login_fade'),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-                        const SizedBox(height: 40),
-                        AppAnimations.slideInFromBottom(
-                          key: const ValueKey('login_logo'),
-                          offset: 50,
-                          child: Column(
-                            children: [
-                              AppAnimations.bounce(
-                                key: const ValueKey('login_icon'),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppTheme.primaryColor.withOpacity(0.2),
-                                        AppTheme.accentColor.withOpacity(0.1),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primaryColor.withOpacity(0.2),
-                                        blurRadius: 15,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.school,
-                                    size: 40,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "campus",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.lightTextPrimary,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "connect",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 24,
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.w300,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Your digital campus hub",
-                                style: GoogleFonts.poppins(
-                                  color: AppTheme.lightTextSecondary,
-                                  fontSize: 14,
-                                ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                  child: Column(
+                    children: [
+                      AppAnimations.bounce(
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.2),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.5),
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
                               ),
                             ],
                           ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/icon/logo.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Icon(
+                                Icons.school,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 60),
-                        AppAnimations.slideInFromBottom(
-                          key: const ValueKey('login_form'),
-                          offset: 30,
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Campus Connect",
+                        style: GoogleFonts.poppins(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Your digital campus hub",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverToBoxAdapter(
+              child: AppAnimations.fadeIn(
+                key: const ValueKey('login_fade'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppAnimations.slideInFromBottom(
+                      delay: const Duration(milliseconds: 200),
+                      child: Text(
+                        'Welcome Back!',
+                        style: GoogleFonts.poppins(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    AppAnimations.slideInFromBottom(
+                      delay: const Duration(milliseconds: 300),
+                      child: Text(
+                        'Sign in to continue',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    AppAnimations.slideInFromBottom(
+                      delay: const Duration(milliseconds: 400),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            if (widget.message != null)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.errorColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                  border: Border.all(
+                                    color: AppTheme.errorColor.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.message!,
+                                  style: GoogleFonts.poppins(
+                                    color: AppTheme.errorColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            AppTextField(
+                              controller: _emailController,
+                              label: 'Email Address',
+                              hint: 'Enter your email',
+                              prefixIcon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!value.contains('@')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            AppTextField(
+                              controller: _passwordController,
+                              label: 'Password',
+                              hint: 'Enter your password',
+                              prefixIcon: Icons.lock_outline,
+                              obscureText: _obscurePassword,
+                              suffixIcon: _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              onSuffixTap: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                AppAnimations.scaleIn(
-                                  key: const ValueKey('login_title'),
+                                TextButton(
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ForgotPasswordScreen(),
+                                    ),
+                                  ),
                                   child: Text(
-                                    'Login',
+                                    'Forgot Password?',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 42,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      letterSpacing: -1,
+                                      color: AppTheme.primaryColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 40),
-            if (widget.message != null)
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.errorColor.withOpacity(0.1),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: AppGradients.primary,
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primaryColor.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: authProvider.isLoading ? null : _handleLogin,
                                       borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                                      border: Border.all(
-                                        color: AppTheme.errorColor.withOpacity(0.3),
-                                      ),
-                                    ),
-                child: Text(
-                  widget.message!,
-                                      style: TextStyle(color: AppTheme.errorColor),
-                ),
-              ),
-                                AppTextField(
-                                  controller: _emailController,
-                                  label: 'Email',
-                                  hint: 'Enter your email',
-                                  prefixIcon: Icons.email_outlined,
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your email';
-                                    }
-                                    if (!value.contains('@')) {
-                                      return 'Please enter a valid email';
-                                    }
-                                    return null;
-                                  },
-            ),
-            const SizedBox(height: 20),
-                                AppTextField(
-                                  controller: _passwordController,
-                                  label: 'Password',
-                                  hint: 'Enter your password',
-                                  prefixIcon: Icons.lock_outline,
-                                  obscureText: _obscurePassword,
-                                  suffixIcon: _obscurePassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  onSuffixTap: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your password';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-            TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                                          builder: (_) => const ForgotPasswordScreen(),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
                                         ),
-              ),
-                                      child: Text(
-                                        'Forgot Password?',
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-            ),
-                                    ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                                        border: Border.all(
-                                          color: AppTheme.primaryColor,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: authProvider.isLoading ? null : _handleLogin,
-                                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 12,
-                                            ),
-                                            child: authProvider.isLoading
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                                        AppTheme.primaryColor,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : Text(
+                                        child: authProvider.isLoading
+                                            ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                                ),
+                                              )
+                                            : Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.login_rounded,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
                                                     'Login',
                                                     style: GoogleFonts.poppins(
-                                                      color: AppTheme.primaryColor,
+                                                      color: Colors.white,
                                                       fontSize: 16,
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
-                                          ),
-                                        ),
+                                                ],
+                                              ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 40),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Don't have an account? ",
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                                          builder: (_) => const RegisterScreen(),
-                                        ),
-              ),
-                                      child: Text(
-                                        "Register",
-                                        style: GoogleFonts.poppins(
-                                          color: AppTheme.accentColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 40),
                               ],
                             ),
-                          ),
-            ),
-          ],
-        ),
-                  ),
+                            const SizedBox(height: 40),
+                            AppAnimations.slideInFromBottom(
+                              delay: const Duration(milliseconds: 500),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Don't have an account? ",
+                                    style: GoogleFonts.poppins(
+                                      color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const RegisterScreen(),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Register",
+                                      style: GoogleFonts.poppins(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

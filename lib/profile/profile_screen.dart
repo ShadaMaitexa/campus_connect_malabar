@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
-import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:campus_connect_malabar/widgets/app_text_field.dart';
@@ -68,39 +67,54 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _loadProfile() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_userId)
-        .get();
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .get();
 
-    if (!doc.exists) {
-      setState(() => _isLoading = false);
-      return;
+      if (doc.exists) {
+        final data = doc.data()!;
+
+        nameController.text = data['name'] ?? '';
+        phoneController.text = data['phone'] ?? '';
+        addressController.text = data['address'] ?? '';
+        gender = data['gender'] ?? 'Male';
+        _email = data['email'];
+        _department = data['department'];
+
+        if (data['dob'] != null) {
+          dob = (data['dob'] as Timestamp).toDate();
+        }
+
+        _role = widget.role ?? data['role'] ?? 'student';
+
+        // Alumni
+        currentPositionController.text = data['currentPosition'] ?? '';
+        workingAddressController.text = data['workingAddress'] ?? '';
+        passoutYearController.text = data['passoutYear'] ?? '';
+
+        // Mentor
+        designationController.text = data['designation'] ?? '';
+        semesterInChargeController.text = data['semesterInCharge'] ?? '';
+      } else {
+        // If no profile exists, set default values
+        nameController.text = '';
+        phoneController.text = '';
+        addressController.text = '';
+        gender = 'Male';
+        _email = FirebaseAuth.instance.currentUser?.email;
+        _role = widget.role ?? 'student';
+      }
+    } catch (e) {
+      // Handle error gracefully
+      nameController.text = '';
+      phoneController.text = '';
+      addressController.text = '';
+      gender = 'Male';
+      _email = FirebaseAuth.instance.currentUser?.email;
+      _role = widget.role ?? 'student';
     }
-
-    final data = doc.data()!;
-
-    nameController.text = data['name'] ?? '';
-    phoneController.text = data['phone'] ?? '';
-    addressController.text = data['address'] ?? '';
-    gender = data['gender'] ?? 'Male';
-    _email = data['email'];
-    _department = data['department'];
-
-    if (data['dob'] != null) {
-      dob = (data['dob'] as Timestamp).toDate();
-    }
-
-    _role = widget.role ?? data['role'] ?? 'student';
-
-    // Alumni
-    currentPositionController.text = data['currentPosition'] ?? '';
-    workingAddressController.text = data['workingAddress'] ?? '';
-    passoutYearController.text = data['passoutYear'] ?? '';
-
-    // Mentor
-    designationController.text = data['designation'] ?? '';
-    semesterInChargeController.text = data['semesterInCharge'] ?? '';
 
     setState(() => _isLoading = false);
   }
@@ -135,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       });
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(_userId).update(data);
+    await FirebaseFirestore.instance.collection('users').doc(_userId).set(data, SetOptions(merge: true));
 
     setState(() => _isSaving = false);
 

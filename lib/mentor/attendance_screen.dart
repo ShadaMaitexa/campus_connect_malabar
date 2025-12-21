@@ -26,17 +26,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     super.initState();
     loadMentorDepartment();
   }
+Future<void> loadMentorDepartment() async {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
 
-  Future<void> loadMentorDepartment() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .get();
 
-    department = doc['department'];
-    setState(() => loading = false);
+  if (!doc.exists || doc.data() == null) {
+    throw Exception("Mentor profile not found");
   }
+
+  final data = doc.data()!;
+
+  if (data['role'] != 'mentor') {
+    throw Exception("Logged user is not mentor");
+  }
+
+  if (!data.containsKey('department')) {
+    throw Exception("Mentor department missing");
+  }
+
+  department = data['department'];
+  setState(() => loading = false);
+}
+
 
   Future<void> markAttendance(String studentId, bool present) async {
     await FirebaseFirestore.instance.collection('attendance').doc(today).set({
@@ -69,11 +84,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             padding: const EdgeInsets.all(20),
             sliver: SliverToBoxAdapter(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .where('role', isEqualTo: 'student')
-                    .where('department', isEqualTo: department)
-                    .snapshots(),
+              stream: FirebaseFirestore.instance
+    .collection('users')
+    .where('role', isEqualTo: 'student')
+    .where('department', isEqualTo: department)
+    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());

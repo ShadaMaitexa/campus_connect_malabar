@@ -1,7 +1,8 @@
 import 'package:campus_connect_malabar/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../config/app_theme.dart';
+import '../theme/app_theme.dart';
+import '../widgets/dashboard_card.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -73,163 +74,166 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Animated background
-          Positioned.fill(
-            child: TweenAnimationBuilder<double>(
-              key: const ValueKey('background'),
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 1500),
-              curve: Curves.easeInOut,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.scale(
-                    scale: 1.0 + (0.1 * (1 - value)),
-                    child: Image.asset(
-                      "assets/images/Background.png",
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(color: Colors.white);
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-          // Animated logo and text
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo with scale and rotation
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return ScaleTransition(
-                      scale: _logoScaleAnimation,
-                      child: RotationTransition(
-                        turns: _logoRotationAnimation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.primaryColor.withOpacity(0.2),
-                          AppTheme.accentColor.withOpacity(0.1),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.school,
-                      size: 60,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
+    return Scaffold(
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Header with logo
+          SliverToBoxAdapter(
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              decoration: const BoxDecoration(
+                gradient: AppGradients.blue,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
-                const SizedBox(height: 30),
-                // Text animations
-                AnimatedBuilder(
-                  animation: _fadeAnimation,
-                  builder: (context, child) {
-                    return FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: child,
-                    );
-                  },
+              ),
+              child: SafeArea(
+                child: Center(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TweenAnimationBuilder<double>(
-                        key: const ValueKey('campus_text'),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(0, 20 * (1 - value)),
-                            child: Opacity(
-                              opacity: value,
-                              child: Text(
-                                "campus",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  letterSpacing: 2,
-                                ),
-                              ),
+                      // Logo with scale and rotation
+                      AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, child) {
+                          return ScaleTransition(
+                            scale: _logoScaleAnimation,
+                            child: RotationTransition(
+                              turns: _logoRotationAnimation,
+                              child: child,
                             ),
                           );
                         },
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.2),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.5),
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 25,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/icon/logo.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Icon(
+                                Icons.school,
+                                size: 80,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      TweenAnimationBuilder<double>(
-                        key: const ValueKey('connect_text'),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(0, 20 * (1 - value)),
-                            child: Opacity(
-                              opacity: value,
-                              child: Text(
-                                "connect",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ),
+                      const SizedBox(height: 40),
+                      // Text animations
+                      AnimatedBuilder(
+                        animation: _fadeAnimation,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: child,
                           );
                         },
+                        child: Column(
+                          children: [
+                            TweenAnimationBuilder<double>(
+                              key: const ValueKey('campus_text'),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 800),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, 20 * (1 - value)),
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: Text(
+                                      "Campus Connect",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TweenAnimationBuilder<double>(
+                              key: const ValueKey('tagline_text'),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, 20 * (1 - value)),
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: Text(
+                                      "Your digital campus hub",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white.withOpacity(0.9),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 60),
+                      // Loading indicator
+                      AnimatedBuilder(
+                        animation: _fadeAnimation,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: child,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
-                // Loading indicator
-                AnimatedBuilder(
-                  animation: _fadeAnimation,
-                  builder: (context, child) {
-                    return FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: child,
-                    );
-                  },
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
