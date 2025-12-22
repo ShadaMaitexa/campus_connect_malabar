@@ -43,9 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen>
   String gender = 'Male';
   DateTime? dob;
 
+  // Student fields
+  final semesterController = TextEditingController();
+  final courseDurationController = TextEditingController();
+
   // Alumni fields
   final currentPositionController = TextEditingController();
   final workingAddressController = TextEditingController();
+  final departmentStudiedController = TextEditingController();
   final passoutYearController = TextEditingController();
 
   // Mentor fields
@@ -89,9 +94,14 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         _role = widget.role ?? data['role'] ?? 'student';
 
+        // Student fields
+        semesterController.text = data['semester'] ?? '';
+        courseDurationController.text = data['courseDuration'] ?? '';
+
         // Alumni
         currentPositionController.text = data['currentPosition'] ?? '';
         workingAddressController.text = data['workingAddress'] ?? '';
+        departmentStudiedController.text = data['departmentStudied'] ?? '';
         passoutYearController.text = data['passoutYear'] ?? '';
 
         // Mentor
@@ -134,16 +144,26 @@ class _ProfileScreenState extends State<ProfileScreen>
       'profileCompleted': true,
     };
 
+    if (_role == 'student') {
+      data.addAll({
+        'department': _department ?? '',
+        'semester': semesterController.text.trim(),
+        'courseDuration': courseDurationController.text.trim(),
+      });
+    }
+
     if (_role == 'alumni') {
       data.addAll({
         'currentPosition': currentPositionController.text.trim(),
         'workingAddress': workingAddressController.text.trim(),
+        'departmentStudied': departmentStudiedController.text.trim(),
         'passoutYear': passoutYearController.text.trim(),
       });
     }
 
     if (_role == 'mentor') {
       data.addAll({
+        'department': _department ?? '',
         'designation': designationController.text.trim(),
         'semesterInCharge': semesterInChargeController.text.trim(),
       });
@@ -456,6 +476,41 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
 
           // Role-specific fields
+          if (_role == 'student') ...[
+            const SizedBox(height: 20),
+            AppAnimations.slideInFromBottom(
+              delay: const Duration(milliseconds: 200),
+              child: _buildSectionCard(
+                title: 'Academic Details',
+                icon: Icons.school_rounded,
+                isDark: isDark,
+                children: [
+                  AppTextField(
+                    controller: TextEditingController(text: _department ?? ''),
+                    label: 'Department',
+                    hint: 'e.g., Computer Science',
+                    prefixIcon: Icons.business_outlined,
+                    onChanged: (value) => _department = value,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: semesterController,
+                    label: 'Current Semester',
+                    hint: 'e.g., 4th Semester',
+                    prefixIcon: Icons.class_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: courseDurationController,
+                    label: 'Course Duration',
+                    hint: 'e.g., 4 Years',
+                    prefixIcon: Icons.schedule_outlined,
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           if (_role == 'alumni') ...[
             const SizedBox(height: 20),
             AppAnimations.slideInFromBottom(
@@ -480,6 +535,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
+                    controller: departmentStudiedController,
+                    label: 'Department Studied',
+                    hint: 'e.g., Computer Science',
+                    prefixIcon: Icons.school_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
                     controller: passoutYearController,
                     label: 'Passout Year',
                     hint: 'e.g., 2020',
@@ -500,6 +562,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                 icon: Icons.school_rounded,
                 isDark: isDark,
                 children: [
+                  AppTextField(
+                    controller: TextEditingController(text: _department ?? ''),
+                    label: 'Department',
+                    hint: 'e.g., Computer Science',
+                    prefixIcon: Icons.business_outlined,
+                    onChanged: (value) => _department = value,
+                  ),
+                  const SizedBox(height: 16),
                   AppTextField(
                     controller: designationController,
                     label: 'Designation',
