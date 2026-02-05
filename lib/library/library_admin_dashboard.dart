@@ -72,342 +72,79 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _handleLogout() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        ),
-        title: Text(
-          'Logout',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          'Are you sure you want to logout?',
-          style: GoogleFonts.poppins(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.poppins(color: AppTheme.lightTextSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (_) => false,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
-              ),
-            ),
-            child: Text(
-              'Logout',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  final List<SidebarDestination> _destinations = [
+    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
+    const SidebarDestination(icon: Icons.work_rounded, label: "Jobs & Materials"),
+    const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
+    const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
+    const SidebarDestination(icon: Icons.verified_user_rounded, label: "Approvals"),
+    const SidebarDestination(icon: Icons.manage_accounts_rounded, label: "Users"),
+    const SidebarDestination(icon: Icons.library_books_rounded, label: "Library"),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Custom Header
-          SliverToBoxAdapter(
-            child: _buildHeader(context, isDark),
-          ),
-
-          // Stats Section
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: AppAnimations.slideInFromBottom(
-                delay: const Duration(milliseconds: 100),
-                child: const SectionHeader(title: 'Library Stats'),
-              ),
-            ),
-          ),
-
-          // Stats Cards
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverToBoxAdapter(
-              child: _isLoading
-                  ? const ShimmerGrid(
-                      itemCount: 4,
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.5,
-                    )
-                  : _buildStatsGrid(),
-            ),
-          ),
-
-          // Management Section
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: AppAnimations.slideInFromBottom(
-                delay: const Duration(milliseconds: 300),
-                child: const SectionHeader(title: 'Management'),
-              ),
-            ),
-          ),
-
-          // Management Cards
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-            sliver: SliverToBoxAdapter(
-              child: _buildManagementGrid(context),
-            ),
-          ),
-        ],
-      ),
+    return ResponsiveLayout(
+      mobile: _buildMobileLayout(),
+      desktop: _buildDesktopLayout(),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: AppGradients.dark,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AppAnimations.slideInFromLeft(
+  Widget _buildDesktopLayout() {
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      body: Row(
+        children: [
+          PremiumSidebar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              _handleGlobalNavigation(index);
+            },
+            destinations: _destinations,
+          ),
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                _buildDesktopAppBar(),
+                SliverPadding(
+                  padding: const EdgeInsets.all(32),
+                  sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Library Admin',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Control Center',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.library_books_rounded,
-                                size: 14,
-                                color: Colors.white.withOpacity(0.9),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Librarian',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryColor),
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              "Library Management",
+                              style: GoogleFonts.outfit(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 48),
+                        _buildLibraryStatsRow(),
+                        const SizedBox(height: 48),
+                        const SectionHeader(title: "Library Operations"),
+                        const SizedBox(height: 24),
+                        _buildLibraryOpsGrid(isDesktop: true),
                       ],
                     ),
-                  ),
-                  AppAnimations.scaleIn(
-                    child: _buildLogoutButton(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return GestureDetector(
-      onTap: _handleLogout,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(AppTheme.radiusM),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: const Icon(
-          Icons.logout_rounded,
-          color: Colors.white,
-          size: 22,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              AppAnimations.slideInFromLeft(
-                delay: const Duration(milliseconds: 200),
-                child: _buildStatCard(
-                  icon: Icons.menu_book_rounded,
-                  value: '$_totalBooks',
-                  label: 'Total Books',
-                  gradient: AppGradients.blue,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppAnimations.slideInFromLeft(
-                delay: const Duration(milliseconds: 300),
-                child: _buildStatCard(
-                  icon: Icons.book_rounded,
-                  value: '$_issuedBooks',
-                  label: 'Issued',
-                  gradient: AppGradients.purple,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            children: [
-              AppAnimations.slideInFromRight(
-                delay: const Duration(milliseconds: 200),
-                child: _buildStatCard(
-                  icon: Icons.assignment_late_rounded,
-                  value: '$_pendingReturns',
-                  label: 'Overdue',
-                  gradient: _pendingReturns > 0
-                      ? AppGradients.warning
-                      : AppGradients.green,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppAnimations.slideInFromRight(
-                delay: const Duration(milliseconds: 300),
-                child: _buildStatCard(
-                  icon: Icons.currency_rupee_rounded,
-                  value: '₹$_totalFines',
-                  label: 'Fines Due',
-                  gradient: _totalFines > 0
-                      ? AppGradients.red
-                      : AppGradients.green,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Gradient gradient,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.colors.first.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-            ),
-            child: Icon(icon, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Colors.white.withOpacity(0.9),
                   ),
                 ),
               ],
@@ -418,81 +155,152 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
     );
   }
 
-  Widget _buildManagementGrid(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.0,
-          children: [
-            DashboardCard(
-              title: "Manage Books",
-              value: "Add/Edit",
-              icon: Icons.library_add_rounded,
-              gradient: AppGradients.blue,
-              showArrow: true,
-              index: 0,
-              onTap: () => Navigator.push(
-                context,
-                PageTransitions.slideUp(page: const ManageBooks()),
-              ),
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      appBar: AppBar(
+        title: const Text("Library Admin"),
+        actions: [
+          IconButton(onPressed: _loadLibraryStats, icon: const Icon(Icons.refresh)),
+        ],
+      ),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _buildMobileHeader(),
+                const SizedBox(height: 24),
+                _buildLibraryStatsGrid(),
+                const SizedBox(height: 32),
+                const SectionHeader(title: "Management"),
+                const SizedBox(height: 16),
+                _buildLibraryOpsGrid(isDesktop: false),
+              ],
             ),
-            DashboardCard(
-              title: "Return Approval",
-              value: "Process",
-              icon: Icons.assignment_turned_in_rounded,
-              gradient: AppGradients.green,
-              showArrow: true,
-              index: 1,
-              onTap: () => Navigator.push(
-                context,
-                PageTransitions.slideUp(page: const IssuedBookScreen()),
-              ),
-            ),
-            DashboardCard(
-              title: "Fine Payments",
-              value: _totalFines > 0 ? "₹$_totalFines Due" : "Clear",
-              icon: Icons.payments_rounded,
-              gradient: _totalFines > 0 ? AppGradients.orange : AppGradients.teal,
-              showArrow: true,
-              index: 2,
-              onTap: () => Navigator.push(
-                context,
-                PageTransitions.slideUp(page: const FinePaymentsScreen()),
-              ),
-            ),
-            DashboardCard(
-              title: "Analytics",
-              value: "Reports",
-              icon: Icons.bar_chart_rounded,
-              gradient: AppGradients.purple,
-              showArrow: true,
-              index: 3,
-              onTap: () => Navigator.push(
-                context,
-                PageTransitions.slideUp(page: const LibraryAnalyticsScreen()),
-              ),
-            ),
-            DashboardCard(
-              title: "Issue History",
-              value: "Records",
-              icon: Icons.history_rounded,
-              gradient: AppGradients.grey,
-              showArrow: true,
-              index: 4,
-              onTap: () => Navigator.push(
-                context,
-                PageTransitions.slideUp(page: const IssueHistoryScreen()),
-              ),
-            ),
-          ],
-        );
-      },
+          ),
     );
+  }
+
+  Widget _buildDesktopAppBar() {
+    return SliverAppBar(
+      floating: true,
+      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      automaticallyImplyLeading: false,
+      title: Row(
+        children: [
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_rounded, size: 18),
+            label: const Text("Back to Admin"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.darkSurface,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.library_books_rounded, color: Colors.white, size: 40),
+          const SizedBox(height: 16),
+          Text("System Pulse", style: GoogleFonts.inter(color: Colors.white70)),
+          Text("Inventory Overview", style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLibraryStatsRow() {
+    return Row(
+      children: [
+        Expanded(child: PremiumStatCard(title: "Collection", value: "$_totalBooks", icon: Icons.book_rounded, gradient: AppGradients.primary)),
+        const SizedBox(width: 24),
+        Expanded(child: PremiumStatCard(title: "Active Issues", value: "$_issuedBooks", icon: Icons.outbound_rounded, gradient: AppGradients.accent)),
+        const SizedBox(width: 24),
+        Expanded(child: PremiumStatCard(title: "Pending Returns", value: "$_pendingReturns", icon: Icons.assignment_return_rounded, gradient: AppGradients.success)),
+        const SizedBox(width: 24),
+        Expanded(child: PremiumStatCard(title: "Total Revenue", value: "₹${_totalFines.toStringAsFixed(0)}", icon: Icons.payments_rounded, gradient: AppGradients.surface)),
+      ],
+    );
+  }
+
+  Widget _buildLibraryStatsGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.2,
+      children: [
+        _miniStat(Icons.book, "$_totalBooks", "Books", AppGradients.primary),
+        _miniStat(Icons.outbound, "$_issuedBooks", "Issued", AppGradients.accent),
+        _miniStat(Icons.assignment_return, "$_pendingReturns", "Pending", AppGradients.success),
+        _miniStat(Icons.payments, "₹${_totalFines.toInt()}", "Fines", AppGradients.surface),
+      ],
+    );
+  }
+
+  Widget _miniStat(IconData icon, String value, String label, Gradient gradient) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 24),
+          const SizedBox(height: 8),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLibraryOpsGrid({required bool isDesktop}) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: isDesktop ? 4 : 2,
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
+      children: [
+        _opCard("Manage Books", Icons.menu_book_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageBooks()))),
+        _opCard("Return Approval", Icons.fact_check_rounded, AppGradients.success, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReturnApproval()))),
+        _opCard("Fine Tracking", Icons.account_balance_wallet_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FinePaymentsScreen()))),
+        _opCard("Issue History", Icons.history_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IssueHistory()))),
+      ],
+    );
+  }
+
+  Widget _opCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
+    return DashboardCard(
+      title: title,
+      value: "View",
+      icon: icon,
+      gradient: gradient,
+      onTap: onTap,
+      showArrow: true,
+    );
+  }
+
+  void _handleGlobalNavigation(int index) {
+     if (index == 6) return; // Already here
+     Navigator.pop(context); // Go back to admin dashboard
   }
 }

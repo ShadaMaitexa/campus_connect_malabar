@@ -1,6 +1,6 @@
+import 'package:campus_connect_malabar/widgets/premium_dashboard.dart';
+import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../auth/login_screen.dart';
 import '../profile/profile_screen.dart';
 import 'alumini_home.dart';
 import 'my_listings.dart';
@@ -14,80 +14,82 @@ class AlumniDashboard extends StatefulWidget {
 }
 
 class _AlumniDashboardState extends State<AlumniDashboard> {
-  int index = 0;
+  int _selectedIndex = 0;
 
-  final screens = const [
+  final List<Widget> _screens = const [
     AlumniHome(),
     MyListings(),
     CommunityScreen(),
     ProfileScreen(),
   ];
 
-  Future<void> _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
+  final List<SidebarDestination> _destinations = [
+    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Home"),
+    const SidebarDestination(icon: Icons.storefront_rounded, label: "Listings"),
+    const SidebarDestination(icon: Icons.people_alt_rounded, label: "Community"),
+    const SidebarDestination(icon: Icons.person_rounded, label: "Profile"),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobile: _buildMobileLayout(),
+      desktop: _buildDesktopLayout(),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Alumni Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            ),
+      backgroundColor: AppTheme.darkBackground,
+      body: Row(
+        children: [
+          PremiumSidebar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+            destinations: _destinations,
           ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                _logout(context);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'logout',
-                child: Text('Logout'),
-              ),
-            ],
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _screens[_selectedIndex],
+            ),
           ),
         ],
       ),
-      body: screens[index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: index,
-        onTap: (i) => setState(() => index = i),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF6366F1),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _screens[_selectedIndex],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+        height: 70,
+        backgroundColor: AppTheme.darkSurface,
+        indicatorColor: AppTheme.primaryColor.withOpacity(0.2),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined, color: Colors.white70),
+            selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor),
             label: "Home",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.storefront_outlined, color: Colors.white70),
+            selectedIcon: Icon(Icons.storefront, color: AppTheme.primaryColor),
             label: "Listings",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_alt_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.people_alt_outlined, color: Colors.white70),
+            selectedIcon: Icon(Icons.people_alt, color: AppTheme.primaryColor),
             label: "Community",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline, color: Colors.white70),
+            selectedIcon: Icon(Icons.person, color: AppTheme.primaryColor),
             label: "Profile",
           ),
         ],

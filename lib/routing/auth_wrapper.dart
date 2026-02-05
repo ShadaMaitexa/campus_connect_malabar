@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../providers/auth_provider.dart';
 import '../auth/splash_screen.dart';
 import '../auth/login_screen.dart';
 import '../routing/role_router.dart';
 import '../profile/profile_screen.dart';
+import '../web/landing_page.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -20,7 +22,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (!authProvider.isAuthenticated) {
-          return const SplashScreen();
+          return kIsWeb ? const LandingPage() : const SplashScreen();
         }
 
         final userModel = authProvider.userModel;
