@@ -234,6 +234,12 @@ class AppGradients {
     end: Alignment.bottomRight,
   );
 
+  static const secondary = LinearGradient(
+    colors: [Color(0xFF8B5CF6), Color(0xFFD946EF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const accent = LinearGradient(
     colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
     begin: Alignment.topLeft,
@@ -257,7 +263,55 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
+  static const info = LinearGradient(
+    colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const teal = LinearGradient(
+    colors: [Color(0xFF14B8A6), Color(0xFF0D9488)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const purple = LinearGradient(
+    colors: [Color(0xFFD946EF), Color(0xFF7C3AED)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const orange = LinearGradient(
+    colors: [Color(0xFFF59E0B), Color(0xFFEA580C)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const dark = LinearGradient(
+    colors: [Color(0xFF334155), Color(0xFF0F172A)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const blue = LinearGradient(
+    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const sunset = LinearGradient(
+    colors: [Color(0xFFF43F5E), Color(0xFFFB923C)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const ocean = LinearGradient(
+    colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const glass = LinearGradient(
     colors: [Colors.white24, Colors.white10],
     begin: Alignment.topLeft,

@@ -37,7 +37,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     _scrollController.animateTo(
       offset,
       duration: const Duration(milliseconds: 1000),
-      curve: Curves.tightFor(height: 1000).curve, // Smooth custom curve
+      curve: Curves.easeInOutCubic, // Smooth curve for scrolling
     );
   }
 

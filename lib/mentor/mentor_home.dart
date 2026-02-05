@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'attendance_screen.dart';
 import 'post_notice.dart';
 import 'post_event.dart';
+import '../widgets/custom_app_bar.dart';
 
 class MentorHome extends StatefulWidget {
   const MentorHome({super.key});
@@ -65,7 +66,7 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  const SectionHeader(title: "Academic Management"),
+                  SectionHeader(title: "Academic Management"),
                   const SizedBox(height: 24),
                   _buildActionGrid(isDesktop),
                 ],

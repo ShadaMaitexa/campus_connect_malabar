@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../library/library_screen.dart';
 import 'market_place_screen.dart';
 import '../alumini/community_screen.dart';
+import '../widgets/custom_app_bar.dart';
 
 class StudentHome extends StatefulWidget {
   const StudentHome({super.key});
@@ -66,7 +67,7 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  const SectionHeader(title: "Academic Navigation"),
+                  SectionHeader(title: "Academic Navigation"),
                   const SizedBox(height: 24),
                   _buildNavigationGrid(isDesktop),
                 ],

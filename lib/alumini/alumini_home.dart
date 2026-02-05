@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'post_item.dart';
 import 'post_job.dart';
 import 'my_listings.dart';
+import '../widgets/custom_app_bar.dart';
 
 class AlumniHome extends StatefulWidget {
   const AlumniHome({super.key});
@@ -72,7 +73,7 @@ class _AlumniHomeState extends State<AlumniHome> {
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  const SectionHeader(title: "Alumni Ecosystem"),
+                  SectionHeader(title: "Alumni Ecosystem"),
                   const SizedBox(height: 24),
                   _buildActionGrid(isDesktop),
                 ],

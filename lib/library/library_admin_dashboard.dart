@@ -1,18 +1,17 @@
-import 'package:campus_connect_malabar/auth/login_screen.dart';
-import 'package:campus_connect_malabar/library/fine_payment_screen.dart';
-import 'package:campus_connect_malabar/library/issue_history.dart';
-import 'package:campus_connect_malabar/library/issued_book_screen.dart';
-import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
-import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
-import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
-import 'package:campus_connect_malabar/theme/app_theme.dart';
-import 'package:campus_connect_malabar/utils/animations.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'manage_books.dart';
 import 'library_analytics_screen.dart';
+import 'return_approval_screen.dart';
+import 'fine_payment_screen.dart';
+import 'issue_history.dart';
+import '../widgets/dashboard_card.dart';
+import '../widgets/custom_app_bar.dart';
+import '../widgets/premium_dashboard.dart';
+import '../theme/app_theme.dart';
+import '../utils/animations.dart';
 
 class LibraryAdminDashboard extends StatefulWidget {
   const LibraryAdminDashboard({super.key});
@@ -27,6 +26,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   int _pendingReturns = 0;
   int _totalFines = 0;
   bool _isLoading = true;
+  int _selectedIndex = 6; // Default to Library
 
   @override
   void initState() {
@@ -70,9 +70,10 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
         });
       }
     } catch (e) {
+      debugPrint("Error loading library stats: $e");
       if (mounted) {
-        setState(() {
-      if (mounted) setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -161,7 +162,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       appBar: AppBar(
         title: const Text("Library Admin"),
         actions: [
-          IconButton(onPressed: _loadLibraryStats, icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: _loadStats, icon: const Icon(Icons.refresh)),
         ],
       ),
       body: _isLoading 
@@ -283,7 +284,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
         _opCard("Manage Books", Icons.menu_book_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageBooks()))),
         _opCard("Return Approval", Icons.fact_check_rounded, AppGradients.success, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReturnApproval()))),
         _opCard("Fine Tracking", Icons.account_balance_wallet_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FinePaymentsScreen()))),
-        _opCard("Issue History", Icons.history_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IssueHistory()))),
+        _opCard("Issue History", Icons.history_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IssueHistoryScreen()))),
       ],
     );
   }
