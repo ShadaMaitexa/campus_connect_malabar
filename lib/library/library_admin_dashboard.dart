@@ -98,58 +98,83 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Row(
+      body: Stack(
         children: [
-          PremiumSidebar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              _handleGlobalNavigation(index);
-            },
-            destinations: _destinations,
+          // Global Premium Background
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
+            ),
           ),
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                _buildDesktopAppBar(),
-                SliverPadding(
-                  padding: const EdgeInsets.all(32),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryColor),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              "Library Management",
-                              style: GoogleFonts.outfit(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 48),
-                        _buildLibraryStatsRow(),
-                        const SizedBox(height: 48),
-                        const SectionHeader(title: "Library Operations"),
-                        const SizedBox(height: 24),
-                        _buildLibraryOpsGrid(isDesktop: true),
-                      ],
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.9),
+            ),
+          ),
+          Row(
+            children: [
+              PremiumSidebar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) {
+                  _handleGlobalNavigation(index);
+                },
+                destinations: _destinations,
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: Colors.white.withOpacity(0.05)),
                     ),
                   ),
+                  child: CustomScrollView(
+                    slivers: [
+                      _buildDesktopAppBar(),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(40),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryColor),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    "Library Desk",
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 48),
+                              _isLoading 
+                                  ? const Center(child: Padding(padding: EdgeInsets.all(100), child: CircularProgressIndicator()))
+                                  : _buildLibraryStatsRow(),
+                              const SizedBox(height: 60),
+                              const SectionHeader(title: "Inventory Control"),
+                              const SizedBox(height: 24),
+                              _buildLibraryOpsGrid(isDesktop: true),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -160,27 +185,53 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
-        title: const Text("Library Admin"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text("Library Desk", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(onPressed: _loadStats, icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: _loadStats, icon: const Icon(Icons.refresh, color: Colors.white70)),
         ],
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildMobileHeader(),
-                const SizedBox(height: 24),
-                _buildLibraryStatsGrid(),
-                const SizedBox(height: 32),
-                const SectionHeader(title: "Management"),
-                const SizedBox(height: 16),
-                _buildLibraryOpsGrid(isDesktop: false),
-              ],
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
             ),
           ),
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.92),
+            ),
+          ),
+          _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      _buildMobileHeader(),
+                      const SizedBox(height: 32),
+                      _buildLibraryStatsGrid(),
+                      const SizedBox(height: 40),
+                      Row(
+                        children: [
+                          Container(width: 4, height: 20, decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(2))),
+                          const SizedBox(width: 12),
+                          const SectionHeader(title: "Management"),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildLibraryOpsGrid(isDesktop: false),
+                    ],
+                  ),
+                ),
+              ),
+        ],
+      ),
     );
   }
 

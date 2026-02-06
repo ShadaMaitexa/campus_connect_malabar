@@ -42,18 +42,44 @@ class _MentorDashboardState extends State<MentorDashboard> {
   Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Row(
+      body: Stack(
         children: [
-          PremiumSidebar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-            destinations: _destinations,
-          ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_selectedIndex],
+          // Global Premium Background
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
             ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.92),
+            ),
+          ),
+          Row(
+            children: [
+              PremiumSidebar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+                destinations: _destinations,
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: Colors.white.withOpacity(0.05)),
+                    ),
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: KeyedSubtree(
+                      key: ValueKey(_selectedIndex),
+                      child: _screens[_selectedIndex],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -62,39 +88,59 @@ class _MentorDashboardState extends State<MentorDashboard> {
 
   Widget _buildMobileLayout() {
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _screens[_selectedIndex],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-        height: 70,
-        backgroundColor: AppTheme.darkSurface,
-        indicatorColor: AppTheme.primaryColor.withOpacity(0.2),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor),
-            label: "Home",
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.check_circle_outline, color: Colors.white70),
-            selectedIcon: Icon(Icons.check_circle, color: AppTheme.primaryColor),
-            label: "Attendance",
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.92),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.campaign_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.campaign, color: AppTheme.primaryColor),
-            label: "Notices",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.event_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.event, color: AppTheme.primaryColor),
-            label: "Events",
+          SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: KeyedSubtree(
+                key: ValueKey(_selectedIndex),
+                child: _screens[_selectedIndex],
+              ),
+            ),
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+        ),
+        child: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+          height: 70,
+          backgroundColor: AppTheme.darkBackground.withOpacity(0.95),
+          indicatorColor: AppTheme.primaryColor.withOpacity(0.15),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          elevation: 0,
+          destinations: [
+            _navItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Home"),
+            _navItem(Icons.check_circle_outline, Icons.check_circle_rounded, "Attendance"),
+            _navItem(Icons.campaign_outlined, Icons.campaign_rounded, "Notices"),
+            _navItem(Icons.event_outlined, Icons.event_rounded, "Events"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  NavigationDestination _navItem(IconData icon, IconData activeIcon, String label) {
+    return NavigationDestination(
+      icon: Icon(icon, color: Colors.white54, size: 22),
+      selectedIcon: Icon(activeIcon, color: AppTheme.primaryColor, size: 24),
+      label: label,
     );
   }
 }
