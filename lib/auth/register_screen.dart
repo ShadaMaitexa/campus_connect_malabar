@@ -80,335 +80,264 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header with logo
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppGradients.blue,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
+      backgroundColor: AppTheme.darkBackground,
+      body: Stack(
+        children: [
+          _buildAnimatedBackground(),
+          Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 0 : 20,
+                vertical: 40,
               ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                  child: Column(
-                    children: [
-                      AppAnimations.bounce(
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.2),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              'assets/icon/logo.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Icons.school,
-                                size: 60,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        "Campus Connect",
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Your digital campus hub",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : 500),
+                child: isDesktop ? _buildDesktopLayout(authProvider) : _buildMobileLayout(authProvider),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // Content
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: AppAnimations.fadeIn(
-                key: const ValueKey('register_fade'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppAnimations.slideInFromBottom(
-                      delay: const Duration(milliseconds: 200),
-                      child: Text(
-                        'Create Account',
-                        style: GoogleFonts.poppins(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    AppAnimations.slideInFromBottom(
-                      delay: const Duration(milliseconds: 300),
-                      child: Text(
-                        'Join our campus community',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    AppAnimations.slideInFromBottom(
-                      delay: const Duration(milliseconds: 400),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            AppTextField(
-                              controller: _nameController,
-                              label: 'Full Name',
-                              hint: 'Enter your full name',
-                              prefixIcon: Icons.person_outline,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your name';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            AppTextField(
-                              controller: _emailController,
-                              label: 'Email Address',
-                              hint: 'Enter your email',
-                              prefixIcon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            AppTextField(
-                              controller: _passwordController,
-                              label: 'Password',
-                              hint: 'Enter your password',
-                              prefixIcon: Icons.lock_outline,
-                              obscureText: _obscurePassword,
-                              suffixIcon: _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              onSuffixTap: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              'REGISTER as',
-                              style: GoogleFonts.poppins(
-                                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: isDark ? AppTheme.darkSurface : Colors.white,
-                                borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                                border: Border.all(
-                                  color: AppTheme.primaryColor.withOpacity(0.3),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _role.toUpperCase(),
-                                  isExpanded: true,
-                                  icon: Icon(
-                                    Icons.arrow_drop_down,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                  style: GoogleFonts.poppins(
-                                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'STUDENT',
-                                      child: Text('STUDENT'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'MENTOR',
-                                      child: Text('MENTOR'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'ALUMNI',
-                                      child: Text('ALUMNI'),
-                                    ),
-                                  ],
-                                  onChanged: (v) {
-                                    setState(() {
-                                      _role = v!.toLowerCase();
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                gradient: AppGradients.primary,
-                                borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.primaryColor.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: authProvider.isLoading ? null : _handleRegister,
-                                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 14,
-                                    ),
-                                    child: authProvider.isLoading
-                                        ? const Center(
-                                            child: SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        : Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              const Icon(
-                                                Icons.person_add_rounded,
-                                                color: Colors.white,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'Create Account',
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                            AppAnimations.slideInFromBottom(
-                              delay: const Duration(milliseconds: 500),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Already have an account? ",
-                                    style: GoogleFonts.poppins(
-                                      color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => Navigator.pop(context),
-                                    child: Text(
-                                      "Login",
-                                      style: GoogleFonts.poppins(
-                                        color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+  Widget _buildDesktopLayout(AuthProvider authProvider) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        boxShadow: AppEffects.deepShadow,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(60),
+              decoration: BoxDecoration(
+                gradient: AppGradients.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  bottomLeft: Radius.circular(32),
                 ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 48),
+                  const SizedBox(height: 32),
+                  Text(
+                    "Join the\nCommunity",
+                    style: GoogleFonts.outfit(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: -1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Unlock exclusive campus resources, connect with mentors, and accelerate your growth.",
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      color: Colors.white.withOpacity(0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(60),
+              child: _buildRegisterForm(authProvider),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(AuthProvider authProvider) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryColor, size: 48),
+          const SizedBox(height: 24),
+          _buildRegisterForm(authProvider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegisterForm(AuthProvider authProvider) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Create Account",
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Start your journey today",
+            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+          ),
+          const SizedBox(height: 40),
+          AppTextField(
+            controller: _nameController,
+            label: 'Full Name',
+            hint: 'Enter your full name',
+            prefixIcon: Icons.person_outline,
+            validator: (value) => value?.isEmpty ?? true ? 'Please enter your name' : null,
+          ),
+          const SizedBox(height: 20),
+          AppTextField(
+            controller: _emailController,
+            label: 'Email',
+            hint: 'email@example.com',
+            prefixIcon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) => value?.contains('@') ?? false ? null : 'Enter a valid email',
+          ),
+          const SizedBox(height: 20),
+          AppTextField(
+            controller: _passwordController,
+            label: 'Password',
+            hint: '••••••••',
+            prefixIcon: Icons.lock_outline,
+            obscureText: _obscurePassword,
+            suffixIcon: _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+            validator: (value) => (value?.length ?? 0) < 6 ? 'Min 6 characters' : null,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'JOIN AS',
+            style: GoogleFonts.outfit(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildRoleSelector(),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: authProvider.isLoading ? null : _handleRegister,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: authProvider.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("Create Account", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Already have an account? ",
+                style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Sign In", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurfaceSecondary,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.darkBorder),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _role.toUpperCase(),
+          isExpanded: true,
+          dropdownColor: AppTheme.darkSurface,
+          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500),
+          items: ['STUDENT', 'MENTOR', 'ALUMNI'].map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (v) => setState(() => _role = v!.toLowerCase()),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.darkBackground,
+            Color(0xFF0F172A),
+            AppTheme.darkBackground,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.primaryColor.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 300,
+            left: -200,
+            child: Container(
+              width: 600,
+              height: 600,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.accentColor.withOpacity(0.03),
               ),
             ),
           ),

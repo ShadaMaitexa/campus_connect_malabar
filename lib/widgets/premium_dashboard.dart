@@ -110,24 +110,27 @@ class _SidebarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
-      ),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(
-          icon,
-          color: isSelected ? AppTheme.primaryColor : AppTheme.darkTextSecondary,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? AppTheme.primaryColor.withOpacity(0.15) : Colors.transparent,
         ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppTheme.darkTextSecondary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          leading: Icon(
+            icon,
+            color: isSelected ? AppTheme.primaryColor : AppTheme.darkTextSecondary,
+          ),
+          title: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppTheme.darkTextSecondary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ),

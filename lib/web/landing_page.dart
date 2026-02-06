@@ -37,27 +37,25 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     _scrollController.animateTo(
       offset,
       duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeInOutCubic, // Smooth curve for scrolling
+      curve: Curves.easeInOutCubic,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Dynamic Background
           Positioned.fill(
             child: _buildAnimatedBackground(),
           ),
-          
-          // Main Content
           SingleChildScrollView(
             controller: _scrollController,
             child: Column(
               children: [
-                _HeroSection(onStart: () => _scrollTo(900)),
+                _HeroSection(onStart: () => _scrollTo(size.height)),
                 const _StatsSection(),
                 const _FeaturesSection(),
                 const _HowItWorksSection(),
@@ -65,9 +63,12 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
               ],
             ),
           ),
-
-          // Navbar
-          _Navbar(scrollOffset: _scrollOffset),
+          _Navbar(
+            scrollOffset: _scrollOffset,
+            onSolutionsTap: () => _scrollTo(size.height),
+            onFeaturesTap: () => _scrollTo(size.height + 400),
+            onResourcesTap: () => _scrollTo(size.height + 1200),
+          ),
         ],
       ),
     );
@@ -120,8 +121,16 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
 
 class _Navbar extends StatelessWidget {
   final double scrollOffset;
+  final VoidCallback onSolutionsTap;
+  final VoidCallback onFeaturesTap;
+  final VoidCallback onResourcesTap;
 
-  const _Navbar({required this.scrollOffset});
+  const _Navbar({
+    required this.scrollOffset,
+    required this.onSolutionsTap,
+    required this.onFeaturesTap,
+    required this.onResourcesTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +155,6 @@ class _Navbar extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 1400),
           child: Row(
             children: [
-              // Brand
               Row(
                 children: [
                   Container(
@@ -156,7 +164,7 @@ class _Navbar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: AppEffects.subtleShadow,
                     ),
-                    child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
+                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 16),
                   Text(
@@ -172,9 +180,9 @@ class _Navbar extends StatelessWidget {
               ),
               const Spacer(),
               if (isDesktop) ...[
-                _NavLink(label: "Solutions", onTap: () {}),
-                _NavLink(label: "Features", onTap: () {}),
-                _NavLink(label: "Resources", onTap: () {}),
+                _NavLink(label: "Solutions", onTap: onSolutionsTap),
+                _NavLink(label: "Features", onTap: onFeaturesTap),
+                _NavLink(label: "Resources", onTap: onResourcesTap),
                 const SizedBox(width: 32),
               ],
               ElevatedButton(
@@ -307,16 +315,6 @@ class _HeroSection extends StatelessWidget {
                           ),
                           child: const Text("Explore Solutions"),
                         ),
-                        const SizedBox(width: 20),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.white.withOpacity(0.1)),
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: Text("Watch Demo", style: TextStyle(color: Colors.white.withOpacity(0.9))),
-                        ),
                       ],
                     ),
                   ],
@@ -327,11 +325,11 @@ class _HeroSection extends StatelessWidget {
                   flex: 5,
                   child: Center(
                     child: Container(
-                      height: 500,
-                      width: 400,
+                      height: 600,
+                      width: 450,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(48),
-                        gradient: AppGradients.surface,
+                        color: AppTheme.darkSurface,
                         border: Border.all(color: Colors.white.withOpacity(0.1), width: 8),
                         boxShadow: [
                           BoxShadow(
@@ -345,16 +343,112 @@ class _HeroSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(40),
                         child: Stack(
                           children: [
-                            const Center(
-                              child: Icon(Icons.phone_iphone_rounded, size: 120, color: Colors.white10),
+                            Image.asset(
+                              "assets/images/generated_background.png",
+                              fit: BoxFit.cover,
+                              height: double.infinity,
+                              width: double.infinity,
+                            ),
+                            // Professional Depth Gradient
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.5),
+                                    AppTheme.darkBackground.withOpacity(0.95),
+                                  ],
+                                ),
+                              ),
                             ),
                             Positioned(
                               top: 40,
                               left: 20,
                               right: 20,
                               child: Container(
-                                height: 80,
+                                padding: const EdgeInsets.all(20),
                                 decoration: AppEffects.glassDecoration,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            gradient: AppGradients.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Center(
+                                            child: Text("A", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          "Welcome, Alex",
+                                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                        ),
+                                        const Spacer(),
+                                        const Icon(Icons.notifications_active_rounded, color: AppTheme.accentColor, size: 16),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      "Attendance: 92%",
+                                      style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: 0.92,
+                                        backgroundColor: Colors.white10,
+                                        color: AppTheme.primaryColor,
+                                        minHeight: 6,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 40,
+                              left: 20,
+                              right: 20,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: AppEffects.glassDecoration,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.event_note_rounded, color: AppTheme.accentColor),
+                                          const SizedBox(height: 8),
+                                          Text("Events", style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: AppEffects.glassDecoration,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.library_books_rounded, color: AppTheme.primaryColor),
+                                          const SizedBox(height: 8),
+                                          Text("Library", style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -433,6 +527,18 @@ class _FeaturesSection extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 120, horizontal: 20),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground,
+        image: DecorationImage(
+          image: const AssetImage("assets/images/generated_background.png"),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            AppTheme.darkBackground.withOpacity(0.97),
+            BlendMode.darken,
+          ),
+        ),
+      ),
       child: Column(
         children: [
           Text(
@@ -455,7 +561,7 @@ class _FeaturesSection extends StatelessWidget {
             crossAxisCount: isDesktop ? 3 : 1,
             mainAxisSpacing: 32,
             crossAxisSpacing: 32,
-            childAspectRatio: 1.4,
+            childAspectRatio: isDesktop ? 1.4 : 1.1,
             children: const [
               _FeatureItem(
                 icon: Icons.admin_panel_settings_rounded,
@@ -537,7 +643,17 @@ class _FeatureItem extends StatelessWidget {
           const SizedBox(height: 24),
           Text(title, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 12),
-          Text(description, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5), height: 1.5)),
+          Expanded(
+            child: Text(
+              description,
+              style: GoogleFonts.inter(
+                color: Colors.white.withOpacity(0.5),
+                height: 1.3,
+                fontSize: 13,
+              ),
+              overflow: TextOverflow.fade,
+            ),
+          ),
         ],
       ),
     );
@@ -551,7 +667,18 @@ class _HowItWorksSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 120, horizontal: 20),
-      color: AppTheme.darkSurface.withOpacity(0.5),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.5),
+        image: DecorationImage(
+          image: const AssetImage("assets/images/generated_background.png"),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            AppTheme.darkBackground.withOpacity(0.94),
+            BlendMode.darken,
+          ),
+        ),
+      ),
       child: Column(
         children: [
           Text(
@@ -620,9 +747,9 @@ class _FooterSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _SocialBtn(icon: Icons.code_rounded),
-              _SocialBtn(icon: Icons.terminal_rounded),
-              _SocialBtn(icon: Icons.webhook_rounded),
+              _SocialBtn(icon: Icons.facebook_rounded),
+              _SocialBtn(icon: Icons.link_rounded),
+              _SocialBtn(icon: Icons.info_outline_rounded),
             ],
           ),
           const SizedBox(height: 32),

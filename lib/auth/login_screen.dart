@@ -96,101 +96,166 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildDesktopLayout() {
-    return Row(
+    return Stack(
       children: [
-        // Left Side: Branding & Image
-        Expanded(
-          flex: 6,
-          child: Container(
-            padding: const EdgeInsets.all(60),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+        _buildAnimatedBackground(),
+        Row(
+          children: [
+            // Left Side: Branding & Image
+            Expanded(
+              flex: 6,
+              child: Container(
+                padding: const EdgeInsets.all(60),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: AppGradients.primary,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: AppEffects.subtleShadow,
+                      ),
+                      child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      "Elevate Your\nCampus Experience",
+                      style: GoogleFonts.outfit(
+                        fontSize: 64,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.1,
+                        letterSpacing: -2,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "A unified ecosystem for students, alumni, and administration. Management, communication, and growth - all in one hyper-connected platform.",
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        color: Colors.white.withOpacity(0.6),
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: AppGradients.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
+            // Right Side: Login Form
+            Expanded(
+              flex: 4,
+              child: Container(
+                margin: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  boxShadow: AppEffects.deepShadow,
                 ),
-                const SizedBox(height: 32),
-                Text(
-                  "Empowering Your\nCampus Journey.",
-                  style: GoogleFonts.outfit(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.1,
+                padding: const EdgeInsets.all(60),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: _buildLoginForm(),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  "Join the most advanced ecosystem for education management and collaboration.",
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    color: Colors.white.withOpacity(0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Right Side: Login Form
-        Expanded(
-          flex: 4,
-          child: Container(
-            color: AppTheme.darkSurface,
-            padding: const EdgeInsets.all(60),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
-                child: _buildLoginForm(),
               ),
             ),
-          ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildMobileLayout() {
-    return SingleChildScrollView(
-      child: Column(
+  Widget _buildAnimatedBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.darkBackground,
+            Color(0xFF0F172A),
+            AppTheme.darkBackground,
+          ],
+        ),
+      ),
+      child: Stack(
         children: [
-          Container(
-            height: 280,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: AppGradients.primary,
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.school_rounded, color: Colors.white, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  "Campus Connect",
-                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.primaryColor.withOpacity(0.05),
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: _buildLoginForm(),
+          Positioned(
+            bottom: 300,
+            left: -200,
+            child: Container(
+              width: 600,
+              height: 600,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.accentColor.withOpacity(0.03),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Stack(
+      children: [
+        _buildAnimatedBackground(),
+        SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                height: 280,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.primary,
+                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
+                  boxShadow: AppEffects.subtleShadow,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Campus Connect",
+                      style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: _buildLoginForm(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -202,13 +267,13 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Account Login",
-            style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+            "Welcome back",
+            style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
           ),
           const SizedBox(height: 8),
           Text(
-            "Welcome back, please enter your details.",
-            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+            "Please enter your details to sign in",
+            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.6)),
           ),
           const SizedBox(height: 48),
           AppTextField(

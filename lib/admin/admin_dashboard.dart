@@ -2,11 +2,9 @@ import 'package:campus_connect_malabar/admin/admin_users.dart';
 import 'package:campus_connect_malabar/admin/post_event.dart';
 import 'package:campus_connect_malabar/admin/post_global_notice.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
-import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
-import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
-import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:campus_connect_malabar/widgets/premium_dashboard.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,12 +23,126 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  int _selectedIndex = 0;
+
+  final List<SidebarDestination> _destinations = [
+    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
+    const SidebarDestination(icon: Icons.work_rounded, label: "Jobs & Materials"),
+    const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
+    const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
+    const SidebarDestination(icon: Icons.verified_user_rounded, label: "Approvals"),
+    const SidebarDestination(icon: Icons.manage_accounts_rounded, label: "Users"),
+    const SidebarDestination(icon: Icons.library_books_rounded, label: "Library"),
+  ];
+
+  late final List<Widget> _screens = [
+    const AdminOverview(),
+    const AdminJobs(),
+    const AdminViewEvents(),
+    const AdminNotices(),
+    const ApproveUsers(),
+    const AdminUsers(),
+    const AdminLibrary(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobile: _buildMobileLayout(),
+      desktop: _buildDesktopLayout(),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      body: Row(
+        children: [
+          PremiumSidebar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            destinations: _destinations,
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _screens[_selectedIndex],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      appBar: AppBar(
+        title: Text(_destinations[_selectedIndex].label),
+        actions: [
+          IconButton(
+            onPressed: () => _handleLogout(),
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
+      ),
+      drawer: Drawer(
+        backgroundColor: AppTheme.darkSurface,
+        child: PremiumSidebar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() => _selectedIndex = index);
+            Navigator.pop(context); // Close drawer
+          },
+          destinations: _destinations,
+        ),
+      ),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _screens[_selectedIndex],
+      ),
+    );
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to exit?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Logout")),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+    }
+  }
+}
+
+class AdminOverview extends StatefulWidget {
+  const AdminOverview({super.key});
+
+  @override
+  State<AdminOverview> createState() => _AdminOverviewState();
+}
+
+class _AdminOverviewState extends State<AdminOverview> {
   int _totalUsers = 0;
   int _pendingApprovals = 0;
   int _totalJobs = 0;
   int _totalEvents = 0;
   bool _isLoading = true;
-  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -62,113 +174,46 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  final List<SidebarDestination> _destinations = [
-    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
-    const SidebarDestination(icon: Icons.work_rounded, label: "Jobs & Materials"),
-    const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
-    const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
-    const SidebarDestination(icon: Icons.verified_user_rounded, label: "Approvals"),
-    const SidebarDestination(icon: Icons.manage_accounts_rounded, label: "Users"),
-    const SidebarDestination(icon: Icons.library_books_rounded, label: "Library"),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      mobile: _buildMobileLayout(),
-      desktop: _buildDesktopLayout(),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Row(
-        children: [
-          PremiumSidebar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() => _selectedIndex = index);
-              _navigateToDestination(index);
-            },
-            destinations: _destinations,
-          ),
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                _buildDesktopAppBar(),
-                SliverPadding(
-                  padding: const EdgeInsets.all(32),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Welcome back, Admin",
-                          style: GoogleFonts.outfit(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Here's what's happening across the campus today.",
-                          style: GoogleFonts.inter(color: AppTheme.darkTextSecondary),
-                        ),
-                        const SizedBox(height: 48),
-                        _buildStatsRow(),
-                        const SizedBox(height: 48),
-                        const SectionHeader(title: "Management Actions"),
-                        const SizedBox(height: 24),
-                        _buildManagementGrid(isDesktop: true),
-                      ],
-                    ),
+    final isDesktop = ResponsiveLayout.isDesktop(context);
+    return CustomScrollView(
+      slivers: [
+        if (isDesktop) _buildDesktopAppBar(),
+        SliverPadding(
+          padding: EdgeInsets.all(isDesktop ? 32 : 20),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isDesktop) _buildMobileHeader(),
+                const SizedBox(height: 32),
+                Text(
+                  "Welcome back, Admin",
+                  style: GoogleFonts.outfit(
+                    fontSize: isDesktop ? 32 : 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  "Here's what's happening across the campus today.",
+                  style: GoogleFonts.inter(color: AppTheme.darkTextSecondary),
+                ),
+                const SizedBox(height: 48),
+                _isLoading 
+                    ? const Center(child: CircularProgressIndicator())
+                    : isDesktop ? _buildStatsRow() : _buildStatsGrid(),
+                const SizedBox(height: 48),
+                const SectionHeader(title: "Management Actions"),
+                const SizedBox(height: 24),
+                _buildManagementGrid(isDesktop: isDesktop),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      appBar: AppBar(
-        title: const Text("Admin Dashboard"),
-        actions: [
-          IconButton(
-            onPressed: () => _handleLogout(),
-            icon: const Icon(Icons.logout_rounded),
-          ),
-        ],
-      ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(child: _buildMobileHeader()),
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  const SectionHeader(title: 'Overview'),
-                  const SizedBox(height: 16),
-                  _isLoading ? const Center(child: CircularProgressIndicator()) : _buildStatsGrid(),
-                  const SizedBox(height: 32),
-                  const SectionHeader(title: 'Management'),
-                  const SizedBox(height: 16),
-                  _buildManagementGrid(isDesktop: false),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -182,12 +227,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           const Spacer(),
           IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded)),
           const SizedBox(width: 16),
-          ElevatedButton.icon(
-            onPressed: _handleLogout,
-            icon: const Icon(Icons.logout_rounded, size: 18),
-            label: const Text("Logout"),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor.withOpacity(0.1), foregroundColor: AppTheme.errorColor),
-          ),
         ],
       ),
     );
@@ -195,15 +234,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildMobileHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
         gradient: AppGradients.primary,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
           Text("Admin Panel", style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
           Text("Control Center • Super Admin", style: GoogleFonts.inter(color: Colors.white70)),
         ],
@@ -285,27 +323,5 @@ class _AdminDashboardState extends State<AdminDashboard> {
       onTap: onTap,
       showArrow: true,
     );
-  }
-
-  void _navigateToDestination(int index) {
-    // Shared navigation logic
-  }
-
-  Future<void> _handleLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to exit?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Logout")),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await FirebaseAuth.instance.signOut();
-      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
-    }
   }
 }

@@ -182,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               const SizedBox(width: 12),
               Text(
                 'Profile updated successfully',
-                style: GoogleFonts.poppins(),
+                style: GoogleFonts.inter(),
               ),
             ],
           ),
@@ -253,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 const SizedBox(width: 12),
                 Text(
                   'Password changed successfully',
-                  style: GoogleFonts.poppins(),
+                  style: GoogleFonts.inter(),
                 ),
               ],
             ),
@@ -347,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   Expanded(
                     child: Text(
                       widget.isFirstTime ? 'Complete Profile' : 'Edit Profile',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.outfit(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -382,7 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       nameController.text.isNotEmpty
                           ? nameController.text[0].toUpperCase()
                           : '?',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.outfit(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -895,7 +895,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       const SizedBox(width: 10),
                       Text(
                         'Save Profile',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.outfit(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
