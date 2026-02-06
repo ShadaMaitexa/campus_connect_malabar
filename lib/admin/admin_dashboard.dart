@@ -47,20 +47,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ),
   ];
 
-  late final List<Widget> _screens = [
-    AdminOverview(
-      onNavigate: (index) {
-        setState(() => _selectedIndex = index);
-      },
-      onLogout: _handleLogout,
-    ),
-    const AdminJobs(),
-    const AdminViewEvents(),
-    const AdminNotices(),
-    const ApproveUsers(),
-    const AdminUsers(),
-    const AdminLibrary(),
-  ];
+  Widget _getScreen(int index) {
+    switch (index) {
+      case 0:
+        return AdminOverview(
+          onNavigate: (index) {
+            setState(() => _selectedIndex = index);
+          },
+          onLogout: () => _handleLogout(),
+        );
+      case 1:
+        return const AdminJobs();
+      case 2:
+        return const AdminViewEvents();
+      case 3:
+        return const AdminNotices();
+      case 4:
+        return const ApproveUsers();
+      case 5:
+        return const AdminUsers();
+      case 6:
+        return const AdminLibrary();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 
   @override
   void initState() {
@@ -118,7 +129,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         },
                     child: KeyedSubtree(
                       key: ValueKey(_selectedIndex),
-                      child: _screens[_selectedIndex],
+                      child: _getScreen(_selectedIndex),
                     ),
                   ),
                 ),
@@ -175,7 +186,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               duration: const Duration(milliseconds: 300),
               child: KeyedSubtree(
                 key: ValueKey(_selectedIndex),
-                child: _screens[_selectedIndex],
+                child: _getScreen(_selectedIndex),
               ),
             ),
           ),
