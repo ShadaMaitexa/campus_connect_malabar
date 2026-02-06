@@ -61,20 +61,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Row(
+      body: Stack(
         children: [
-          PremiumSidebar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() => _selectedIndex = index);
-            },
-            destinations: _destinations,
-          ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_selectedIndex],
+          // Global Premium Background
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
             ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.9),
+            ),
+          ),
+          Row(
+            children: [
+              PremiumSidebar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+                destinations: _destinations,
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: Colors.white.withOpacity(0.05)),
+                    ),
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey(_selectedIndex),
+                      child: _screens[_selectedIndex],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -85,14 +114,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
-        title: Text(_destinations[_selectedIndex].label),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          _destinations[_selectedIndex].label,
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             onPressed: () => _handleLogout(),
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
           ),
         ],
       ),
+      extendBodyBehindAppBar: true,
       drawer: Drawer(
         backgroundColor: AppTheme.darkSurface,
         child: PremiumSidebar(
@@ -104,9 +139,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
           destinations: _destinations,
         ),
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _screens[_selectedIndex],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/generated_background.png",
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: AppTheme.darkBackground.withOpacity(0.92),
+            ),
+          ),
+          SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: KeyedSubtree(
+                key: ValueKey(_selectedIndex),
+                child: _screens[_selectedIndex],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -177,56 +232,98 @@ class _AdminOverviewState extends State<AdminOverview> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    return CustomScrollView(
-      slivers: [
-        if (isDesktop) _buildDesktopAppBar(),
-        SliverPadding(
-          padding: EdgeInsets.all(isDesktop ? 32 : 20),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isDesktop) _buildMobileHeader(),
-                const SizedBox(height: 32),
-                Text(
-                  "Welcome back, Admin",
-                  style: GoogleFonts.outfit(
-                    fontSize: isDesktop ? 32 : 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+    return Container(
+      color: Colors.transparent,
+      child: CustomScrollView(
+        slivers: [
+          if (isDesktop) _buildDesktopAppBar(),
+          SliverPadding(
+            padding: EdgeInsets.all(isDesktop ? 40 : 20),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isDesktop) _buildMobileHeader(),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Overview",
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor,
+                      letterSpacing: 2,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Here's what's happening across the campus today.",
-                  style: GoogleFonts.inter(color: AppTheme.darkTextSecondary),
-                ),
-                const SizedBox(height: 48),
-                _isLoading 
-                    ? const Center(child: CircularProgressIndicator())
-                    : isDesktop ? _buildStatsRow() : _buildStatsGrid(),
-                const SizedBox(height: 48),
-                const SectionHeader(title: "Management Actions"),
-                const SizedBox(height: 24),
-                _buildManagementGrid(isDesktop: isDesktop),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    "Welcome back, Admin",
+                    style: GoogleFonts.outfit(
+                      fontSize: isDesktop ? 40 : 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Real-time visibility into your campus ecosystem.",
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _isLoading 
+                      ? const Center(child: Padding(padding: EdgeInsets.all(100), child: CircularProgressIndicator()))
+                      : isDesktop ? _buildStatsRow() : _buildStatsGrid(),
+                  const SizedBox(height: 60),
+                  Row(
+                    children: [
+                      Container(width: 4, height: 24, decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(width: 12),
+                      const SectionHeader(title: "Management Hub"),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildManagementGrid(isDesktop: isDesktop),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildDesktopAppBar() {
     return SliverAppBar(
       floating: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       automaticallyImplyLeading: false,
       title: Row(
         children: [
           const Spacer(),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded)),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search_rounded, color: Colors.white54, size: 18),
+                const SizedBox(width: 12),
+                Text("Search metrics...", style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          IconButton(
+            onPressed: () {}, 
+            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
+          ),
         ],
       ),
     );

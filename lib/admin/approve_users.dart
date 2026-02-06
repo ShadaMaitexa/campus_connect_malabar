@@ -1,15 +1,11 @@
 import 'package:campus_connect_malabar/services/approve_user_service.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
-import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
-import '../widgets/app_card.dart';
-import '../widgets/app_button.dart';
-import '../widgets/empty_state.dart';
-import '../widgets/loading_shimmer.dart';
 
 class ApproveUsers extends StatelessWidget {
   const ApproveUsers({super.key});
@@ -17,9 +13,18 @@ class ApproveUsers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: "Pending User Approvals",
-        showBackButton: true,
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          "Pending Approvals",
+          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.maybePop(context),
+        ),
       ),
       body: CustomScrollView(
         slivers: [
@@ -27,30 +32,12 @@ class ApproveUsers extends StatelessWidget {
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('approved', isEqualTo: false)
-                .where('role', whereIn: ['mentor', 'alumni']) // ✅ IMPORTANT
+                .where('role', whereIn: ['mentor', 'alumni'])
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return SliverPadding(
-                  padding: EdgeInsets.all(Responsive.padding(context)),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      Column(
-                        children: List.generate(
-                          3,
-                          (index) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppTheme.spacingM,
-                            ),
-                            child: LoadingShimmer(
-                              width: double.infinity,
-                              height: 100,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
+                return const SliverToBoxAdapter(
+                  child: Center(child: Padding(padding: EdgeInsets.all(100), child: CircularProgressIndicator())),
                 );
               }
 
@@ -58,25 +45,29 @@ class ApproveUsers extends StatelessWidget {
 
               if (docs.isEmpty) {
                 return SliverToBoxAdapter(
-                  child: EmptyStateWidget(
-                    icon: Icons.verified_user_rounded,
-                    title: "No Pending Approvals",
-                    subtitle: "All mentors and alumni are approved.",
+                  child: Padding(
+                    padding: const EdgeInsets.all(100),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.verified_user_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                          const SizedBox(height: 16),
+                          Text("No Pending Approvals", style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.3))),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }
 
               return SliverPadding(
-                padding: EdgeInsets.all(Responsive.padding(context)),
+                padding: const EdgeInsets.all(24),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     return AppAnimations.slideInFromBottom(
-                      child: Column(
-                        children: [
-                          _UserApprovalCard(user: docs[index]),
-                          if (index < docs.length - 1)
-                            const SizedBox(height: AppTheme.spacingM),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _UserApprovalCard(user: docs[index]),
                       ),
                     );
                   }, childCount: docs.length),
@@ -90,7 +81,6 @@ class ApproveUsers extends StatelessWidget {
   }
 }
 
-// ---------------- USER CARD ----------------
 class _UserApprovalCard extends StatelessWidget {
   final QueryDocumentSnapshot user;
 
@@ -102,69 +92,72 @@ class _UserApprovalCard extends StatelessWidget {
     final name = user['name'] ?? 'Unknown';
     final email = user['email'] ?? '';
 
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      child: Responsive.isMobile(context)
-          ? Column(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppGradients.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(name, email),
-                const SizedBox(height: AppTheme.spacingM),
-
-                AppButton(label: 'Approve', onPressed: () => _approve(context)),
-              ],
-            )
-          : Row(
-              children: [
-                _avatar(name),
-                const SizedBox(width: AppTheme.spacingL),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name, style: AppTheme.heading3),
-                      Text(email, style: AppTheme.bodyMedium),
-                      const SizedBox(height: AppTheme.spacingXS),
-                    ],
+                Text(
+                  name,
+                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: GoogleFonts.inter(color: Colors.white.withOpacity(0.4), fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    role.toUpperCase(),
+                    style: GoogleFonts.inter(color: AppTheme.primaryColor, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                   ),
                 ),
-                AppButton(label: 'Approve', onPressed: () => _approve(context)),
               ],
             ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            onPressed: () => _approve(context),
+            child: const Text("Approve"),
+          ),
+        ],
+      ),
     );
   }
-
-  Widget _avatar(String name) => CircleAvatar(
-    backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-    child: Text(
-      name.isNotEmpty ? name[0].toUpperCase() : 'U',
-      style: TextStyle(color: AppTheme.primaryColor),
-    ),
-  );
-
-  Widget _header(String name, String email) => Row(
-    children: [
-      _avatar(name),
-      const SizedBox(width: AppTheme.spacingM),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: AppTheme.heading3),
-            Text(email, style: AppTheme.bodyMedium),
-          ],
-        ),
-      ),
-    ],
-  );
-
-  Widget _chips(String role, String dept) => Row(
-    children: [
-      _InfoChip(label: role.toUpperCase()),
-      const SizedBox(width: AppTheme.spacingS),
-      if (dept.isNotEmpty) _InfoChip(label: dept),
-    ],
-  );
 
   Future<void> _approve(BuildContext context) async {
     await ApproveUserService.approveUser(
@@ -182,33 +175,5 @@ class _UserApprovalCard extends StatelessWidget {
         ),
       );
     }
-  }
-}
-
-// ---------------- CHIP ----------------
-class _InfoChip extends StatelessWidget {
-  final String label;
-
-  const _InfoChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingM,
-        vertical: AppTheme.spacingXS,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusS),
-      ),
-      child: Text(
-        label,
-        style: AppTheme.bodySmall.copyWith(
-          color: AppTheme.primaryColor,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
   }
 }

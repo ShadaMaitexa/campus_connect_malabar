@@ -363,57 +363,6 @@ class _HeroSection extends StatelessWidget {
                               ),
                             ),
                             Positioned(
-                              top: 40,
-                              left: 20,
-                              right: 20,
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: AppEffects.glassDecoration,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            gradient: AppGradients.primary,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Center(
-                                            child: Text("A", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          "Welcome, Alex",
-                                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                        ),
-                                        const Spacer(),
-                                        const Icon(Icons.notifications_active_rounded, color: AppTheme.accentColor, size: 16),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Text(
-                                      "Attendance: 92%",
-                                      style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: 0.92,
-                                        backgroundColor: Colors.white10,
-                                        color: AppTheme.primaryColor,
-                                        minHeight: 6,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Positioned(
                               bottom: 40,
                               left: 20,
                               right: 20,

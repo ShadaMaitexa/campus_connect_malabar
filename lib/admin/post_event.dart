@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class AdminViewEvents extends StatelessWidget {
   const AdminViewEvents({super.key});
@@ -7,103 +9,112 @@ class AdminViewEvents extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appBar("All Events"),
-      body: _page(
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('events')
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.data!.docs.isEmpty) {
-              return _empty("No events available");
-            }
-
-            return ListView.separated(
-              itemCount: snapshot.data!.docs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 18),
-              itemBuilder: (context, index) {
-                final event = snapshot.data!.docs[index];
-                return _eventCard(context, event);
-              },
-            );
-          },
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          "Manage Events",
+          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('events')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.event_busy_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                  const SizedBox(height: 16),
+                  Text("No events scheduled", style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.3))),
+                ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(24),
+            itemCount: snapshot.data!.docs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 18),
+            itemBuilder: (context, index) {
+              final event = snapshot.data!.docs[index];
+              return _eventCard(context, event);
+            },
+          );
+        },
       ),
     );
   }
 
-  // ---------------- EVENT CARD ----------------
   Widget _eventCard(BuildContext context, QueryDocumentSnapshot event) {
     final Timestamp dateTs = event['date'];
     final DateTime eventDate = dateTs.toDate();
 
     return Container(
-      decoration: _card(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // TITLE
-          Text(
-            event['title'],
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // DEPARTMENT
-          Text(
-            "Department: ${event['department']}",
-            style: const TextStyle(
-              color: Color(0xFF6366F1),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // DESCRIPTION
-          Text(
-            event['description'],
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          const SizedBox(height: 14),
-
-          // DATE
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.calendar_today,
-                  size: 16, color: Colors.grey),
-              const SizedBox(width: 6),
-              Text(
-                "${eventDate.day}-${eventDate.month}-${eventDate.year}",
-                style: const TextStyle(color: Colors.grey),
+              Expanded(
+                child: Text(
+                  event['title'],
+                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  event['department'].toString().toUpperCase(),
+                  style: GoogleFonts.inter(color: AppTheme.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
-
-          const Divider(height: 30),
-
-          // ACTIONS
+          const SizedBox(height: 12),
+          Text(
+            event['description'],
+            style: GoogleFonts.inter(color: Colors.white70, fontSize: 14, height: 1.5),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              Icon(Icons.calendar_today_rounded, size: 16, color: Colors.white.withOpacity(0.3)),
+              const SizedBox(width: 8),
+              Text(
+                "${eventDate.day}-${eventDate.month}-${eventDate.year}",
+                style: GoogleFonts.inter(color: Colors.white.withOpacity(0.3), fontSize: 13),
+              ),
+              const Spacer(),
               TextButton.icon(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: const Text(
-                  "Remove",
-                  style: TextStyle(color: Colors.red),
-                ),
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                label: Text("Remove", style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.w600)),
                 onPressed: () async {
                   final confirm = await _confirmDelete(context);
                   if (confirm) {
@@ -118,26 +129,21 @@ class AdminViewEvents extends StatelessWidget {
     );
   }
 
-  // ---------------- CONFIRM DELETE ----------------
   Future<bool> _confirmDelete(BuildContext context) async {
     return await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text("Delete Event"),
-            content:
-                const Text("Are you sure you want to remove this event?"),
+            backgroundColor: AppTheme.darkSurface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text("Delete Event", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text("Are you sure you want to remove this event?", style: GoogleFonts.inter(color: Colors.white70)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel"),
+                child: Text("Cancel", style: TextStyle(color: Colors.white.withOpacity(0.5))),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text("Delete"),
               ),
@@ -147,54 +153,3 @@ class AdminViewEvents extends StatelessWidget {
         false;
   }
 }
-
-/* ================= SHARED UI (MATCHES PROFILE & ADMIN) ================= */
-
-PreferredSizeWidget _appBar(String title) => AppBar(
-      elevation: 0,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-          ),
-        ),
-      ),
-    );
-
-Widget _page({required Widget child}) => Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF6366F1).withOpacity(0.06),
-            Colors.white,
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: child,
-    );
-
-Decoration _card() => BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 16,
-          offset: const Offset(0, 10),
-        ),
-      ],
-    );
-
-Widget _empty(String text) => Center(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 60),
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.grey),
-        ),
-      ),
-    );
