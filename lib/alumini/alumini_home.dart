@@ -14,7 +14,8 @@ import 'my_listings.dart';
 import '../widgets/custom_app_bar.dart';
 
 class AlumniHome extends StatefulWidget {
-  const AlumniHome({super.key});
+  final ValueChanged<int> onNavigate;
+  const AlumniHome({super.key, required this.onNavigate});
 
   @override
   State<AlumniHome> createState() => _AlumniHomeState();
@@ -191,8 +192,8 @@ class _AlumniHomeState extends State<AlumniHome> {
       children: [
         _navCard("Post Material", Icons.publish_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PostItemScreen()))),
         _navCard("Hiring / Job", Icons.work_outline_rounded, AppGradients.info, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PostJobScreen()))),
-        _navCard("My Contributions", Icons.analytics_outlined, AppGradients.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListings()))),
-        _navCard("Global Community", Icons.public_rounded, AppGradients.secondary, () {}),
+        _navCard("My Contributions", Icons.analytics_outlined, AppGradients.teal, () => widget.onNavigate(1)),
+        _navCard("Global Community", Icons.public_rounded, AppGradients.secondary, () => widget.onNavigate(2)),
       ],
     );
   }

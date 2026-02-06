@@ -15,7 +15,8 @@ import '../alumini/community_screen.dart';
 import '../widgets/custom_app_bar.dart';
 
 class StudentHome extends StatefulWidget {
-  const StudentHome({super.key});
+  final ValueChanged<int> onNavigate;
+  const StudentHome({super.key, required this.onNavigate});
 
   @override
   State<StudentHome> createState() => _StudentHomeState();
@@ -167,12 +168,16 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
           children: [
             SizedBox(
               width: isDesktop ? 300 : double.infinity,
-              child: PremiumStatCard(
-                title: "Attendance Rate",
-                value: "$percent%",
-                icon: Icons.analytics_rounded,
-                gradient: percent >= 75 ? AppGradients.primary : AppGradients.accent,
-                trend: "$present/$total days",
+              child: InkWell(
+                onTap: () => widget.onNavigate(1),
+                borderRadius: BorderRadius.circular(24),
+                child: PremiumStatCard(
+                  title: "Attendance Rate",
+                  value: "$percent%",
+                  icon: Icons.analytics_rounded,
+                  gradient: percent >= 75 ? AppGradients.primary : AppGradients.accent,
+                  trend: "$present/$total days",
+                ),
               ),
             ),
             SizedBox(

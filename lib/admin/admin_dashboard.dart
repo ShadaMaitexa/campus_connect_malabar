@@ -36,7 +36,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   ];
 
   late final List<Widget> _screens = [
-    const AdminOverview(),
+    AdminOverview(onNavigate: (index) {
+      setState(() => _selectedIndex = index);
+    }),
     const AdminJobs(),
     const AdminViewEvents(),
     const AdminNotices(),
@@ -83,6 +85,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   setState(() => _selectedIndex = index);
                 },
                 destinations: _destinations,
+                onLogout: _handleLogout,
               ),
               Expanded(
                 child: Container(
@@ -186,7 +189,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 }
 
 class AdminOverview extends StatefulWidget {
-  const AdminOverview({super.key});
+  final ValueChanged<int> onNavigate;
+  const AdminOverview({super.key, required this.onNavigate});
 
   @override
   State<AdminOverview> createState() => _AdminOverviewState();
@@ -324,6 +328,12 @@ class _AdminOverviewState extends State<AdminOverview> {
             onPressed: () {}, 
             icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
           ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _handleLogout, 
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+            tooltip: "Logout",
+          ),
         ],
       ),
     );
@@ -349,13 +359,13 @@ class _AdminOverviewState extends State<AdminOverview> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: PremiumStatCard(title: "Total Users", value: "$_totalUsers", icon: Icons.people_rounded, gradient: AppGradients.primary)),
+        Expanded(child: InkWell(onTap: () => widget.onNavigate(5), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Total Users", value: "$_totalUsers", icon: Icons.people_rounded, gradient: AppGradients.primary))),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Pending Approvals", value: "$_pendingApprovals", icon: Icons.verified_user_rounded, gradient: AppGradients.success, trend: "4 New", isPositive: false)),
+        Expanded(child: InkWell(onTap: () => widget.onNavigate(4), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Pending Approvals", value: "$_pendingApprovals", icon: Icons.verified_user_rounded, gradient: AppGradients.success, trend: "4 New", isPositive: false))),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Active Jobs", value: "$_totalJobs", icon: Icons.work_rounded, gradient: AppGradients.accent)),
+        Expanded(child: InkWell(onTap: () => widget.onNavigate(1), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Active Jobs", value: "$_totalJobs", icon: Icons.work_rounded, gradient: AppGradients.accent))),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Total Events", value: "$_totalEvents", icon: Icons.event_rounded, gradient: AppGradients.surface)),
+        Expanded(child: InkWell(onTap: () => widget.onNavigate(2), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Total Events", value: "$_totalEvents", icon: Icons.event_rounded, gradient: AppGradients.surface))),
       ],
     );
   }
@@ -369,10 +379,10 @@ class _AdminOverviewState extends State<AdminOverview> {
       mainAxisSpacing: 16,
       childAspectRatio: 1.2,
       children: [
-        _buildStatCard(Icons.people_rounded, "$_totalUsers", "Users", AppGradients.primary),
-        _buildStatCard(Icons.verified_user_rounded, "$_pendingApprovals", "Pending", AppGradients.success),
-        _buildStatCard(Icons.work_rounded, "$_totalJobs", "Jobs", AppGradients.accent),
-        _buildStatCard(Icons.event_rounded, "$_totalEvents", "Events", AppGradients.surface),
+        InkWell(onTap: () => widget.onNavigate(5), child: _buildStatCard(Icons.people_rounded, "$_totalUsers", "Users", AppGradients.primary)),
+        InkWell(onTap: () => widget.onNavigate(4), child: _buildStatCard(Icons.verified_user_rounded, "$_pendingApprovals", "Pending", AppGradients.success)),
+        InkWell(onTap: () => widget.onNavigate(1), child: _buildStatCard(Icons.work_rounded, "$_totalJobs", "Jobs", AppGradients.accent)),
+        InkWell(onTap: () => widget.onNavigate(2), child: _buildStatCard(Icons.event_rounded, "$_totalEvents", "Events", AppGradients.surface)),
       ],
     );
   }
@@ -401,12 +411,12 @@ class _AdminOverviewState extends State<AdminOverview> {
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _actionCard("Jobs & Materials", Icons.work_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminJobs()))),
-        _actionCard("Events", Icons.event_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminViewEvents()))),
-        _actionCard("Notices", Icons.campaign_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminNotices()))),
-        _actionCard("Approvals", Icons.verified_user_rounded, AppGradients.success, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ApproveUsers()))),
-        _actionCard("Manage Users", Icons.manage_accounts_rounded, AppGradients.danger, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsers()))),
-        _actionCard("Library", Icons.library_books_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminLibrary()))),
+        _actionCard("Jobs & Materials", Icons.work_rounded, AppGradients.accent, () => widget.onNavigate(1)),
+        _actionCard("Events", Icons.event_rounded, AppGradients.primary, () => widget.onNavigate(2)),
+        _actionCard("Notices", Icons.campaign_rounded, AppGradients.surface, () => widget.onNavigate(3)),
+        _actionCard("Approvals", Icons.verified_user_rounded, AppGradients.success, () => widget.onNavigate(4)),
+        _actionCard("Manage Users", Icons.manage_accounts_rounded, AppGradients.danger, () => widget.onNavigate(5)),
+        _actionCard("Library", Icons.library_books_rounded, AppGradients.surface, () => widget.onNavigate(6)),
       ],
     );
   }

@@ -14,7 +14,8 @@ import 'post_event.dart';
 import '../widgets/custom_app_bar.dart';
 
 class MentorHome extends StatefulWidget {
-  const MentorHome({super.key});
+  final ValueChanged<int> onNavigate;
+  const MentorHome({super.key, required this.onNavigate});
 
   @override
   State<MentorHome> createState() => _MentorHomeState();
@@ -189,9 +190,9 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _navCard("Mark Attendance", Icons.how_to_reg_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
-        _navCard("Post Notice", Icons.add_alert_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PostNotice()))),
-        _navCard("New Event", Icons.event_note_rounded, AppGradients.success, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MentorPostEvent()))),
+        _navCard("Mark Attendance", Icons.how_to_reg_rounded, AppGradients.primary, () => widget.onNavigate(1)),
+        _navCard("Post Notice", Icons.add_alert_rounded, AppGradients.accent, () => widget.onNavigate(2)),
+        _navCard("New Event", Icons.event_note_rounded, AppGradients.success, () => widget.onNavigate(3)),
         _navCard("Student Reports", Icons.analytics_rounded, AppGradients.surface, () {}),
       ],
     );

@@ -5,12 +5,14 @@ class PremiumSidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onDestinationSelected;
   final List<SidebarDestination> destinations;
+  final VoidCallback? onLogout;
 
   const PremiumSidebar({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.destinations,
+    this.onLogout,
   });
 
   @override
@@ -81,6 +83,13 @@ class PremiumSidebar extends StatelessWidget {
             ),
             title: const Text("Admin User", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             subtitle: const Text("Super Admin", style: TextStyle(color: AppTheme.darkTextSecondary, fontSize: 12)),
+            trailing: onLogout != null 
+                ? IconButton(
+                    onPressed: onLogout, 
+                    icon: const Icon(Icons.logout_rounded, color: Colors.white54, size: 20),
+                    tooltip: "Logout",
+                  )
+                : null,
           ),
           const SizedBox(height: 24),
         ],

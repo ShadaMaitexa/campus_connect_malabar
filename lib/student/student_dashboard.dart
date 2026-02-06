@@ -2,8 +2,10 @@ import 'package:campus_connect_malabar/student/attendence_view.dart';
 import 'package:campus_connect_malabar/student/stdent_home.dart';
 import 'package:campus_connect_malabar/widgets/premium_dashboard.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../auth/login_screen.dart';
 import 'view_notices.dart';
 import 'view_events.dart';
 
@@ -17,11 +19,13 @@ class StudentDashboard extends StatefulWidget {
 class _StudentDashboardState extends State<StudentDashboard> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    StudentHome(),
-    StudentAttendanceView(),
-    ViewNotices(),
-    ViewEvents(),
+  late final List<Widget> _screens = [
+    StudentHome(onNavigate: (index) {
+      setState(() => _selectedIndex = index);
+    }),
+    const StudentAttendanceView(),
+    const ViewNotices(),
+    const ViewEvents(),
   ];
 
   final List<SidebarDestination> _destinations = [
@@ -62,6 +66,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) => setState(() => _selectedIndex = index),
                 destinations: _destinations,
+                onLogout: _handleLogout,
               ),
               Expanded(
                 child: Container(
@@ -89,6 +94,17 @@ class _StudentDashboardState extends State<StudentDashboard> {
   Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _handleLogout,
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+          ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           Positioned.fill(
@@ -134,6 +150,29 @@ class _StudentDashboardState extends State<StudentDashboard> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkSurface,
+        title: const Text("Logout", style: TextStyle(color: Colors.white)),
+        content: const Text("Are you sure you want to exit?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("Logout")
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+    }
   }
 
   NavigationDestination _navItem(IconData icon, IconData activeIcon, String label) {
