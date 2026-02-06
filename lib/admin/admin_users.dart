@@ -17,7 +17,7 @@ class AdminUsers extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Manage Alumni",
+          "Manage Users",
           style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
         ),
         leading: IconButton(
@@ -30,7 +30,7 @@ class AdminUsers extends StatelessWidget {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
-                .where('role', isEqualTo: 'alumni')
+                .where('role', whereIn: ['alumni', 'student', 'mentor'])
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
@@ -44,7 +44,7 @@ class AdminUsers extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.all(100),
                     child: Center(
-                      child: Text("No Alumni Found", style: TextStyle(color: Colors.white38)),
+                      child: Text("No Users Found", style: TextStyle(color: Colors.white38)),
                     ),
                   ),
                 );

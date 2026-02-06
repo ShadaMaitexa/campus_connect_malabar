@@ -15,10 +15,18 @@ class LibraryAnalyticsScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           "Collection Metrics",
-          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
           onPressed: () => Navigator.maybePop(context),
         ),
       ),
@@ -28,7 +36,8 @@ class LibraryAnalyticsScreen extends StatelessWidget {
           FirebaseFirestore.instance.collection('issued_books').get(),
         ]),
         builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
 
           final booksCount = (snap.data![0] as QuerySnapshot).docs.length;
           final issuedCount = (snap.data![1] as QuerySnapshot).docs.length;
@@ -40,7 +49,10 @@ class LibraryAnalyticsScreen extends StatelessWidget {
               children: [
                 Text(
                   "Deep insights into your inventory performance.",
-                  style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5), fontSize: 16),
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 48),
                 Expanded(
@@ -50,10 +62,30 @@ class LibraryAnalyticsScreen extends StatelessWidget {
                     mainAxisSpacing: 24,
                     childAspectRatio: 1.5,
                     children: [
-                      _buildMetricCard("Total Titles", booksCount.toString(), Icons.menu_book_rounded, AppGradients.primary),
-                      _buildMetricCard("Currently Issued", issuedCount.toString(), Icons.outbound_rounded, AppGradients.accent),
-                      _buildMetricCard("Active Users", "12", Icons.people_rounded, AppGradients.success),
-                      _buildMetricCard("System Health", "Optimal", Icons.storage_rounded, AppGradients.surface),
+                      _buildMetricCard(
+                        "Total Titles",
+                        booksCount.toString(),
+                        Icons.menu_book_rounded,
+                        AppGradients.primary,
+                      ),
+                      _buildMetricCard(
+                        "Currently Issued",
+                        issuedCount.toString(),
+                        Icons.outbound_rounded,
+                        AppGradients.accent,
+                      ),
+                      _buildMetricCard(
+                        "Active Users",
+                        "12",
+                        Icons.people_rounded,
+                        AppGradients.success,
+                      ),
+                      _buildMetricCard(
+                        "System Health",
+                        "Optimal",
+                        Icons.storage_rounded,
+                        AppGradients.surface,
+                      ),
                     ],
                   ),
                 ),
@@ -65,7 +97,12 @@ class LibraryAnalyticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Gradient gradient) {
+  Widget _buildMetricCard(
+    String title,
+    String value,
+    IconData icon,
+    Gradient gradient,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

@@ -10,6 +10,7 @@ import 'issue_history.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/premium_dashboard.dart';
+import '../auth/login_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
 
@@ -21,12 +22,12 @@ class LibraryAdminDashboard extends StatefulWidget {
 }
 
 class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
+  int _selectedIndex = 0;
   int _totalBooks = 0;
   int _issuedBooks = 0;
   int _pendingReturns = 0;
   int _totalFines = 0;
   bool _isLoading = true;
-  int _selectedIndex = 6; // Default to Library
 
   @override
   void initState() {
@@ -36,27 +37,27 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
 
   Future<void> _loadStats() async {
     try {
-      // Load total books
-      final booksSnap =
-          await FirebaseFirestore.instance.collection('books').get();
-
-      // Load issued books
+      final booksSnap = await FirebaseFirestore.instance
+          .collection('books')
+          .get();
       final issuedSnap = await FirebaseFirestore.instance
           .collection('issued_books')
           .where('returned', isEqualTo: false)
           .get();
 
-      // Load pending returns (overdue)
       final now = DateTime.now();
       int pendingCount = 0;
       int totalFine = 0;
 
       for (var doc in issuedSnap.docs) {
-        final dueDate = (doc.data()['dueDate'] as Timestamp).toDate();
-        if (dueDate.isBefore(now)) {
-          pendingCount++;
-          final daysOverdue = now.difference(dueDate).inDays;
-          totalFine += daysOverdue * 5; // ₹5 per day fine
+        final data = doc.data();
+        if (data.containsKey('dueDate')) {
+          final dueDate = (data['dueDate'] as Timestamp).toDate();
+          if (dueDate.isBefore(now)) {
+            pendingCount++;
+            final daysOverdue = now.difference(dueDate).inDays;
+            totalFine += daysOverdue * 5;
+          }
         }
       }
 
@@ -70,22 +71,54 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
         });
       }
     } catch (e) {
-      debugPrint("Error loading library stats: $e");
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   final List<SidebarDestination> _destinations = [
-    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
-    const SidebarDestination(icon: Icons.work_rounded, label: "Jobs & Materials"),
-    const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
-    const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
-    const SidebarDestination(icon: Icons.verified_user_rounded, label: "Approvals"),
-    const SidebarDestination(icon: Icons.manage_accounts_rounded, label: "Users"),
-    const SidebarDestination(icon: Icons.library_books_rounded, label: "Library"),
+    const SidebarDestination(
+      icon: Icons.library_books_rounded,
+      label: "Library Management",
+    ),
+    const SidebarDestination(icon: Icons.analytics_rounded, label: "Analytics"),
+    const SidebarDestination(icon: Icons.history_rounded, label: "History"),
   ];
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkSurface,
+        title: const Text("Logout", style: TextStyle(color: Colors.white)),
+        content: const Text(
+          "Are you sure you want to exit?",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +133,6 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Global Premium Background
           Positioned.fill(
             child: Image.asset(
               "assets/images/generated_background.png",
@@ -108,18 +140,16 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.9),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.9)),
           ),
           Row(
             children: [
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
-                onDestinationSelected: (index) {
-                  _handleGlobalNavigation(index);
-                },
+                onDestinationSelected: (index) =>
+                    setState(() => _selectedIndex = index),
                 destinations: _destinations,
+                onLogout: _handleLogout,
               ),
               Expanded(
                 child: Container(
@@ -128,49 +158,12 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
                       left: BorderSide(color: Colors.white.withOpacity(0.05)),
                     ),
                   ),
-                  child: CustomScrollView(
-                    slivers: [
-                      _buildDesktopAppBar(),
-                      SliverPadding(
-                        padding: const EdgeInsets.all(40),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryColor),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    "Library Desk",
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 48),
-                              _isLoading 
-                                  ? const Center(child: Padding(padding: EdgeInsets.all(100), child: CircularProgressIndicator()))
-                                  : _buildLibraryStatsRow(),
-                              const SizedBox(height: 60),
-                              const SectionHeader(title: "Inventory Control"),
-                              const SizedBox(height: 24),
-                              _buildLibraryOpsGrid(isDesktop: true),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: KeyedSubtree(
+                      key: ValueKey(_selectedIndex),
+                      child: _buildCurrentScreen(),
+                    ),
                   ),
                 ),
               ),
@@ -181,15 +174,127 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
     );
   }
 
+  Widget _buildCurrentScreen() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildOverviewScreen();
+      case 1:
+        return const LibraryAnalyticsScreen();
+      case 2:
+        return const IssueHistoryScreen();
+      default:
+        return _buildOverviewScreen();
+    }
+  }
+
+  Widget _buildOverviewScreen() {
+    return CustomScrollView(
+      slivers: [
+        _buildDesktopAppBar(),
+        SliverPadding(
+          padding: const EdgeInsets.all(40),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 48),
+                _isLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(100),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : _buildLibraryStatsRow(),
+                const SizedBox(height: 60),
+                const SectionHeader(title: "Inventory Control"),
+                const SizedBox(height: 24),
+                _buildLibraryOpsGrid(isDesktop: true),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.auto_stories_rounded,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          "Library Desk",
+          style: GoogleFonts.outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopAppBar() {
+    return SliverAppBar(
+      floating: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      actions: [
+        FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser?.uid)
+              .get(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!['role'] == 'admin') {
+              return Padding(
+                padding: const EdgeInsets.only(right: 20, top: 10),
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.maybePop(context),
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text("Back to Admin"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.darkSurface,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text("Library Desk", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text(
+          "Library Desk",
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(onPressed: _loadStats, icon: const Icon(Icons.refresh, color: Colors.white70)),
+          IconButton(
+            onPressed: _loadStats,
+            icon: const Icon(Icons.refresh, color: Colors.white70),
+          ),
         ],
       ),
       extendBodyBehindAppBar: true,
@@ -202,58 +307,45 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
-          _isLoading 
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      _buildMobileHeader(),
-                      const SizedBox(height: 32),
-                      _buildLibraryStatsGrid(),
-                      const SizedBox(height: 40),
-                      Row(
-                        children: [
-                          Container(width: 4, height: 20, decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 12),
-                          const SectionHeader(title: "Management"),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLibraryOpsGrid(isDesktop: false),
-                    ],
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        _buildMobileHeader(),
+                        const SizedBox(height: 32),
+                        _buildLibraryStatsGrid(),
+                        const SizedBox(height: 40),
+                        _buildSectionHeader("Management"),
+                        const SizedBox(height: 20),
+                        _buildLibraryOpsGrid(isDesktop: false),
+                      ],
+                    ),
                   ),
                 ),
-              ),
         ],
       ),
     );
   }
 
-  Widget _buildDesktopAppBar() {
-    return SliverAppBar(
-      floating: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
-      automaticallyImplyLeading: false,
-      title: Row(
-        children: [
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_rounded, size: 18),
-            label: const Text("Back to Admin"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.darkSurface,
-              foregroundColor: Colors.white,
-            ),
+  Widget _buildSectionHeader(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(2),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        SectionHeader(title: title),
+      ],
     );
   }
 
@@ -268,10 +360,21 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.library_books_rounded, color: Colors.white, size: 40),
+          const Icon(
+            Icons.library_books_rounded,
+            color: Colors.white,
+            size: 40,
+          ),
           const SizedBox(height: 16),
           Text("System Pulse", style: GoogleFonts.inter(color: Colors.white70)),
-          Text("Inventory Overview", style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(
+            "Inventory Overview",
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -280,13 +383,41 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   Widget _buildLibraryStatsRow() {
     return Row(
       children: [
-        Expanded(child: PremiumStatCard(title: "Collection", value: "$_totalBooks", icon: Icons.book_rounded, gradient: AppGradients.primary)),
+        Expanded(
+          child: PremiumStatCard(
+            title: "Collection",
+            value: "$_totalBooks",
+            icon: Icons.book_rounded,
+            gradient: AppGradients.primary,
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Active Issues", value: "$_issuedBooks", icon: Icons.outbound_rounded, gradient: AppGradients.accent)),
+        Expanded(
+          child: PremiumStatCard(
+            title: "Active Issues",
+            value: "$_issuedBooks",
+            icon: Icons.outbound_rounded,
+            gradient: AppGradients.accent,
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Pending Returns", value: "$_pendingReturns", icon: Icons.assignment_return_rounded, gradient: AppGradients.success)),
+        Expanded(
+          child: PremiumStatCard(
+            title: "Pending Returns",
+            value: "$_pendingReturns",
+            icon: Icons.assignment_return_rounded,
+            gradient: AppGradients.success,
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: PremiumStatCard(title: "Total Revenue", value: "₹${_totalFines.toStringAsFixed(0)}", icon: Icons.payments_rounded, gradient: AppGradients.surface)),
+        Expanded(
+          child: PremiumStatCard(
+            title: "Total Revenue",
+            value: "₹$_totalFines",
+            icon: Icons.payments_rounded,
+            gradient: AppGradients.surface,
+          ),
+        ),
       ],
     );
   }
@@ -301,24 +432,57 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       childAspectRatio: 1.2,
       children: [
         _miniStat(Icons.book, "$_totalBooks", "Books", AppGradients.primary),
-        _miniStat(Icons.outbound, "$_issuedBooks", "Issued", AppGradients.accent),
-        _miniStat(Icons.assignment_return, "$_pendingReturns", "Pending", AppGradients.success),
-        _miniStat(Icons.payments, "₹${_totalFines.toInt()}", "Fines", AppGradients.surface),
+        _miniStat(
+          Icons.outbound,
+          "$_issuedBooks",
+          "Issued",
+          AppGradients.accent,
+        ),
+        _miniStat(
+          Icons.assignment_return,
+          "$_pendingReturns",
+          "Pending",
+          AppGradients.success,
+        ),
+        _miniStat(
+          Icons.payments,
+          "₹$_totalFines",
+          "Fines",
+          AppGradients.surface,
+        ),
       ],
     );
   }
 
-  Widget _miniStat(IconData icon, String value, String label, Gradient gradient) {
+  Widget _miniStat(
+    IconData icon,
+    String value,
+    String label,
+    Gradient gradient,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white, size: 24),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -332,15 +496,52 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _opCard("Manage Books", Icons.menu_book_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageBooks()))),
-        _opCard("Return Approval", Icons.fact_check_rounded, AppGradients.success, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReturnApproval()))),
-        _opCard("Fine Tracking", Icons.account_balance_wallet_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FinePaymentsScreen()))),
-        _opCard("Issue History", Icons.history_rounded, AppGradients.surface, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IssueHistoryScreen()))),
+        _opCard(
+          "Manage Books",
+          Icons.menu_book_rounded,
+          AppGradients.primary,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ManageBooks()),
+          ),
+        ),
+        _opCard(
+          "Return Approval",
+          Icons.fact_check_rounded,
+          AppGradients.success,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ReturnApproval()),
+          ),
+        ),
+        _opCard(
+          "Fine Tracking",
+          Icons.account_balance_wallet_rounded,
+          AppGradients.accent,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FinePaymentsScreen()),
+          ),
+        ),
+        _opCard(
+          "Issue History",
+          Icons.history_rounded,
+          AppGradients.surface,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const IssueHistoryScreen()),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _opCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
+  Widget _opCard(
+    String title,
+    IconData icon,
+    Gradient gradient,
+    VoidCallback onTap,
+  ) {
     return DashboardCard(
       title: title,
       value: "View",
@@ -349,10 +550,5 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       onTap: onTap,
       showArrow: true,
     );
-  }
-
-  void _handleGlobalNavigation(int index) {
-     if (index == 6) return; // Already here
-     Navigator.pop(context); // Go back to admin dashboard
   }
 }

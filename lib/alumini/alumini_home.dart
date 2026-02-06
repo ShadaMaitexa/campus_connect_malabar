@@ -38,8 +38,16 @@ class _AlumniHomeState extends State<AlumniHome> {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final materialsSnap = await FirebaseFirestore.instance.collection('study_materials').where('uploadedBy', isEqualTo: uid).get();
-      final jobsSnap = await FirebaseFirestore.instance.collection('jobs').where('postedBy', isEqualTo: uid).get();
+      
+      final materialsSnap = await FirebaseFirestore.instance.collection('marketplace')
+          .where('postedBy', isEqualTo: uid)
+          .where('type', isEqualTo: 'material')
+          .get();
+          
+      final jobsSnap = await FirebaseFirestore.instance.collection('marketplace')
+          .where('postedBy', isEqualTo: uid)
+          .where('type', isEqualTo: 'job')
+          .get();
 
       if (mounted) {
         setState(() {

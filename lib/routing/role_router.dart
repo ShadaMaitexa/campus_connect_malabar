@@ -50,6 +50,15 @@ class RoleRouter extends StatelessWidget {
 
         final lowerRole = role.toLowerCase();
 
+        /// 🌐 Platform Specific Gating
+        /// Web: Only Admin & Library
+        /// App: Student, Mentor, Alumni
+        if (kIsWeb) {
+          if (lowerRole != 'admin' && lowerRole != 'library') {
+            return const MobileOnlyRoleScreen();
+          }
+        }
+
         /// ✅ Route based on role
         switch (lowerRole) {
           case 'admin':

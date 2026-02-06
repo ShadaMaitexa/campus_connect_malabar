@@ -27,18 +27,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   final List<SidebarDestination> _destinations = [
     const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
-    const SidebarDestination(icon: Icons.work_rounded, label: "Jobs & Materials"),
+    const SidebarDestination(
+      icon: Icons.work_rounded,
+      label: "Jobs & Materials",
+    ),
     const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
     const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
-    const SidebarDestination(icon: Icons.verified_user_rounded, label: "Approvals"),
-    const SidebarDestination(icon: Icons.manage_accounts_rounded, label: "Users"),
-    const SidebarDestination(icon: Icons.library_books_rounded, label: "Library"),
+    const SidebarDestination(
+      icon: Icons.verified_user_rounded,
+      label: "Approvals",
+    ),
+    const SidebarDestination(
+      icon: Icons.manage_accounts_rounded,
+      label: "Users",
+    ),
+    const SidebarDestination(
+      icon: Icons.library_books_rounded,
+      label: "Library",
+    ),
   ];
 
   late final List<Widget> _screens = [
-    AdminOverview(onNavigate: (index) {
-      setState(() => _selectedIndex = index);
-    }),
+    AdminOverview(
+      onNavigate: (index) {
+        setState(() => _selectedIndex = index);
+      },
+      onLogout: _handleLogout,
+    ),
     const AdminJobs(),
     const AdminViewEvents(),
     const AdminNotices(),
@@ -73,9 +88,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.9),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.9)),
           ),
           Row(
             children: [
@@ -96,9 +109,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
                     child: KeyedSubtree(
                       key: ValueKey(_selectedIndex),
                       child: _screens[_selectedIndex],
@@ -151,9 +168,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
           SafeArea(
             child: AnimatedSwitcher(
@@ -176,21 +191,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
         title: const Text("Logout"),
         content: const Text("Are you sure you want to exit?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Logout")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
         ],
       ),
     );
     if (confirmed == true) {
       await FirebaseAuth.instance.signOut();
-      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+      if (mounted)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
     }
   }
 }
 
 class AdminOverview extends StatefulWidget {
   final ValueChanged<int> onNavigate;
-  const AdminOverview({super.key, required this.onNavigate});
+  final VoidCallback onLogout;
+  const AdminOverview({
+    super.key,
+    required this.onNavigate,
+    required this.onLogout,
+  });
 
   @override
   State<AdminOverview> createState() => _AdminOverviewState();
@@ -211,19 +242,25 @@ class _AdminOverviewState extends State<AdminOverview> {
 
   Future<void> _loadStats() async {
     try {
-      final usersSnap = await FirebaseFirestore.instance.collection('users').get();
+      final usersSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .get();
       final pendingSnap = await FirebaseFirestore.instance
           .collection('users')
           .where('approved', isEqualTo: false)
           .get();
-      final jobsSnap = await FirebaseFirestore.instance.collection('jobs').get();
-      final eventsSnap = await FirebaseFirestore.instance.collection('events').get();
+      final marketplaceSnap = await FirebaseFirestore.instance
+          .collection('marketplace')
+          .get();
+      final eventsSnap = await FirebaseFirestore.instance
+          .collection('events')
+          .get();
 
       if (mounted) {
         setState(() {
           _totalUsers = usersSnap.docs.length;
           _pendingApprovals = pendingSnap.docs.length;
-          _totalJobs = jobsSnap.docs.length;
+          _totalJobs = marketplaceSnap.docs.length;
           _totalEvents = eventsSnap.docs.length;
           _isLoading = false;
         });
@@ -277,13 +314,27 @@ class _AdminOverviewState extends State<AdminOverview> {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  _isLoading 
-                      ? const Center(child: Padding(padding: EdgeInsets.all(100), child: CircularProgressIndicator()))
-                      : isDesktop ? _buildStatsRow() : _buildStatsGrid(),
+                  _isLoading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(100),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : isDesktop
+                      ? _buildStatsRow()
+                      : _buildStatsGrid(),
                   const SizedBox(height: 60),
                   Row(
                     children: [
-                      Container(width: 4, height: 24, decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(2))),
+                      Container(
+                        width: 4,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       const SectionHeader(title: "Management Hub"),
                     ],
@@ -317,20 +368,30 @@ class _AdminOverviewState extends State<AdminOverview> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded, color: Colors.white54, size: 18),
+                const Icon(
+                  Icons.search_rounded,
+                  color: Colors.white54,
+                  size: 18,
+                ),
                 const SizedBox(width: 12),
-                Text("Search metrics...", style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+                Text(
+                  "Search metrics...",
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 24),
           IconButton(
-            onPressed: () {}, 
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
+            onPressed: () {},
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white70,
+            ),
           ),
           const SizedBox(width: 8),
           IconButton(
-            onPressed: _handleLogout, 
+            onPressed: widget.onLogout,
             icon: const Icon(Icons.logout_rounded, color: Colors.white70),
             tooltip: "Logout",
           ),
@@ -349,8 +410,18 @@ class _AdminOverviewState extends State<AdminOverview> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Admin Panel", style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-          Text("Control Center • Super Admin", style: GoogleFonts.inter(color: Colors.white70)),
+          Text(
+            "Admin Panel",
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            "Control Center • Super Admin",
+            style: GoogleFonts.inter(color: Colors.white70),
+          ),
         ],
       ),
     );
@@ -359,13 +430,59 @@ class _AdminOverviewState extends State<AdminOverview> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: InkWell(onTap: () => widget.onNavigate(5), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Total Users", value: "$_totalUsers", icon: Icons.people_rounded, gradient: AppGradients.primary))),
+        Expanded(
+          child: InkWell(
+            onTap: () => widget.onNavigate(5),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Total Users",
+              value: "$_totalUsers",
+              icon: Icons.people_rounded,
+              gradient: AppGradients.primary,
+            ),
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: InkWell(onTap: () => widget.onNavigate(4), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Pending Approvals", value: "$_pendingApprovals", icon: Icons.verified_user_rounded, gradient: AppGradients.success, trend: "4 New", isPositive: false))),
+        Expanded(
+          child: InkWell(
+            onTap: () => widget.onNavigate(4),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Pending Approvals",
+              value: "$_pendingApprovals",
+              icon: Icons.verified_user_rounded,
+              gradient: AppGradients.success,
+              trend: "4 New",
+              isPositive: false,
+            ),
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: InkWell(onTap: () => widget.onNavigate(1), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Active Jobs", value: "$_totalJobs", icon: Icons.work_rounded, gradient: AppGradients.accent))),
+        Expanded(
+          child: InkWell(
+            onTap: () => widget.onNavigate(1),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Active Jobs",
+              value: "$_totalJobs",
+              icon: Icons.work_rounded,
+              gradient: AppGradients.accent,
+            ),
+          ),
+        ),
         const SizedBox(width: 24),
-        Expanded(child: InkWell(onTap: () => widget.onNavigate(2), borderRadius: BorderRadius.circular(20), child: PremiumStatCard(title: "Total Events", value: "$_totalEvents", icon: Icons.event_rounded, gradient: AppGradients.surface))),
+        Expanded(
+          child: InkWell(
+            onTap: () => widget.onNavigate(2),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Total Events",
+              value: "$_totalEvents",
+              icon: Icons.event_rounded,
+              gradient: AppGradients.surface,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -379,25 +496,76 @@ class _AdminOverviewState extends State<AdminOverview> {
       mainAxisSpacing: 16,
       childAspectRatio: 1.2,
       children: [
-        InkWell(onTap: () => widget.onNavigate(5), child: _buildStatCard(Icons.people_rounded, "$_totalUsers", "Users", AppGradients.primary)),
-        InkWell(onTap: () => widget.onNavigate(4), child: _buildStatCard(Icons.verified_user_rounded, "$_pendingApprovals", "Pending", AppGradients.success)),
-        InkWell(onTap: () => widget.onNavigate(1), child: _buildStatCard(Icons.work_rounded, "$_totalJobs", "Jobs", AppGradients.accent)),
-        InkWell(onTap: () => widget.onNavigate(2), child: _buildStatCard(Icons.event_rounded, "$_totalEvents", "Events", AppGradients.surface)),
+        InkWell(
+          onTap: () => widget.onNavigate(5),
+          child: _buildStatCard(
+            Icons.people_rounded,
+            "$_totalUsers",
+            "Users",
+            AppGradients.primary,
+          ),
+        ),
+        InkWell(
+          onTap: () => widget.onNavigate(4),
+          child: _buildStatCard(
+            Icons.verified_user_rounded,
+            "$_pendingApprovals",
+            "Pending",
+            AppGradients.success,
+          ),
+        ),
+        InkWell(
+          onTap: () => widget.onNavigate(1),
+          child: _buildStatCard(
+            Icons.work_rounded,
+            "$_totalJobs",
+            "Jobs",
+            AppGradients.accent,
+          ),
+        ),
+        InkWell(
+          onTap: () => widget.onNavigate(2),
+          child: _buildStatCard(
+            Icons.event_rounded,
+            "$_totalEvents",
+            "Events",
+            AppGradients.surface,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(IconData icon, String value, String label, Gradient gradient) {
+  Widget _buildStatCard(
+    IconData icon,
+    String value,
+    String label,
+    Gradient gradient,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(20), boxShadow: AppEffects.subtleShadow),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppEffects.subtleShadow,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white, size: 28),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -411,17 +579,52 @@ class _AdminOverviewState extends State<AdminOverview> {
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _actionCard("Jobs & Materials", Icons.work_rounded, AppGradients.accent, () => widget.onNavigate(1)),
-        _actionCard("Events", Icons.event_rounded, AppGradients.primary, () => widget.onNavigate(2)),
-        _actionCard("Notices", Icons.campaign_rounded, AppGradients.surface, () => widget.onNavigate(3)),
-        _actionCard("Approvals", Icons.verified_user_rounded, AppGradients.success, () => widget.onNavigate(4)),
-        _actionCard("Manage Users", Icons.manage_accounts_rounded, AppGradients.danger, () => widget.onNavigate(5)),
-        _actionCard("Library", Icons.library_books_rounded, AppGradients.surface, () => widget.onNavigate(6)),
+        _actionCard(
+          "Jobs & Materials",
+          Icons.work_rounded,
+          AppGradients.accent,
+          () => widget.onNavigate(1),
+        ),
+        _actionCard(
+          "Events",
+          Icons.event_rounded,
+          AppGradients.primary,
+          () => widget.onNavigate(2),
+        ),
+        _actionCard(
+          "Notices",
+          Icons.campaign_rounded,
+          AppGradients.surface,
+          () => widget.onNavigate(3),
+        ),
+        _actionCard(
+          "Approvals",
+          Icons.verified_user_rounded,
+          AppGradients.success,
+          () => widget.onNavigate(4),
+        ),
+        _actionCard(
+          "Manage Users",
+          Icons.manage_accounts_rounded,
+          AppGradients.danger,
+          () => widget.onNavigate(5),
+        ),
+        _actionCard(
+          "Library",
+          Icons.library_books_rounded,
+          AppGradients.surface,
+          () => widget.onNavigate(6),
+        ),
       ],
     );
   }
 
-  Widget _actionCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
+  Widget _actionCard(
+    String title,
+    IconData icon,
+    Gradient gradient,
+    VoidCallback onTap,
+  ) {
     return DashboardCard(
       title: title,
       value: "Manage",

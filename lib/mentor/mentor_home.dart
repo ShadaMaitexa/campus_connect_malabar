@@ -159,23 +159,35 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
         ),
         SizedBox(
           width: isDesktop ? 300 : double.infinity,
-          child: const PremiumStatCard(
-            title: "Pending Notices",
-            value: "2",
-            icon: Icons.campaign_rounded,
-            gradient: AppGradients.accent,
-            trend: "Awaiting review",
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('notices').where('department', isEqualTo: dept).snapshots(),
+            builder: (context, snap) {
+              final count = snap.hasData ? snap.data!.docs.length : 0;
+              return PremiumStatCard(
+                title: "Active Notices",
+                value: "$count",
+                icon: Icons.campaign_rounded,
+                gradient: AppGradients.accent,
+                trend: "Dept updates",
+              );
+            },
           ),
         ),
         if (isDesktop)
-        const SizedBox(
+        SizedBox(
           width: 300,
-          child: PremiumStatCard(
-            title: "Events This Month",
-            value: "14",
-            icon: Icons.event_available_rounded,
-            gradient: AppGradients.success,
-            trend: "+2 from last",
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('events').where('department', isEqualTo: dept).snapshots(),
+            builder: (context, snap) {
+              final count = snap.hasData ? snap.data!.docs.length : 0;
+              return PremiumStatCard(
+                title: "Events Scheduled",
+                value: "$count",
+                icon: Icons.event_available_rounded,
+                gradient: AppGradients.success,
+                trend: "Upcoming items",
+              );
+            },
           ),
         ),
       ],

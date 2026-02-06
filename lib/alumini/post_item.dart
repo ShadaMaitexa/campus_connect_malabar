@@ -56,7 +56,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
         'title': title.text.trim(),
         'description': description.text.trim(),
         'imageUrl': imageUrl,
-        'sellerId': FirebaseAuth.instance.currentUser!.uid,
+        'postedBy': FirebaseAuth.instance.currentUser!.uid,
         'status': 'available',
         'createdAt': Timestamp.now(),
       });

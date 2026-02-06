@@ -146,64 +146,73 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
 
   Widget _buildStatsOverview(bool isDesktop) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('attendance').snapshots(),
-      builder: (context, snapshot) {
-        int total = 0;
-        int present = 0;
-        if (snapshot.hasData) {
-          for (var doc in snapshot.data!.docs) {
-            final data = doc.data() as Map<String, dynamic>;
-            if (data.containsKey(uid)) {
-              total++;
-              if (data[uid]['present'] == true) present++;
-            }
-          }
-        }
-        final percent = total == 0 ? 0 : ((present / total) * 100).round();
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+      builder: (context, userSnap) {
+        final userData = userSnap.data?.data() as Map<String, dynamic>?;
+        final gpa = userData?['gpa']?.toString() ?? "0.0";
+        final progress = userData?['progress']?.toString() ?? "0";
 
-        return Wrap(
-          spacing: 24,
-          runSpacing: 24,
-          children: [
-            SizedBox(
-              width: isDesktop ? 300 : double.infinity,
-              child: InkWell(
-                onTap: () => widget.onNavigate(1),
-                borderRadius: BorderRadius.circular(24),
-                child: PremiumStatCard(
-                  title: "Attendance Rate",
-                  value: "$percent%",
-                  icon: Icons.analytics_rounded,
-                  gradient: percent >= 75 ? AppGradients.primary : AppGradients.accent,
-                  trend: "$present/$total days",
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('attendance').snapshots(),
+          builder: (context, snapshot) {
+            int total = 0;
+            int present = 0;
+            if (snapshot.hasData) {
+              for (var doc in snapshot.data!.docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                if (data.containsKey(uid)) {
+                  total++;
+                  if (data[uid]['present'] == true) present++;
+                }
+              }
+            }
+            final percent = total == 0 ? 0 : ((present / total) * 100).round();
+
+            return Wrap(
+              spacing: 24,
+              runSpacing: 24,
+              children: [
+                SizedBox(
+                  width: isDesktop ? 300 : double.infinity,
+                  child: InkWell(
+                    onTap: () => widget.onNavigate(1),
+                    borderRadius: BorderRadius.circular(24),
+                    child: PremiumStatCard(
+                      title: "Attendance Rate",
+                      value: "$percent%",
+                      icon: Icons.analytics_rounded,
+                      gradient: percent >= 75 ? AppGradients.primary : AppGradients.accent,
+                      trend: "$present/$total days",
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            SizedBox(
-              width: isDesktop ? 300 : double.infinity,
-              child: const PremiumStatCard(
-                title: "Internal GPA",
-                value: "3.8/4.0",
-                icon: Icons.grade_rounded,
-                gradient: AppGradients.success,
-                trend: "Top 5%",
-              ),
-            ),
-            if (isDesktop)
-            SizedBox(
-              width: 300,
-              child: const PremiumStatCard(
-                title: "Course Progress",
-                value: "82%",
-                icon: Icons.trending_up_rounded,
-                gradient: AppGradients.surface,
-                trend: "On schedule",
-              ),
-            ),
-          ],
+                SizedBox(
+                  width: isDesktop ? 300 : double.infinity,
+                  child: PremiumStatCard(
+                    title: "Internal GPA",
+                    value: gpa,
+                    icon: Icons.grade_rounded,
+                    gradient: AppGradients.success,
+                    trend: "Academic standing",
+                  ),
+                ),
+                if (isDesktop)
+                SizedBox(
+                  width: 300,
+                  child: PremiumStatCard(
+                    title: "Course Progress",
+                    value: "$progress%",
+                    icon: Icons.trending_up_rounded,
+                    gradient: AppGradients.surface,
+                    trend: "On schedule",
+                  ),
+                ),
+              ],
+            );
+          },
         );
-      },
+      }
     );
   }
 

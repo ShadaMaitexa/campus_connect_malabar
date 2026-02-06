@@ -117,7 +117,7 @@ class MyListings extends StatelessWidget {
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('marketplace')
-            .where('sellerId', isEqualTo: uid)
+            .where('postedBy', isEqualTo: uid)
             .where('type', isEqualTo: type)
             .orderBy('createdAt', descending: true)
             .snapshots(),
