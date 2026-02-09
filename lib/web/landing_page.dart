@@ -12,7 +12,8 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with SingleTickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage>
+    with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
   double _scrollOffset = 0.0;
 
@@ -48,9 +49,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: _buildAnimatedBackground(),
-          ),
+          Positioned.fill(child: _buildAnimatedBackground()),
           SingleChildScrollView(
             controller: _scrollController,
             child: Column(
@@ -143,7 +142,9 @@ class _Navbar extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 100 : 20),
       decoration: BoxDecoration(
-        color: isScrolled ? AppTheme.darkSurface.withOpacity(0.8) : Colors.transparent,
+        color: isScrolled
+            ? AppTheme.darkSurface.withOpacity(0.8)
+            : Colors.transparent,
         border: Border(
           bottom: BorderSide(
             color: isScrolled ? AppTheme.darkBorder : Colors.transparent,
@@ -164,7 +165,11 @@ class _Navbar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: AppEffects.subtleShadow,
                     ),
-                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 24),
+                    child: Image.asset(
+                      "assets/icon/logo.png",
+                      width: 24,
+                      height: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Text(
@@ -189,14 +194,21 @@ class _Navbar extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppTheme.darkBackground,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text("Sign In"),
               ),
@@ -256,19 +268,30 @@ class _HeroSection extends StatelessWidget {
                 flex: isDesktop ? 6 : 1,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                  crossAxisAlignment: isDesktop
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withOpacity(0.2),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.bolt, color: AppTheme.accentColor, size: 16),
+                          const Icon(
+                            Icons.bolt,
+                            color: AppTheme.accentColor,
+                            size: 16,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             "NEW: V2.0 Dashboard is now live",
@@ -305,13 +328,20 @@ class _HeroSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 48),
                     Row(
-                      mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                      mainAxisAlignment: isDesktop
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.center,
                       children: [
                         ElevatedButton(
                           onPressed: onStart,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 24,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           child: const Text("Explore Solutions"),
                         ),
@@ -330,13 +360,16 @@ class _HeroSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(48),
                         color: AppTheme.darkSurface,
-                        border: Border.all(color: Colors.white.withOpacity(0.1), width: 8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 8,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryColor.withOpacity(0.2),
                             blurRadius: 100,
                             spreadRadius: -20,
-                          )
+                          ),
                         ],
                       ),
                       child: ClipRRect(
@@ -375,9 +408,19 @@ class _HeroSection extends StatelessWidget {
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.event_note_rounded, color: AppTheme.accentColor),
+                                          const Icon(
+                                            Icons.event_note_rounded,
+                                            color: AppTheme.accentColor,
+                                          ),
                                           const SizedBox(height: 8),
-                                          Text("Events", style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          Text(
+                                            "Events",
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -390,9 +433,19 @@ class _HeroSection extends StatelessWidget {
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.library_books_rounded, color: AppTheme.primaryColor),
+                                          const Icon(
+                                            Icons.library_books_rounded,
+                                            color: AppTheme.primaryColor,
+                                          ),
                                           const SizedBox(height: 8),
-                                          Text("Library", style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          Text(
+                                            "Library",
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -515,37 +568,43 @@ class _FeaturesSection extends StatelessWidget {
               _FeatureItem(
                 icon: Icons.admin_panel_settings_rounded,
                 title: "Centralized Admin",
-                description: "Full visibility and control over campus operations with real-time analytics.",
+                description:
+                    "Full visibility and control over campus operations with real-time analytics.",
                 gradient: AppGradients.primary,
               ),
               _FeatureItem(
                 icon: Icons.library_books_rounded,
                 title: "Smart Library",
-                description: "Digital inventory management, automated fines, and resource tracking.",
+                description:
+                    "Digital inventory management, automated fines, and resource tracking.",
                 gradient: AppGradients.accent,
               ),
               _FeatureItem(
                 icon: Icons.hub_rounded,
                 title: "Alumni Hub",
-                description: "Bridge the gap between current students and successful graduates.",
+                description:
+                    "Bridge the gap between current students and successful graduates.",
                 gradient: AppGradients.success,
               ),
               _FeatureItem(
                 icon: Icons.psychology_rounded,
                 title: "Mentor Link",
-                description: "Facilitate meaningful mentor-student interactions seamlessly.",
+                description:
+                    "Facilitate meaningful mentor-student interactions seamlessly.",
                 gradient: AppGradients.surface,
               ),
               _FeatureItem(
                 icon: Icons.assignment_turned_in_rounded,
                 title: "Aptitude Engine",
-                description: "Prepare students for the industry with integrated assessment tools.",
+                description:
+                    "Prepare students for the industry with integrated assessment tools.",
                 gradient: AppGradients.primary,
               ),
               _FeatureItem(
                 icon: Icons.rocket_launch_rounded,
                 title: "Placement Portal",
-                description: "Streamline the hiring process for companies and students alike.",
+                description:
+                    "Streamline the hiring process for companies and students alike.",
                 gradient: AppGradients.accent,
               ),
             ],
@@ -590,7 +649,14 @@ class _FeatureItem extends StatelessWidget {
             child: Icon(icon, color: Colors.white),
           ),
           const SizedBox(height: 24),
-          Text(title, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 12),
           Expanded(
             child: Text(
@@ -632,7 +698,11 @@ class _HowItWorksSection extends StatelessWidget {
         children: [
           Text(
             "Simplified Workflow",
-            style: GoogleFonts.outfit(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.outfit(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 80),
           Wrap(
@@ -640,9 +710,21 @@ class _HowItWorksSection extends StatelessWidget {
             runSpacing: 60,
             alignment: WrapAlignment.center,
             children: const [
-              _StepProgress(num: "01", title: "Join", desc: "Select your role and authenticate safely."),
-              _StepProgress(num: "02", title: "Sync", desc: "Access your personalized campus dashboard."),
-              _StepProgress(num: "03", title: "Scale", desc: "Utilize resources to grow and collaborate."),
+              _StepProgress(
+                num: "01",
+                title: "Join",
+                desc: "Select your role and authenticate safely.",
+              ),
+              _StepProgress(
+                num: "02",
+                title: "Sync",
+                desc: "Access your personalized campus dashboard.",
+              ),
+              _StepProgress(
+                num: "03",
+                title: "Scale",
+                desc: "Utilize resources to grow and collaborate.",
+              ),
             ],
           ),
         ],
@@ -656,7 +738,11 @@ class _StepProgress extends StatelessWidget {
   final String title;
   final String desc;
 
-  const _StepProgress({required this.num, required this.title, required this.desc});
+  const _StepProgress({
+    required this.num,
+    required this.title,
+    required this.desc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -673,9 +759,20 @@ class _StepProgress extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(title, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 16),
-          Text(desc, textAlign: TextAlign.center, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5))),
+          Text(
+            desc,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+          ),
         ],
       ),
     );
@@ -704,7 +801,10 @@ class _FooterSection extends StatelessWidget {
           const SizedBox(height: 32),
           Text(
             "© 2024 Campus Connect Systems. Enterprise Architecture Ready.",
-            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.3), fontSize: 13),
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.3),
+              fontSize: 13,
+            ),
           ),
         ],
       ),

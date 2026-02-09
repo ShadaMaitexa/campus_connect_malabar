@@ -169,7 +169,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       });
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(_userId).set(data, SetOptions(merge: true));
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_userId)
+        .set(data, SetOptions(merge: true));
 
     setState(() => _isSaving = false);
 
@@ -180,10 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               const Icon(Icons.check_circle, color: Colors.white),
               const SizedBox(width: 12),
-              Text(
-                'Profile updated successfully',
-                style: GoogleFonts.inter(),
-              ),
+              Text('Profile updated successfully', style: GoogleFonts.inter()),
             ],
           ),
           backgroundColor: AppTheme.successColor,
@@ -201,7 +201,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _changePassword() async {
-    if (oldPasswordController.text.isEmpty || newPasswordController.text.isEmpty) {
+    if (oldPasswordController.text.isEmpty ||
+        newPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please fill in both password fields'),
@@ -269,7 +270,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Password change failed. Check your current password.'),
+            content: const Text(
+              'Password change failed. Check your current password.',
+            ),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -287,14 +290,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      backgroundColor: isDark
+          ? AppTheme.darkBackground
+          : AppTheme.lightBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Header
-          SliverToBoxAdapter(
-            child: _buildHeader(context, isDark),
-          ),
+          SliverToBoxAdapter(child: _buildHeader(context, isDark)),
 
           // Content
           SliverPadding(
@@ -447,7 +450,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                   label: 'Full Name',
                   hint: 'Enter your full name',
                   prefixIcon: Icons.person_outline_rounded,
-                  validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Name is required' : null,
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
@@ -692,10 +696,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppTheme.primaryColor,
-                  size: 22,
+                child: Image.asset(
+                  "assets/icon/logo.png",
+                  width: 22,
+                  height: 22,
                 ),
               ),
               const SizedBox(width: 12),
@@ -727,7 +731,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+            color: isDark
+                ? AppTheme.darkTextSecondary
+                : AppTheme.lightTextSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -769,7 +775,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 size: 20,
                 color: isSelected
                     ? Colors.white
-                    : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                    : (isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary),
               ),
               const SizedBox(width: 8),
               Text(
@@ -778,7 +786,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                   fontWeight: FontWeight.w500,
                   color: isSelected
                       ? Colors.white
-                      : (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
+                      : (isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary),
                 ),
               ),
             ],
@@ -837,14 +847,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                     : '${dob!.day}/${dob!.month}/${dob!.year}',
                 style: GoogleFonts.poppins(
                   color: dob == null
-                      ? (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary)
-                      : (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
+                      ? (isDark
+                            ? AppTheme.darkTextSecondary
+                            : AppTheme.lightTextSecondary)
+                      : (isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary),
                 ),
               ),
             ),
             Icon(
               Icons.arrow_drop_down_rounded,
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              color: isDark
+                  ? AppTheme.darkTextSecondary
+                  : AppTheme.lightTextSecondary,
             ),
           ],
         ),

@@ -45,7 +45,6 @@ class PremiumSidebar extends StatelessWidget {
                     "assets/icon/logo.png",
                     width: 24,
                     height: 24,
-                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(width: 16),

@@ -43,12 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text.trim();
 
     if (email == "admin@campusconnect.com" && password == "admin123") {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminDashboard()),
+      );
       return;
     }
 
     if (email == "library@campusconnect.com" && password == "library123") {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LibraryAdminDashboard()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LibraryAdminDashboard()),
+      );
       return;
     }
 
@@ -70,18 +76,30 @@ class _LoginScreenState extends State<LoginScreen> {
     final userModel = authProvider.userModel;
     if (userModel == null) return;
 
-    if ((userModel.role == 'mentor' || userModel.role == 'alumni') && !userModel.approved) {
+    if ((userModel.role == 'mentor' || userModel.role == 'alumni') &&
+        !userModel.approved) {
       await authProvider.logout();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Waiting for admin approval'), backgroundColor: AppTheme.warningColor));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Waiting for admin approval'),
+          backgroundColor: AppTheme.warningColor,
+        ),
+      );
       return;
     }
 
     if (!userModel.profileCompleted) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+      );
       return;
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => RoleRouter(role: userModel.role)));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => RoleRouter(role: userModel.role)),
+    );
   }
 
   @override
@@ -117,7 +135,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: AppEffects.subtleShadow,
                       ),
-                      child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
+                      child: Image.asset(
+                        "assets/icon/logo.png",
+                        width: 32,
+                        height: 32,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     Text(
@@ -156,9 +178,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 padding: const EdgeInsets.all(60),
                 child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: _buildLoginForm(),
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: _buildLoginForm(),
+                    ),
                   ),
                 ),
               ),
@@ -225,17 +249,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: AppGradients.primary,
-                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
                   boxShadow: AppEffects.subtleShadow,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 64),
+                    Image.asset("assets/icon/logo.png", width: 64, height: 64),
                     const SizedBox(height: 16),
                     Text(
                       "Campus Connect",
-                      style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
+                      style: GoogleFonts.outfit(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: -1,
+                      ),
                     ),
                   ],
                 ),
@@ -268,36 +300,50 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Text(
             "Welcome back",
-            style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             "Please enter your details to sign in",
             style: GoogleFonts.inter(color: Colors.white.withOpacity(0.6)),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 38),
           AppTextField(
             controller: _emailController,
             label: 'Email',
             hint: 'email@example.com',
             prefixIcon: Icons.email_rounded,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           AppTextField(
             controller: _passwordController,
             label: 'Password',
             hint: '••••••••',
             prefixIcon: Icons.lock_rounded,
             obscureText: _obscurePassword,
-            suffixIcon: _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-            onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+            suffixIcon: _obscurePassword
+                ? Icons.visibility_off_rounded
+                : Icons.visibility_rounded,
+            onSuffixTap: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-              child: Text("Forgot Password?", style: TextStyle(color: AppTheme.primaryColor)),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+              ),
+              child: Text(
+                "Forgot Password?",
+                style: TextStyle(color: AppTheme.primaryColor),
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -308,21 +354,38 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: authProvider.isLoading ? null : _handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: authProvider.isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Sign In", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  : const Text(
+                      "Sign In",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 40),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("New here?", style: TextStyle(color: Colors.white.withOpacity(0.5))),
+              Text(
+                "New here?",
+                style: TextStyle(color: Colors.white.withOpacity(0.5)),
+              ),
               TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                child: const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                ),
+                child: const Text(
+                  "Create Account",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

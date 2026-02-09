@@ -90,11 +90,7 @@ class AdminSidebar extends StatelessWidget {
               color: AppTheme.primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusM),
             ),
-            child: Icon(
-              Icons.school_rounded,
-              color: AppTheme.primaryColor,
-              size: 24,
-            ),
+            child: Image.asset("assets/icon/logo.png", width: 24, height: 24),
           ),
           if (!isCollapsed) ...[
             const SizedBox(width: AppTheme.spacingM),
@@ -218,7 +214,9 @@ class _SidebarItem extends StatelessWidget {
                       color: isSelected
                           ? AppTheme.primaryColor
                           : theme.colorScheme.onSurface,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -230,4 +228,3 @@ class _SidebarItem extends StatelessWidget {
     );
   }
 }
-
