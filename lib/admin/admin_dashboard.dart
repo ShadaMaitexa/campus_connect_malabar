@@ -45,6 +45,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: Icons.library_books_rounded,
       label: "Library",
     ),
+    const SidebarDestination(icon: Icons.logout_rounded, label: "Logout"),
   ];
 
   Widget _getScreen(int index) {
@@ -106,7 +107,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) {
-                  setState(() => _selectedIndex = index);
+                  if (index == 7) {
+                    _handleLogout();
+                  } else {
+                    setState(() => _selectedIndex = index);
+                  }
                 },
                 destinations: _destinations,
                 onLogout: _handleLogout,
@@ -164,8 +169,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
         child: PremiumSidebar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
-            setState(() => _selectedIndex = index);
-            Navigator.pop(context); // Close drawer
+            if (index == 7) {
+              Navigator.pop(context);
+              _handleLogout();
+            } else {
+              setState(() => _selectedIndex = index);
+              Navigator.pop(context); // Close drawer
+            }
           },
           destinations: _destinations,
         ),
