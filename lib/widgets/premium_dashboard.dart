@@ -6,6 +6,8 @@ class PremiumSidebar extends StatelessWidget {
   final Function(int) onDestinationSelected;
   final List<SidebarDestination> destinations;
   final VoidCallback? onLogout;
+  final String userName;
+  final String userRole;
 
   const PremiumSidebar({
     super.key,
@@ -13,6 +15,8 @@ class PremiumSidebar extends StatelessWidget {
     required this.onDestinationSelected,
     required this.destinations,
     this.onLogout,
+    this.userName = "Admin User",
+    this.userRole = "Super Admin",
   });
 
   @override
@@ -37,7 +41,12 @@ class PremiumSidebar extends StatelessWidget {
                     gradient: AppGradients.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.school, color: Colors.white),
+                  child: Image.asset(
+                    "assets/icon/logo.png",
+                    width: 24,
+                    height: 24,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 const Text(
@@ -76,17 +85,36 @@ class PremiumSidebar extends StatelessWidget {
             child: Divider(color: AppTheme.darkBorder),
           ),
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 8,
+            ),
             leading: const CircleAvatar(
               backgroundColor: AppTheme.primaryColor,
               child: Icon(Icons.person, color: Colors.white),
             ),
-            title: const Text("Admin User", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            subtitle: const Text("Super Admin", style: TextStyle(color: AppTheme.darkTextSecondary, fontSize: 12)),
-            trailing: onLogout != null 
+            title: Text(
+              userName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              userRole,
+              style: const TextStyle(
+                color: AppTheme.darkTextSecondary,
+                fontSize: 12,
+              ),
+            ),
+            trailing: onLogout != null
                 ? IconButton(
-                    onPressed: onLogout, 
-                    icon: const Icon(Icons.logout_rounded, color: Colors.white54, size: 20),
+                    onPressed: onLogout,
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.white54,
+                      size: 20,
+                    ),
                     tooltip: "Logout",
                   )
                 : null,
@@ -125,14 +153,20 @@ class _SidebarTile extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? AppTheme.primaryColor.withOpacity(0.15)
+              : Colors.transparent,
         ),
         child: ListTile(
           onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           leading: Icon(
             icon,
-            color: isSelected ? AppTheme.primaryColor : AppTheme.darkTextSecondary,
+            color: isSelected
+                ? AppTheme.primaryColor
+                : AppTheme.darkTextSecondary,
           ),
           title: Text(
             label,
@@ -192,7 +226,9 @@ class PremiumStatCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (isPositive ? Colors.green : Colors.red).withOpacity(0.1),
+                  color: (isPositive ? Colors.green : Colors.red).withOpacity(
+                    0.1,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

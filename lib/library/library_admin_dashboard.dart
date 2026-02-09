@@ -150,6 +150,8 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
                     setState(() => _selectedIndex = index),
                 destinations: _destinations,
                 onLogout: _handleLogout,
+                userName: "Library Admin",
+                userRole: "Librarian",
               ),
               Expanded(
                 child: Container(
@@ -181,7 +183,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       case 1:
         return const LibraryAnalyticsScreen();
       case 2:
-        return const IssueHistoryScreen();
+        return const IssueHistoryScreen(isEmbedded: true);
       default:
         return _buildOverviewScreen();
     }

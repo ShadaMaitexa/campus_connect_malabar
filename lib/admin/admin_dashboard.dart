@@ -115,6 +115,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 },
                 destinations: _destinations,
                 onLogout: _handleLogout,
+                userName: "Admin User",
+                userRole: "Super Admin",
               ),
               Expanded(
                 child: Container(
@@ -178,6 +180,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }
           },
           destinations: _destinations,
+          userName: "Admin User",
+          userRole: "Super Admin",
         ),
       ),
       body: Stack(
