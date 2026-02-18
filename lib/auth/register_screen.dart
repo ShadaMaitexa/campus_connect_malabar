@@ -21,11 +21,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-
   String _role = 'student';
- 
+
   bool _obscurePassword = true;
- 
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -37,14 +36,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.register(
       _emailController.text.trim(),
       _passwordController.text.trim(),
       _nameController.text.trim(),
-      _role
-     
+      _role,
     );
 
     if (!mounted) return;
@@ -95,7 +92,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : 500),
-                child: isDesktop ? _buildDesktopLayout(authProvider) : _buildMobileLayout(authProvider),
+                child: isDesktop
+                    ? _buildDesktopLayout(authProvider)
+                    : _buildMobileLayout(authProvider),
               ),
             ),
           ),
@@ -128,7 +127,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 48),
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 48,
+                  ),
                   const SizedBox(height: 32),
                   Text(
                     "Join the\nCommunity",
@@ -174,7 +177,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryColor, size: 48),
+          const Icon(
+            Icons.auto_awesome_rounded,
+            color: AppTheme.primaryColor,
+            size: 48,
+          ),
           const SizedBox(height: 24),
           _buildRegisterForm(authProvider),
         ],
@@ -208,7 +215,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             label: 'Full Name',
             hint: 'Enter your full name',
             prefixIcon: Icons.person_outline,
-            validator: (value) => value?.isEmpty ?? true ? 'Please enter your name' : null,
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please enter your name' : null,
           ),
           const SizedBox(height: 20),
           AppTextField(
@@ -217,7 +225,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hint: 'email@example.com',
             prefixIcon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            validator: (value) => value?.contains('@') ?? false ? null : 'Enter a valid email',
+            validator: (value) =>
+                value?.contains('@') ?? false ? null : 'Enter a valid email',
           ),
           const SizedBox(height: 20),
           AppTextField(
@@ -226,9 +235,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hint: '••••••••',
             prefixIcon: Icons.lock_outline,
             obscureText: _obscurePassword,
-            suffixIcon: _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
-            validator: (value) => (value?.length ?? 0) < 6 ? 'Min 6 characters' : null,
+            suffixIcon: _obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            onSuffixTap: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
+            validator: (value) =>
+                (value?.length ?? 0) < 6 ? 'Min 6 characters' : null,
           ),
           const SizedBox(height: 24),
           Text(
@@ -250,11 +263,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: authProvider.isLoading ? null : _handleRegister,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: authProvider.isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Create Account", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  : const Text(
+                      "Create Account",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 32),
@@ -267,7 +288,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Sign In", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "Sign In",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -279,22 +303,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildRoleSelector() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkSurfaceSecondary,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.darkSurface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(color: AppTheme.darkBorder),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _role.toUpperCase(),
           isExpanded: true,
-          dropdownColor: AppTheme.darkSurface,
-          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500),
+          dropdownColor: AppTheme.darkSurfaceSecondary,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppTheme.primaryColor,
+          ),
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+          ),
           items: ['STUDENT', 'MENTOR', 'ALUMNI'].map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
+            return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
           onChanged: (v) => setState(() => _role = v!.toLowerCase()),
         ),

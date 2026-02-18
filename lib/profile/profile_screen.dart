@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
@@ -37,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
+  final departmentController = TextEditingController();
   String? _email;
   String? _department;
 
@@ -87,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         gender = data['gender'] ?? 'Male';
         _email = data['email'];
         _department = data['department'];
+        departmentController.text = _department ?? '';
 
         if (data['dob'] != null) {
           dob = (data['dob'] as Timestamp).toDate();
@@ -138,6 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       'name': nameController.text.trim(),
       'phone': phoneController.text.trim(),
       'address': addressController.text.trim(),
+      'department': departmentController.text.trim(),
       'gender': gender,
       'dob': dob,
       'role': _role,
@@ -286,27 +290,29 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = true; // Dashboard pages are always dark for consistency
+    const isDark = true; // Dashboard pages are always dark for consistency
 
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header
-          SliverToBoxAdapter(child: _buildHeader(context, isDark)),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Header
+            SliverToBoxAdapter(child: _buildHeader(context, isDark)),
 
-          // Content
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: _isLoading
-                  ? const ShimmerList(itemCount: 5)
-                  : _buildContent(isDark),
+            // Content
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverToBoxAdapter(
+                child: _isLoading
+                    ? const ShimmerList(itemCount: 5)
+                    : _buildContent(isDark),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -413,7 +419,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$_department • ${_role.toUpperCase()}',
+                    '${departmentController.text.isNotEmpty ? departmentController.text : "No Department"} • ${_role.toUpperCase()}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.9),
@@ -448,6 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   label: 'Full Name',
                   hint: 'Enter your full name',
                   prefixIcon: Icons.person_outline_rounded,
+                  onChanged: (_) => setState(() {}),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Name is required' : null,
                 ),
@@ -458,6 +465,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                   hint: 'Enter your phone number',
                   prefixIcon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
@@ -488,11 +499,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 isDark: isDark,
                 children: [
                   AppTextField(
-                    controller: TextEditingController(text: _department ?? ''),
+                    controller: departmentController,
                     label: 'Department',
                     hint: 'e.g., Computer Science',
                     prefixIcon: Icons.business_outlined,
-                    onChanged: (value) => _department = value,
+                    onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
@@ -549,6 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     hint: 'e.g., 2020',
                     prefixIcon: Icons.calendar_today_outlined,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ],
               ),
@@ -565,11 +577,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 isDark: isDark,
                 children: [
                   AppTextField(
-                    controller: TextEditingController(text: _department ?? ''),
+                    controller: departmentController,
                     label: 'Department',
                     hint: 'e.g., Computer Science',
                     prefixIcon: Icons.business_outlined,
-                    onChanged: (value) => _department = value,
+                    onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
@@ -694,11 +706,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
                 ),
-                child: Image.asset(
-                  "assets/icon/logo.png",
-                  width: 22,
-                  height: 22,
-                ),
+                child: Icon(icon, color: AppTheme.primaryColor, size: 22),
               ),
               const SizedBox(width: 12),
               Text(
@@ -807,11 +815,22 @@ class _ProfileScreenState extends State<ProfileScreen>
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: AppTheme.primaryColor,
-                  onPrimary: Colors.white,
-                  surface: isDark ? AppTheme.darkSurface : Colors.white,
-                ),
+                colorScheme: isDark
+                    ? ColorScheme.dark(
+                        primary: AppTheme.primaryColor,
+                        onPrimary: Colors.white,
+                        surface: AppTheme.darkSurface,
+                        onSurface: Colors.white,
+                      )
+                    : ColorScheme.light(
+                        primary: AppTheme.primaryColor,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                        onSurface: AppTheme.lightTextPrimary,
+                      ),
+                dialogBackgroundColor: isDark
+                    ? AppTheme.darkSurface
+                    : Colors.white,
               ),
               child: child!,
             );

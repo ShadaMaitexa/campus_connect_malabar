@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
-import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
+import '../widgets/custom_app_bar.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
-import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 
 class ViewNotices extends StatelessWidget {
@@ -12,60 +11,62 @@ class ViewNotices extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      appBar: CustomAppBar(title: "Notices", showBackButton: true),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('notices')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const ShimmerList(itemCount: 3);
-                  }
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        appBar: const CustomAppBar(title: "Notices", showBackButton: true),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverToBoxAdapter(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('notices')
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const ShimmerList(itemCount: 3);
+                    }
 
-                  if (snap.hasError) {
-                    return Center(
-                      child: Text(
-                        "Error: ${snap.error}",
-                        style: GoogleFonts.poppins(color: AppTheme.errorColor),
-                      ),
+                    if (snap.hasError) {
+                      return Center(
+                        child: Text(
+                          "Error: ${snap.error}",
+                          style: GoogleFonts.poppins(
+                            color: AppTheme.errorColor,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (!snap.hasData || snap.data!.docs.isEmpty) {
+                      return const EmptyStateWidget(
+                        icon: Icons.notifications_off_outlined,
+                        title: "No notices available",
+                        subtitle: "Check back later for new announcements",
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        AppAnimations.staggeredList(
+                          children: snap.data!.docs
+                              .map((doc) => _noticeCard(doc))
+                              .toList(),
+                          staggerDelay: const Duration(milliseconds: 100),
+                        ),
+                      ],
                     );
-                  }
-
-                  if (!snap.hasData || snap.data!.docs.isEmpty) {
-                    return const EmptyStateWidget(
-                      icon: Icons.notifications_off_outlined,
-                      title: "No notices available",
-                      subtitle: "Check back later for new announcements",
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      AppAnimations.staggeredList(
-                        children: snap.data!.docs
-                            .map((doc) => _noticeCard(doc))
-                            .toList(),
-                        staggerDelay: const Duration(milliseconds: 100),
-                      ),
-                      const SizedBox(
-                        height: 100,
-                      ), // Fix excess empty space at bottom
-                    ],
-                  );
-                },
+                  },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -88,60 +89,75 @@ class ViewNotices extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isAdmin
+                    ? AppTheme.errorColor.withOpacity(0.1)
+                    : AppTheme.primaryColor.withOpacity(0.1),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isAdmin
+                        ? Icons.admin_panel_settings_rounded
+                        : Icons.person_rounded,
+                    color: isAdmin
+                        ? AppTheme.errorColor
+                        : AppTheme.primaryColor,
+                    size: 16,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: isAdmin
-                        ? AppGradients.danger
-                        : AppGradients.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
+                  const SizedBox(width: 8),
+                  Text(
                     role,
                     style: GoogleFonts.poppins(
-                      color: Colors.white,
+                      color: isAdmin
+                          ? AppTheme.errorColor
+                          : AppTheme.primaryColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 1,
                     ),
                   ),
-                ),
-                Text(
-                  _formatDate(doc['createdAt']),
-                  style: GoogleFonts.inter(
-                    color: AppTheme.darkTextSecondary,
-                    fontSize: 11,
+                  const Spacer(),
+                  Text(
+                    _formatDate(doc['createdAt']),
+                    style: GoogleFonts.inter(
+                      color: AppTheme.darkTextSecondary,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              doc['title'] ?? '',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.darkTextPrimary,
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              doc['message'] ?? '',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                height: 1.5,
-                color: AppTheme.darkTextSecondary,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doc['title'] ?? 'No Title',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    doc['content'] ?? 'No Content',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppTheme.darkTextSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

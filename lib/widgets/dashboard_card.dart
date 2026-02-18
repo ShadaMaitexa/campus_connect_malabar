@@ -151,31 +151,27 @@ class _DashboardCardState extends State<DashboardCard>
                   ),
                   // Content
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Icon with glow effect
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(
                               AppTheme.radiusM,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
                           ),
                           child: Icon(
                             widget.icon,
                             color: Colors.white,
-                            size: 24,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -183,16 +179,9 @@ class _DashboardCardState extends State<DashboardCard>
                         Text(
                           widget.value,
                           style: GoogleFonts.poppins(
-                            fontSize: 22,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.2),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -204,32 +193,19 @@ class _DashboardCardState extends State<DashboardCard>
                           widget.title,
                           style: GoogleFonts.poppins(
                             color: Colors.white.withOpacity(0.9),
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.subtitle != null) ...[
-                          Text(
-                            widget.subtitle!,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
                         if (widget.showArrow) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
+                              horizontal: 12,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -242,15 +218,15 @@ class _DashboardCardState extends State<DashboardCard>
                                   'View',
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(width: 4),
                                 const Icon(
                                   Icons.arrow_forward_rounded,
                                   color: Colors.white,
-                                  size: 12,
+                                  size: 10,
                                 ),
                               ],
                             ),

@@ -42,6 +42,26 @@ class CommunityScreen extends StatelessWidget {
               .where('role', whereIn: ['student', 'alumni'])
               .snapshots(),
           builder: (context, snap) {
+            if (snap.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Something went wrong",
+                      style: GoogleFonts.poppins(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }

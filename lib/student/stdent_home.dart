@@ -2,15 +2,13 @@ import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
-import 'package:campus_connect_malabar/widgets/premium_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../library/library_screen.dart';
-import 'market_place_screen.dart';
 import '../alumini/community_screen.dart';
+import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import '../widgets/custom_app_bar.dart';
 
 class StudentHome extends StatefulWidget {
@@ -24,7 +22,6 @@ class StudentHome extends StatefulWidget {
 class _StudentHomeState extends State<StudentHome>
     with SingleTickerProviderStateMixin {
   String? _userName;
-  String? _department;
   bool _isLoading = true;
 
   @override
@@ -43,7 +40,6 @@ class _StudentHomeState extends State<StudentHome>
       if (mounted && doc.exists) {
         setState(() {
           _userName = doc.data()?['name'] ?? 'Student';
-          _department = doc.data()?['department'] ?? 'General';
           _isLoading = false;
         });
       }
@@ -54,7 +50,6 @@ class _StudentHomeState extends State<StudentHome>
 
   @override
   Widget build(BuildContext context) {
-    // Note: PremiumDashboard/Modern templates usually check screen size
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
@@ -98,29 +93,29 @@ class _StudentHomeState extends State<StudentHome>
 
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       floating: true,
       pinned: true,
       backgroundColor: AppTheme.darkBackground,
       elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        title: Text(
-          "Student Pulse",
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.white,
-          ),
+      title: Text(
+        "Student Pulse",
+        style: GoogleFonts.outfit(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+          color: Colors.white,
         ),
+      ),
+      centerTitle: false,
+      flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppTheme.primaryColor.withOpacity(0.1),
-                AppTheme.darkBackground,
+                AppTheme.primaryColor.withOpacity(0.15),
+                AppTheme.darkBackground.withOpacity(0.95),
               ],
             ),
           ),
@@ -134,6 +129,7 @@ class _StudentHomeState extends State<StudentHome>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 12),
         AppAnimations.slideInFromLeft(
           child: Text(
             "Welcome back,",
@@ -246,29 +242,27 @@ class _StudentHomeState extends State<StudentHome>
   }
 
   Widget _buildNavigationGrid(bool isDesktop) {
-    final items = [
-      _NavDivider("Academic"),
+    final navItems = [
       _NavItem("Attendance", Icons.fact_check_rounded, AppGradients.blue, 1),
-      _NavItem(
-        "Internal Marks",
-        Icons.assignment_rounded,
-        AppGradients.purple,
-        2,
-      ),
-      _NavItem("Notices", Icons.campaign_rounded, AppGradients.danger, 3),
-      _NavDivider("Campus Life"),
+      _NavItem("Notices", Icons.campaign_rounded, AppGradients.danger, 2),
       _NavItem(
         "Events",
         Icons.event_available_rounded,
         AppGradients.success,
-        4,
+        3,
       ),
-      _NavItem("Library", Icons.local_library_rounded, AppGradients.orange, 5),
+      _NavItem("Library", Icons.local_library_rounded, AppGradients.orange, -1),
       _NavItem(
         "Marketplace",
         Icons.shopping_bag_rounded,
         AppGradients.primary,
-        6,
+        -2,
+      ),
+      _NavItem(
+        "Internal Marks",
+        Icons.assignment_rounded,
+        AppGradients.purple,
+        -3,
       ),
     ];
 
@@ -281,9 +275,8 @@ class _StudentHomeState extends State<StudentHome>
         mainAxisSpacing: 16,
         childAspectRatio: 1.1,
       ),
-      itemCount: items.where((i) => i is _NavItem).length,
+      itemCount: navItems.length,
       itemBuilder: (context, index) {
-        final navItems = items.whereType<_NavItem>().toList();
         final item = navItems[index];
 
         return DashboardCard(
@@ -291,7 +284,23 @@ class _StudentHomeState extends State<StudentHome>
           value: "",
           icon: item.icon,
           gradient: item.gradient,
-          onTap: () => widget.onNavigate(item.index),
+          onTap: () {
+            if (item.index >= 0) {
+              widget.onNavigate(item.index);
+            } else if (item.index == -1) {
+              // Library
+              // Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
+            } else if (item.index == -2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
+              );
+            } else if (item.index == -3) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Internal Marks coming soon!")),
+              );
+            }
+          },
           showArrow: true,
         );
       },
@@ -305,9 +314,4 @@ class _NavItem {
   final Gradient gradient;
   final int index;
   _NavItem(this.title, this.icon, this.gradient, this.index);
-}
-
-class _NavDivider {
-  final String title;
-  _NavDivider(this.title);
 }

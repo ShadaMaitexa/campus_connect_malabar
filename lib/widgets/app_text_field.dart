@@ -43,6 +43,7 @@ class AppTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return TextFormField(
       controller: controller,
@@ -55,35 +56,62 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       validator: validator,
       focusNode: focusNode,
+      textAlignVertical: TextAlignVertical.center,
       style: AppTheme.bodyLarge.copyWith(
-        color: theme.colorScheme.onSurface,
-        height: 1.4,
+        color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+        height: 1.2,
       ),
-      cursorColor: theme.colorScheme.primary,
+      cursorColor: AppTheme.primaryColor,
+      cursorWidth: 2,
       decoration: InputDecoration(
+        isDense: true,
         labelText: label,
         labelStyle: AppTheme.bodyMedium.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.7),
+          color: isDark
+              ? AppTheme.darkTextSecondary
+              : AppTheme.lightTextSecondary,
         ),
         hintText: hint,
-        hintStyle: AppTheme.bodyMedium.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.4),
+        hintStyle: AppTheme.bodySmall.copyWith(
+          color:
+              (isDark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary)
+                  .withOpacity(0.5),
         ),
         errorText: errorText,
+        filled: true,
+        fillColor: isDark ? AppTheme.darkSurface : Colors.grey.shade50,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppTheme.spacingM,
-          vertical: AppTheme.spacingL,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          borderSide: BorderSide(
+            color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          borderSide: BorderSide(
+            color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          borderSide: const BorderSide(color: AppTheme.errorColor),
         ),
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: theme.colorScheme.primary, size: 20)
+            ? Icon(prefixIcon, color: AppTheme.primaryColor, size: 20)
             : null,
         suffixIcon: suffixIcon != null
             ? IconButton(
-                icon: Icon(
-                  suffixIcon,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
+                icon: Icon(suffixIcon, color: AppTheme.primaryColor, size: 20),
                 onPressed: onSuffixTap,
               )
             : null,

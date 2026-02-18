@@ -2,7 +2,6 @@ import 'package:campus_connect_malabar/alumini/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/dashboard_card.dart';
 import '../widgets/custom_app_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';

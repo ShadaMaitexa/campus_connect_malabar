@@ -17,96 +17,179 @@ class StudentAttendanceView extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      appBar: CustomAppBar(
-        title: 'My Attendance',
-        subtitle: 'Today\'s Status',
-        gradient: AppGradients.blue,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppGradients.blue.colors.first.withOpacity(0.05),
-              AppTheme.darkBackground,
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        appBar: CustomAppBar(
+          title: 'My Attendance',
+          subtitle: 'Today\'s Status',
+          gradient: AppGradients.blue,
+        ),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppGradients.blue.colors.first.withOpacity(0.05),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('attendance')
+                      .doc(today())
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const CircularProgressIndicator(),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Loading attendance...',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: AppTheme.darkTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (!snapshot.hasData ||
+                        !snapshot.data!.exists ||
+                        !(snapshot.data!.data() as Map<String, dynamic>)
+                            .containsKey(uid)) {
+                      return const EmptyStateWidget(
+                        icon: Icons.event_busy_rounded,
+                        title: "Not Marked Yet",
+                        subtitle:
+                            "Your attendance has not been marked for today",
+                      );
+                    }
+
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final present = data[uid]['present'] as bool;
+
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppAnimations.scaleIn(
+                              child: _AttendanceStatusCard(present: present),
+                              duration: const Duration(milliseconds: 600),
+                            ),
+                            const SizedBox(height: 32),
+                            AppAnimations.slideInFromBottom(
+                              delay: const Duration(milliseconds: 300),
+                              child: _AttendanceInfo(
+                                date: DateTime.now(),
+                                present: present,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Attendance History / Summary View Placeholder
+              _buildAttendanceSummary(uid),
             ],
           ),
         ),
-        child: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
-              .collection('attendance')
-              .doc(today())
-              .get(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const CircularProgressIndicator(),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Loading attendance...',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: AppTheme.darkTextSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            if (!snapshot.hasData ||
-                !snapshot.data!.exists ||
-                !(snapshot.data!.data() as Map<String, dynamic>).containsKey(
-                  uid,
-                )) {
-              return const EmptyStateWidget(
-                icon: Icons.event_busy_rounded,
-                title: "Not Marked Yet",
-                subtitle: "Your attendance has not been marked for today",
-              );
-            }
-
-            final data = snapshot.data!.data() as Map<String, dynamic>;
-            final present = data[uid]['present'] as bool;
-
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppAnimations.scaleIn(
-                      child: _AttendanceStatusCard(present: present),
-                      duration: const Duration(milliseconds: 600),
-                    ),
-                    const SizedBox(height: 32),
-                    AppAnimations.slideInFromBottom(
-                      delay: const Duration(milliseconds: 300),
-                      child: _AttendanceInfo(
-                        date: DateTime.now(),
-                        present: present,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
       ),
+    );
+  }
+
+  Widget _buildAttendanceSummary(String uid) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('attendance_summary')
+          .doc(uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const SizedBox.shrink();
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final present = data['present'] ?? 0;
+        final total = data['total'] ?? 0;
+        final percentage = total > 0 ? (present / total) * 100 : 0.0;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppTheme.darkBorder),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Overall Attendance',
+                    style: GoogleFonts.poppins(
+                      color: AppTheme.darkTextSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    '${percentage.toStringAsFixed(1)}%',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Present: $present Days',
+                    style: GoogleFonts.poppins(
+                      color: AppTheme.successColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    'Total: $total Days',
+                    style: GoogleFonts.poppins(
+                      color: AppTheme.darkTextSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
