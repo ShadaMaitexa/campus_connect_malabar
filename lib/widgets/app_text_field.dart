@@ -59,32 +59,39 @@ class AppTextField extends StatelessWidget {
       textAlignVertical: TextAlignVertical.center,
       style: AppTheme.bodyLarge.copyWith(
         color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
-        height: 1.2,
+        height: 1.0, // Critical for vertical alignment with contentPadding
       ),
       cursorColor: AppTheme.primaryColor,
       cursorWidth: 2,
+      cursorRadius: const Radius.circular(2),
       decoration: InputDecoration(
         isDense: true,
         labelText: label,
         labelStyle: AppTheme.bodyMedium.copyWith(
-          color: isDark
-              ? AppTheme.darkTextSecondary
-              : AppTheme.lightTextSecondary,
-        ),
-        hintText: hint,
-        hintStyle: AppTheme.bodySmall.copyWith(
           color:
               (isDark
                       ? AppTheme.darkTextSecondary
                       : AppTheme.lightTextSecondary)
-                  .withOpacity(0.5),
+                  .withOpacity(0.8),
+        ),
+        floatingLabelStyle: AppTheme.bodyMedium.copyWith(
+          color: AppTheme.primaryColor,
+          fontWeight: FontWeight.w600,
+        ),
+        hintText: hint,
+        hintStyle: AppTheme.bodyMedium.copyWith(
+          color:
+              (isDark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary)
+                  .withOpacity(0.6),
         ),
         errorText: errorText,
         filled: true,
         fillColor: isDark ? AppTheme.darkSurface : Colors.grey.shade50,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppTheme.spacingM,
-          vertical: 16,
+          vertical: 18, // Slightly more vertical space for a premium feel
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusM),

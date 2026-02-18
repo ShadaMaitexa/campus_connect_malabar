@@ -101,8 +101,9 @@ class _TitleSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment:
-          centerTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: centerTitle
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         Text(
           title,
@@ -210,9 +211,7 @@ class CustomSliverAppBar extends StatelessWidget {
       backgroundColor: Colors.transparent,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
-            gradient: gradient ?? AppGradients.blue,
-          ),
+          decoration: BoxDecoration(gradient: gradient ?? AppGradients.blue),
           child: Stack(
             children: [
               // Background pattern
@@ -242,11 +241,7 @@ class CustomSliverAppBar extends StatelessWidget {
               ),
               // Content
               if (flexibleContent != null)
-                Positioned.fill(
-                  child: SafeArea(
-                    child: flexibleContent!,
-                  ),
-                ),
+                Positioned.fill(child: SafeArea(child: flexibleContent!)),
             ],
           ),
         ),
@@ -368,11 +363,7 @@ class WelcomeHeader extends StatelessWidget {
                           ),
                         ),
                       )
-                    : const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    : const Icon(Icons.person, color: Colors.white, size: 28),
               ),
             ),
           ],
@@ -412,7 +403,9 @@ class SectionHeader extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+              color: isDark
+                  ? AppTheme.darkTextPrimary
+                  : AppTheme.lightTextPrimary,
             ),
           ),
           if (actionLabel != null || actionIcon != null)
@@ -441,11 +434,7 @@ class SectionHeader extends StatelessWidget {
                       ),
                     if (actionIcon != null) ...[
                       if (actionLabel != null) const SizedBox(width: 4),
-                      Icon(
-                        actionIcon,
-                        size: 16,
-                        color: AppTheme.primaryColor,
-                      ),
+                      Icon(actionIcon, size: 16, color: AppTheme.primaryColor),
                     ],
                   ],
                 ),
@@ -481,64 +470,99 @@ class EmptyStateWidget extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // Premium Icon Container
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppTheme.primaryColor.withOpacity(0.08),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.05),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
               ),
               child: Icon(
                 icon,
-                size: 48,
-                color: AppTheme.primaryColor.withOpacity(0.7),
+                size: 64,
+                color: AppTheme.primaryColor.withOpacity(0.8),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+            // Title
             Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                letterSpacing: -0.5,
               ),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: isDark
-                      ? AppTheme.darkTextSecondary
-                      : AppTheme.lightTextSecondary,
+              const SizedBox(height: 12),
+              // Subtitle
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  subtitle!,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
             if (actionLabel != null && onActionTap != null) ...[
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: onActionTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                  ),
+              const SizedBox(height: 40),
+              // Action Button
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  actionLabel!,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
+                child: ElevatedButton(
+                  onPressed: onActionTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    actionLabel!,
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -591,12 +615,7 @@ class LoadingOverlay extends StatelessWidget {
                     const CircularProgressIndicator(),
                     if (message != null) ...[
                       const SizedBox(height: 16),
-                      Text(
-                        message!,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                        ),
-                      ),
+                      Text(message!, style: GoogleFonts.poppins(fontSize: 14)),
                     ],
                   ],
                 ),

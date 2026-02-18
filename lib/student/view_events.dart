@@ -23,84 +23,95 @@ class ViewEvents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      appBar: CustomAppBar(
-        title: "Upcoming Events",
-        gradient: AppGradients.purple,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.05),
-              AppTheme.darkBackground,
-            ],
-          ),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        appBar: const CustomAppBar(
+          title: "Events",
+          subtitle: "Institutional Calendar",
+          showBackButton: true,
+          gradient: AppGradients.purple,
         ),
-        child: FutureBuilder<String?>(
-          future: getUserDepartment(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final department = snapshot.data;
-
-            return StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('events')
-                  .orderBy('date')
-                  .snapshots(),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const ShimmerList(itemCount: 3);
-                }
-
-                if (!snap.hasData || snap.data!.docs.isEmpty) {
-                  return const EmptyStateWidget(
-                    icon: Icons.event_busy_rounded,
-                    title: "No upcoming events",
-                    subtitle: "Check back later for new announcements",
-                  );
-                }
-
-                final events = snap.data!.docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return data['department'] == 'ALL' ||
-                      data['department'] == department;
-                }).toList();
-
-                if (events.isEmpty) {
-                  return const EmptyStateWidget(
-                    icon: Icons.event_busy_rounded,
-                    title: "No events for you",
-                    subtitle:
-                        "There are no events scheduled for your department",
-                  );
-                }
-
-                return ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 24,
-                  ),
-                  itemCount: events.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 20),
-                  itemBuilder: (context, index) {
-                    final doc = events[index];
-                    return AppAnimations.slideInFromBottom(
-                      delay: Duration(milliseconds: 100 + (index * 50)),
-                      child: _EventCard(doc: doc),
-                    );
-                  },
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppGradients.purple.colors.first.withOpacity(0.08),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+          child: FutureBuilder<String?>(
+            future: getUserDepartment(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: ShimmerList(itemCount: 3),
                 );
-              },
-            );
-          },
+              }
+
+              final department = snapshot.data;
+
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('events')
+                    .orderBy('date')
+                    .snapshots(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: ShimmerList(itemCount: 3),
+                    );
+                  }
+
+                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                    return const EmptyStateWidget(
+                      icon: Icons.event_busy_rounded,
+                      title: "No Events Found",
+                      subtitle:
+                          "Stay tuned for upcoming institutional activities",
+                    );
+                  }
+
+                  final events = snap.data!.docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return data['department'] == 'ALL' ||
+                        data['department'] == department;
+                  }).toList();
+
+                  if (events.isEmpty) {
+                    return const EmptyStateWidget(
+                      icon: Icons.event_note_rounded,
+                      title: "No Departmental Events",
+                      subtitle:
+                          "There are no events scheduled for your specific department",
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+                    itemCount: events.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final doc = events[index];
+                      return AppAnimations.slideInFromBottom(
+                        delay: Duration(milliseconds: 100 + (index * 50)),
+                        child: _EventCard(doc: doc),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -116,159 +127,206 @@ class _EventCard extends StatelessWidget {
     final data = doc.data() as Map<String, dynamic>;
     final dateTime = (data['date'] as Timestamp).toDate();
     final isUpcoming = dateTime.isAfter(DateTime.now());
-    final dateStr =
-        "${dateTime.day} ${_getMonth(dateTime.month)} ${dateTime.year}";
+    final dateStr = "${dateTime.day} ${_getMonth(dateTime.month)}";
+    final yearStr = dateTime.year.toString();
     final role = (data['role'] ?? 'OFFICIAL').toString().toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.darkSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: isUpcoming
-              ? AppTheme.primaryColor.withOpacity(0.3)
-              : Colors.white.withOpacity(0.05),
+              ? AppTheme.primaryColor.withOpacity(0.2)
+              : AppTheme.darkBorder,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with Badge and Date
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Row(
+              children: [
+                // Date Chip - Leading
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.event_available_rounded,
-                          color: isUpcoming
-                              ? AppTheme.primaryColor
-                              : Colors.white54,
-                          size: 24,
+                      Text(
+                        dateStr.split(' ')[0],
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          height: 1.0,
                         ),
                       ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: isUpcoming
-                              ? AppGradients.success
-                              : AppGradients.surface,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          role,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                      Text(
+                        dateStr.split(' ')[1],
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor.withOpacity(0.8),
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    data['title'] ?? 'Event',
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['title'] ?? 'Untitled Event',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        yearStr,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppTheme.darkTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Role Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Text(
+                    role,
                     style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkTextPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryColor,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    data['description'] ?? '',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      height: 1.5,
-                      color: AppTheme.darkTextSecondary,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      _Chip(icon: Icons.calendar_today_rounded, label: dateStr),
-                      const SizedBox(width: 12),
-                      if (data['venue'] != null)
-                        _Chip(
-                          icon: Icons.location_on_rounded,
-                          label: data['venue'],
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          const Divider(color: AppTheme.darkBorder, height: 1),
+
+          // Body Content
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data['description'] ?? 'No description provided.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppTheme.darkTextSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (data['venue'] != null)
+                      _InfoChip(
+                        icon: Icons.location_on_rounded,
+                        label: data['venue'],
+                      ),
+                    const SizedBox(width: 12),
+                    _InfoChip(
+                      icon: Icons.access_time_filled_rounded,
+                      label: isUpcoming ? "Status: Upcoming" : "Status: Past",
+                      color: isUpcoming
+                          ? AppTheme.successColor
+                          : AppTheme.errorColor,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   String _getMonth(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
     ];
     return months[month - 1];
   }
 }
 
-class _Chip extends StatelessWidget {
+class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _Chip({required this.icon, required this.label});
+  final Color? color;
+  const _InfoChip({required this.icon, required this.label, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? AppTheme.primaryColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: effectiveColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppTheme.primaryColor),
+          Icon(icon, size: 14, color: effectiveColor),
           const SizedBox(width: 6),
           Text(
             label,
             style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.darkTextSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: effectiveColor.withOpacity(0.9),
             ),
           ),
         ],

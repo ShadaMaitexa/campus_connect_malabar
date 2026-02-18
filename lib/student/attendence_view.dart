@@ -23,101 +23,193 @@ class StudentAttendanceView extends StatelessWidget {
         backgroundColor: AppTheme.darkBackground,
         appBar: CustomAppBar(
           title: 'My Attendance',
-          subtitle: 'Today\'s Status',
+          subtitle: 'Daily Progress Tracker',
           gradient: AppGradients.blue,
         ),
         body: Container(
+          width: double.infinity,
+          height: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppGradients.blue.colors.first.withOpacity(0.05),
+                AppGradients.blue.colors.first.withOpacity(0.08),
                 AppTheme.darkBackground,
               ],
             ),
           ),
-          child: Column(
-            children: [
-              Expanded(
-                child: FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('attendance')
-                      .doc(today())
-                      .get(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const CircularProgressIndicator(),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              'Loading attendance...',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                color: AppTheme.darkTextSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    if (!snapshot.hasData ||
-                        !snapshot.data!.exists ||
-                        !(snapshot.data!.data() as Map<String, dynamic>)
-                            .containsKey(uid)) {
-                      return const EmptyStateWidget(
-                        icon: Icons.event_busy_rounded,
-                        title: "Not Marked Yet",
-                        subtitle:
-                            "Your attendance has not been marked for today",
-                      );
-                    }
-
-                    final data = snapshot.data!.data() as Map<String, dynamic>;
-                    final present = data[uid]['present'] as bool;
-
-                    return Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppAnimations.scaleIn(
-                              child: _AttendanceStatusCard(present: present),
-                              duration: const Duration(milliseconds: 600),
-                            ),
-                            const SizedBox(height: 32),
-                            AppAnimations.slideInFromBottom(
-                              delay: const Duration(milliseconds: 300),
-                              child: _AttendanceInfo(
-                                date: DateTime.now(),
-                                present: present,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              children: [
+                // 1. Overall Summary Section
+                AppAnimations.slideInFromBottom(
+                  delay: const Duration(milliseconds: 100),
+                  child: _buildAttendanceSummary(uid),
                 ),
-              ),
-              // Attendance History / Summary View Placeholder
-              _buildAttendanceSummary(uid),
-            ],
+
+                const SizedBox(height: 12),
+
+                // 2. Today's Status Section
+                _buildTodayStatusSection(uid),
+
+                const SizedBox(height: 24),
+
+                // 3. Information Section (To make it feel less empty)
+                AppAnimations.slideInFromBottom(
+                  delay: const Duration(milliseconds: 400),
+                  child: _buildAttendanceInsights(),
+                ),
+
+                const SizedBox(height: 80), // Padding for bottom
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTodayStatusSection(String uid) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('attendance')
+          .doc(today())
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(40.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        bool hasData =
+            snapshot.hasData &&
+            snapshot.data!.exists &&
+            (snapshot.data!.data() as Map<String, dynamic>).containsKey(uid);
+
+        if (!hasData) {
+          return AppAnimations.slideInFromBottom(
+            delay: const Duration(milliseconds: 300),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: EmptyStateWidget(
+                icon: Icons.event_note_rounded,
+                title: "Not Marked Yet",
+                subtitle: "Checking back later for today's status",
+              ),
+            ),
+          );
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final present = data[uid]['present'] as bool;
+
+        return Column(
+          children: [
+            AppAnimations.scaleIn(
+              child: _AttendanceStatusCard(present: present),
+              duration: const Duration(milliseconds: 600),
+            ),
+            const SizedBox(height: 24),
+            AppAnimations.slideInFromBottom(
+              delay: const Duration(milliseconds: 300),
+              child: _AttendanceInfo(date: DateTime.now(), present: present),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAttendanceInsights() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppTheme.darkSurface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.darkBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Attendance Insights",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildInsightItem(
+              Icons.trending_up_rounded,
+              "Consistent Attendance",
+              "Maintain above 75% for exam eligibility.",
+              AppTheme.successColor,
+            ),
+            const Divider(color: AppTheme.darkBorder, height: 24),
+            _buildInsightItem(
+              Icons.warning_amber_rounded,
+              "Minimum Criteria",
+              "A drop below 60% may require special permission.",
+              AppTheme.warningColor,
+            ),
+            const Divider(color: AppTheme.darkBorder, height: 24),
+            _buildInsightItem(
+              Icons.info_outline_rounded,
+              "Marking Process",
+              "Attendance is usually updated within 2 hours of class.",
+              AppTheme.primaryColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInsightItem(
+    IconData icon,
+    String title,
+    String desc,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                desc,
+                style: GoogleFonts.inter(fontSize: 12, color: Colors.white60),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -128,68 +220,126 @@ class StudentAttendanceView extends StatelessWidget {
           .doc(uid)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const SizedBox.shrink();
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: ShimmerCard(height: 100),
+          );
         }
-        final data = snapshot.data!.data() as Map<String, dynamic>;
+
+        final data = snapshot.hasData && snapshot.data!.exists
+            ? snapshot.data!.data() as Map<String, dynamic>
+            : {'present': 0, 'total': 0};
+
         final present = data['present'] ?? 0;
         final total = data['total'] ?? 0;
         final percentage = total > 0 ? (present / total) * 100 : 0.0;
 
         return Container(
-          padding: const EdgeInsets.all(20),
-          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-            color: AppTheme.darkSurface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.darkBorder),
+            gradient: AppGradients.primary,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
+                alignment: Alignment.center,
                 children: [
-                  Text(
-                    'Overall Attendance',
-                    style: GoogleFonts.poppins(
-                      color: AppTheme.darkTextSecondary,
-                      fontSize: 12,
+                  SizedBox(
+                    width: 70,
+                    height: 70,
+                    child: CircularProgressIndicator(
+                      value: percentage / 100,
+                      backgroundColor: Colors.white.withOpacity(0.15),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
+                      strokeWidth: 8,
+                      strokeCap: StrokeCap.round,
                     ),
                   ),
                   Text(
-                    '${percentage.toStringAsFixed(1)}%',
+                    '${percentage.toInt()}%',
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Present: $present Days',
-                    style: GoogleFonts.poppins(
-                      color: AppTheme.successColor,
-                      fontSize: 12,
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Semester Status',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Total: $total Days',
-                    style: GoogleFonts.poppins(
-                      color: AppTheme.darkTextSecondary,
-                      fontSize: 12,
+                    Text(
+                      'Overall Persistence',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _StatMini(label: 'Present', val: '$present'),
+                        const SizedBox(width: 12),
+                        _StatMini(label: 'Total', val: '$total'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _StatMini extends StatelessWidget {
+  final String label;
+  final String val;
+  const _StatMini({required this.label, required this.val});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          val,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10),
+        ),
+      ],
     );
   }
 }
@@ -210,6 +360,7 @@ class _AttendanceStatusCard extends StatelessWidget {
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         gradient: gradient,
@@ -219,12 +370,6 @@ class _AttendanceStatusCard extends StatelessWidget {
             color: gradient.colors.first.withOpacity(0.4),
             blurRadius: 30,
             offset: const Offset(0, 15),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -232,58 +377,33 @@ class _AttendanceStatusCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           AppAnimations.pulse(
-            minScale: 0.95,
-            maxScale: 1.05,
             child: Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
               ),
-              child: Icon(icon, size: 80, color: Colors.white),
+              child: Icon(icon, size: 60, color: Colors.white),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Text(
             status,
             style: GoogleFonts.poppins(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               letterSpacing: 2,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.3),
-                  offset: const Offset(0, 3),
-                  blurRadius: 8,
-                ),
-              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: GoogleFonts.poppins(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 14,
             ),
-            child: Text(
-              message,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -299,95 +419,33 @@ class _AttendanceInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 360),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.darkSurface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.darkBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: AppGradients.blue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.info_outline_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Attendance Details',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.darkTextPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _InfoRow(
-            icon: Icons.calendar_today_rounded,
-            label: 'Date',
-            value: _formatDate(date),
-          ),
-          const SizedBox(height: 12),
-          _InfoRow(
-            icon: Icons.access_time_rounded,
-            label: 'Day',
-            value: _getDayOfWeek(date),
-          ),
-          const SizedBox(height: 12),
-          _InfoRow(
-            icon: present
-                ? Icons.check_circle_outline_rounded
-                : Icons.highlight_off_rounded,
-            label: 'Status',
-            value: present ? 'Present' : 'Absent',
-            valueColor: present ? AppTheme.successColor : AppTheme.errorColor,
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppTheme.darkSurface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.darkBorder),
+        ),
+        child: Column(
+          children: [
+            _InfoRow(
+              icon: Icons.calendar_today_rounded,
+              label: 'Date',
+              value: '${date.day}/${date.month}/${date.year}',
+            ),
+            const Divider(color: AppTheme.darkBorder, height: 24),
+            _InfoRow(
+              icon: present ? Icons.check_circle_outline : Icons.highlight_off,
+              label: 'Status',
+              value: present ? 'Present' : 'Absent',
+              valueColor: present ? AppTheme.successColor : AppTheme.errorColor,
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]}, ${date.year}';
-  }
-
-  String _getDayOfWeek(DateTime date) {
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[date.weekday - 1];
   }
 }
 
@@ -408,14 +466,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 18, color: AppTheme.primaryColor),
-        ),
+        Icon(icon, size: 18, color: AppTheme.primaryColor),
         const SizedBox(width: 12),
         Expanded(
           child: Text(

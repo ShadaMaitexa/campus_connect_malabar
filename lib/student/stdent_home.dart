@@ -70,57 +70,34 @@ class _StudentHomeState extends State<StudentHome>
                   const SectionHeader(title: "Academic Navigation"),
                   const SizedBox(height: 24),
                   _buildNavigationGrid(isDesktop),
-                  const SizedBox(height: 80), // Space for FAB
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ],
       ),
-      floatingActionButton: AppAnimations.scaleIn(
-        child: FloatingActionButton.extended(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CommunityScreen()),
-          ),
-          label: const Text("Community"),
-          icon: const Icon(Icons.groups_rounded),
-          backgroundColor: AppTheme.primaryColor,
-        ),
-      ),
     );
   }
 
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
-      expandedHeight: 140,
-      floating: true,
+      expandedHeight: 120,
+      floating: false,
       pinned: true,
       backgroundColor: AppTheme.darkBackground,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       title: Text(
         "Student Pulse",
         style: GoogleFonts.outfit(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          fontSize: 24,
           color: Colors.white,
+          letterSpacing: -0.5,
         ),
       ),
       centerTitle: false,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppTheme.primaryColor.withOpacity(0.15),
-                AppTheme.darkBackground.withOpacity(0.95),
-              ],
-            ),
-          ),
-        ),
-      ),
       actions: const [ProfileMenu(), SizedBox(width: 12)],
     );
   }
@@ -258,6 +235,7 @@ class _StudentHomeState extends State<StudentHome>
         AppGradients.primary,
         -2,
       ),
+      _NavItem("Community", Icons.groups_rounded, AppGradients.blue, -4),
       _NavItem(
         "Internal Marks",
         Icons.assignment_rounded,
@@ -273,7 +251,7 @@ class _StudentHomeState extends State<StudentHome>
         crossAxisCount: isDesktop ? 4 : 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.1,
+        childAspectRatio: 0.95,
       ),
       itemCount: navItems.length,
       itemBuilder: (context, index) {
@@ -289,7 +267,6 @@ class _StudentHomeState extends State<StudentHome>
               widget.onNavigate(item.index);
             } else if (item.index == -1) {
               // Library
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
             } else if (item.index == -2) {
               Navigator.push(
                 context,
@@ -298,6 +275,11 @@ class _StudentHomeState extends State<StudentHome>
             } else if (item.index == -3) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Internal Marks coming soon!")),
+              );
+            } else if (item.index == -4) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CommunityScreen()),
               );
             }
           },

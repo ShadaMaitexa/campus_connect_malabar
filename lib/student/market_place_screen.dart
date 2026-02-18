@@ -17,32 +17,34 @@ class MarketplaceScreen extends StatelessWidget {
         length: 2,
         child: Scaffold(
           backgroundColor: AppTheme.darkBackground,
-          appBar: CustomAppBar(
+          appBar: const CustomAppBar(
             title: 'Marketplace',
+            subtitle: 'Campus Trade & Careers',
             gradient: AppGradients.orange,
+            showBackButton: true,
           ),
-          body: Column(
-            children: [
-              // Custom Tab Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.darkSurface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white.withOpacity(0.05),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppGradients.orange.colors.first.withOpacity(0.05),
+                  AppTheme.darkBackground,
+                ],
+              ),
+            ),
+            child: Column(
+              children: [
+                // Refined Custom Tab Bar
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                   child: Container(
+                    height: 54,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
                     ),
                     child: TabBar(
                       indicator: BoxDecoration(
@@ -53,23 +55,25 @@ class MarketplaceScreen extends StatelessWidget {
                             color: AppGradients.orange.colors.first.withOpacity(
                               0.3,
                             ),
-                            blurRadius: 8,
+                            blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
+                      indicatorPadding: const EdgeInsets.all(4),
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
-                      labelStyle: GoogleFonts.poppins(
+                      labelStyle: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                      unselectedLabelStyle: GoogleFonts.outfit(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
-                      unselectedLabelStyle: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
                       labelColor: Colors.white,
-                      unselectedLabelColor: Colors.white60,
+                      unselectedLabelColor: Colors.white38,
                       tabs: [
                         Tab(
                           child: Row(
@@ -77,7 +81,7 @@ class MarketplaceScreen extends StatelessWidget {
                             children: const [
                               Icon(Icons.menu_book_rounded, size: 18),
                               SizedBox(width: 8),
-                              Text('Materials'),
+                              Text('MATERIALS'),
                             ],
                           ),
                         ),
@@ -87,7 +91,7 @@ class MarketplaceScreen extends StatelessWidget {
                             children: const [
                               Icon(Icons.work_rounded, size: 18),
                               SizedBox(width: 8),
-                              Text('Jobs'),
+                              Text('JOBS'),
                             ],
                           ),
                         ),
@@ -95,14 +99,15 @@ class MarketplaceScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              // Tab Views
-              const Expanded(
-                child: TabBarView(
-                  children: [StudyMaterialsScreen(), JobsScreen()],
+                // Tab Views
+                const Expanded(
+                  child: TabBarView(
+                    physics: BouncingScrollPhysics(),
+                    children: [StudyMaterialsScreen(), JobsScreen()],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

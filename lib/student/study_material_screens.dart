@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/custom_app_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import '../widgets/loading_shimmer.dart';
 
 class StudyMaterialsScreen extends StatelessWidget {
   const StudyMaterialsScreen({super.key});
@@ -13,65 +14,72 @@ class StudyMaterialsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.warningColor,
-        elevation: 8,
-        child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StudyChatbotScreen()),
-          );
-        },
-      ),
-      body: Container(
+      backgroundColor: Colors.transparent, // Let parent handle background
+      floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.05),
-              AppTheme.darkBackground,
-            ],
-          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppGradients.orange.colors.first.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('marketplace')
-              .where('type', isEqualTo: 'material')
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const EmptyStateWidget(
-                icon: Icons.menu_book_rounded,
-                title: 'No materials available',
-                subtitle: 'Check back later for newly shared study resources',
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                100,
-              ), // Extra space for FAB
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (context, index) {
-                return AnimatedListItem(
-                  index: index,
-                  child: _MaterialCard(doc: snapshot.data!.docs[index]),
-                );
-              },
+        child: FloatingActionButton(
+          backgroundColor: AppTheme.warningColor, // Matches orange theme
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.psychology_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const StudyChatbotScreen()),
             );
           },
         ),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('marketplace')
+            .where('type', isEqualTo: 'material')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: ShimmerList(itemCount: 3),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const EmptyStateWidget(
+              icon: Icons.auto_stories_rounded,
+              title: 'No Resource Found',
+              subtitle:
+                  'Be the first to share study notes or textbooks with your peers!',
+            );
+          }
+
+          return ListView.builder(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              return AppAnimations.slideInFromBottom(
+                delay: Duration(milliseconds: 100 + (index * 50)),
+                child: _MaterialCard(doc: snapshot.data!.docs[index]),
+              );
+            },
+          );
+        },
       ),
     );
   }

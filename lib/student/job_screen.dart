@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/custom_app_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import '../widgets/loading_shimmer.dart';
 
 class JobsScreen extends StatelessWidget {
   const JobsScreen({super.key});
@@ -12,48 +13,41 @@ class JobsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppGradients.purple.colors.first.withOpacity(0.05),
-              AppTheme.darkBackground,
-            ],
-          ),
-        ),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('marketplace')
-              .where('type', isEqualTo: 'job')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const EmptyStateWidget(
-                icon: Icons.work_outline_rounded,
-                title: 'No Job Openings',
-                subtitle: 'Check back later for new opportunities',
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (context, index) {
-                return AnimatedListItem(
-                  index: index,
-                  child: _JobCard(doc: snapshot.data!.docs[index]),
-                );
-              },
+      backgroundColor: Colors.transparent,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('marketplace')
+            .where('type', isEqualTo: 'job')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: ShimmerList(itemCount: 4),
             );
-          },
-        ),
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const EmptyStateWidget(
+              icon: Icons.work_history_rounded,
+              title: 'No Active Openings',
+              subtitle:
+                  'Stay proactive! Check back frequently for new career opportunities.',
+            );
+          }
+
+          return ListView.builder(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              return AppAnimations.slideInFromBottom(
+                delay: Duration(milliseconds: 100 + (index * 50)),
+                child: _JobCard(doc: snapshot.data!.docs[index]),
+              );
+            },
+          );
+        },
       ),
     );
   }

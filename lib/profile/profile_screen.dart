@@ -814,23 +814,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           lastDate: DateTime.now(),
           builder: (context, child) {
             return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: isDark
-                    ? ColorScheme.dark(
-                        primary: AppTheme.primaryColor,
-                        onPrimary: Colors.white,
-                        surface: AppTheme.darkSurface,
-                        onSurface: Colors.white,
-                      )
-                    : ColorScheme.light(
-                        primary: AppTheme.primaryColor,
-                        onPrimary: Colors.white,
-                        surface: Colors.white,
-                        onSurface: AppTheme.lightTextPrimary,
-                      ),
-                dialogBackgroundColor: isDark
-                    ? AppTheme.darkSurface
-                    : Colors.white,
+              data: AppTheme.darkTheme.copyWith(
+                colorScheme: const ColorScheme.dark(
+                  primary: AppTheme.primaryColor,
+                  onPrimary: Colors.white,
+                  surface: AppTheme.darkSurface,
+                  onSurface: Colors.white,
+                ),
+                dialogBackgroundColor: AppTheme.darkSurface,
               ),
               child: child!,
             );
