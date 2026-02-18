@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
+import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 
 class ViewNotices extends StatelessWidget {
@@ -11,13 +12,8 @@ class ViewNotices extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
+      backgroundColor: AppTheme.darkBackground,
       appBar: CustomAppBar(title: "Notices", showBackButton: true),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -52,11 +48,18 @@ class ViewNotices extends StatelessWidget {
                     );
                   }
 
-                  return AppAnimations.staggeredList(
-                    children: snap.data!.docs
-                        .map((doc) => _noticeCard(doc, isDark))
-                        .toList(),
-                    staggerDelay: const Duration(milliseconds: 100),
+                  return Column(
+                    children: [
+                      AppAnimations.staggeredList(
+                        children: snap.data!.docs
+                            .map((doc) => _noticeCard(doc))
+                            .toList(),
+                        staggerDelay: const Duration(milliseconds: 100),
+                      ),
+                      const SizedBox(
+                        height: 100,
+                      ), // Fix excess empty space at bottom
+                    ],
                   );
                 },
               ),
@@ -67,92 +70,89 @@ class ViewNotices extends StatelessWidget {
     );
   }
 
-  // ---------------- NOTICE CARD ----------------
-  Widget _noticeCard(QueryDocumentSnapshot doc, bool isDark) {
+  Widget _noticeCard(QueryDocumentSnapshot doc) {
     final role = (doc['role'] ?? 'ADMIN').toString().toUpperCase();
     final isAdmin = role == 'ADMIN';
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        gradient: isDark
-            ? LinearGradient(
-                colors: [
-                  AppTheme.darkSurface,
-                  AppTheme.darkSurface.withOpacity(0.8),
-                ],
-              )
-            : const LinearGradient(
-                colors: [Color(0xFFF8FAFF), Color(0xFFE9EEFF)],
-              ),
-        border: Border.all(
-          color: isDark ? AppTheme.darkBorder : Colors.transparent,
-        ),
+        color: AppTheme.darkSurface,
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Role badge
-            Align(
-              alignment: Alignment.topRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isAdmin ? AppTheme.errorColor : AppTheme.primaryColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  role,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isAdmin
+                        ? AppGradients.danger
+                        : AppGradients.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    role,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
-              ),
+                Text(
+                  _formatDate(doc['createdAt']),
+                  style: GoogleFonts.inter(
+                    color: AppTheme.darkTextSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 8),
-
-            // 🔹 Title
+            const SizedBox(height: 16),
             Text(
               doc['title'] ?? '',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? AppTheme.darkTextPrimary
-                    : AppTheme.lightTextPrimary,
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkTextPrimary,
               ),
             ),
-
-            const SizedBox(height: 6),
-
-            // 🔹 Message
+            const SizedBox(height: 8),
             Text(
               doc['message'] ?? '',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 14,
-                color: isDark
-                    ? AppTheme.darkTextSecondary
-                    : AppTheme.lightTextSecondary,
+                height: 1.5,
+                color: AppTheme.darkTextSecondary,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return '';
+    final date = (timestamp as Timestamp).toDate();
+    return "${date.day}/${date.month}/${date.year}";
   }
 }

@@ -1,4 +1,3 @@
-import 'package:campus_connect_malabar/student/attendenceprogress_card.dart';
 import 'package:campus_connect_malabar/widgets/profile_menu.dart';
 import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
@@ -22,7 +21,8 @@ class StudentHome extends StatefulWidget {
   State<StudentHome> createState() => _StudentHomeState();
 }
 
-class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStateMixin {
+class _StudentHomeState extends State<StudentHome>
+    with SingleTickerProviderStateMixin {
   String? _userName;
   String? _department;
   bool _isLoading = true;
@@ -36,7 +36,10 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
   Future<void> _loadData() async {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (mounted && doc.exists) {
         setState(() {
           _userName = doc.data()?['name'] ?? 'Student';
@@ -51,7 +54,8 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = ResponsiveLayout.isDesktop(context);
+    // Note: PremiumDashboard/Modern templates usually check screen size
+    final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
@@ -68,9 +72,10 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  SectionHeader(title: "Academic Navigation"),
+                  const SectionHeader(title: "Academic Navigation"),
                   const SizedBox(height: 24),
                   _buildNavigationGrid(isDesktop),
+                  const SizedBox(height: 80), // Space for FAB
                 ],
               ),
             ),
@@ -79,7 +84,10 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
       ),
       floatingActionButton: AppAnimations.scaleIn(
         child: FloatingActionButton.extended(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityScreen())),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CommunityScreen()),
+          ),
           label: const Text("Community"),
           icon: const Icon(Icons.groups_rounded),
           backgroundColor: AppTheme.primaryColor,
@@ -91,155 +99,215 @@ class _StudentHomeState extends State<StudentHome> with SingleTickerProviderStat
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
       expandedHeight: 120,
+      floating: true,
       pinned: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      backgroundColor: AppTheme.darkBackground,
+      elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         title: Text(
           "Student Pulse",
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white,
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
         ),
       ),
-      actions: const [
-        ProfileMenu(),
-        SizedBox(width: 16),
-      ],
+      actions: const [ProfileMenu(), SizedBox(width: 12)],
     );
   }
 
   Widget _buildGreetingSection(bool isDesktop) {
-    final hour = DateTime.now().hour;
-    String greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-
-    return AppAnimations.slideInFromLeft(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                greeting,
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 16),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.waving_hand_rounded, color: Colors.amber, size: 16),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppAnimations.slideInFromLeft(
+          child: Text(
+            "Welcome back,",
+            style: GoogleFonts.inter(fontSize: 16, color: Colors.white70),
           ),
-          const SizedBox(height: 8),
-          Text(
-            _userName ?? "Loading...",
+        ),
+        const SizedBox(height: 4),
+        AppAnimations.slideInFromLeft(
+          delay: const Duration(milliseconds: 100),
+          child: Text(
+            _userName ?? "Student",
             style: GoogleFonts.outfit(
-              fontSize: isDesktop ? 48 : 32,
+              fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          if (_department != null)
-            Text(
-              "Dept. of $_department",
-              style: GoogleFonts.inter(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildStatsOverview(bool isDesktop) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
-      builder: (context, userSnap) {
-        final userData = userSnap.data?.data() as Map<String, dynamic>?;
-        final gpa = userData?['gpa']?.toString() ?? "0.0";
-        final progress = userData?['progress']?.toString() ?? "0";
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('attendance_summary')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        double percentage = 0.0;
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final present = data['present'] ?? 0;
+          final total = data['total'] ?? 0;
+          if (total > 0) percentage = (present / total) * 100;
+        }
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('attendance').snapshots(),
-          builder: (context, snapshot) {
-            int total = 0;
-            int present = 0;
-            if (snapshot.hasData) {
-              for (var doc in snapshot.data!.docs) {
-                final data = doc.data() as Map<String, dynamic>;
-                if (data.containsKey(uid)) {
-                  total++;
-                  if (data[uid]['present'] == true) present++;
-                }
-              }
-            }
-            final percent = total == 0 ? 0 : ((present / total) * 100).round();
-
-            return Wrap(
-              spacing: 24,
-              runSpacing: 24,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = (constraints.maxWidth - 16) / 2;
+            return Row(
               children: [
-                SizedBox(
-                  width: isDesktop ? 300 : double.infinity,
-                  child: InkWell(
-                    onTap: () => widget.onNavigate(1),
-                    borderRadius: BorderRadius.circular(24),
-                    child: PremiumStatCard(
-                      title: "Attendance Rate",
-                      value: "$percent%",
-                      icon: Icons.analytics_rounded,
-                      gradient: percent >= 75 ? AppGradients.primary : AppGradients.accent,
-                      trend: "$present/$total days",
-                    ),
-                  ),
+                _buildModernStatCard(
+                  "Attendance",
+                  "${percentage.toStringAsFixed(1)}%",
+                  Icons.event_available_rounded,
+                  AppGradients.blue,
+                  cardWidth,
                 ),
-                SizedBox(
-                  width: isDesktop ? 300 : double.infinity,
-                  child: PremiumStatCard(
-                    title: "Internal GPA",
-                    value: gpa,
-                    icon: Icons.grade_rounded,
-                    gradient: AppGradients.success,
-                    trend: "Academic standing",
-                  ),
-                ),
-                if (isDesktop)
-                SizedBox(
-                  width: 300,
-                  child: PremiumStatCard(
-                    title: "Course Progress",
-                    value: "$progress%",
-                    icon: Icons.trending_up_rounded,
-                    gradient: AppGradients.surface,
-                    trend: "On schedule",
-                  ),
+                const SizedBox(width: 16),
+                _buildModernStatCard(
+                  "GPA",
+                  "3.8",
+                  Icons.auto_graph_rounded,
+                  AppGradients.purple,
+                  cardWidth,
                 ),
               ],
             );
           },
         );
-      }
+      },
+    );
+  }
+
+  Widget _buildModernStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Gradient gradient,
+    double width,
+  ) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.white, size: 28),
+          const SizedBox(height: 16),
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildNavigationGrid(bool isDesktop) {
-    return GridView.count(
+    final items = [
+      _NavDivider("Academic"),
+      _NavItem("Attendance", Icons.fact_check_rounded, AppGradients.blue, 1),
+      _NavItem(
+        "Internal Marks",
+        Icons.assignment_rounded,
+        AppGradients.purple,
+        2,
+      ),
+      _NavItem("Notices", Icons.campaign_rounded, AppGradients.danger, 3),
+      _NavDivider("Campus Life"),
+      _NavItem(
+        "Events",
+        Icons.event_available_rounded,
+        AppGradients.success,
+        4,
+      ),
+      _NavItem("Library", Icons.local_library_rounded, AppGradients.orange, 5),
+      _NavItem(
+        "Marketplace",
+        Icons.shopping_bag_rounded,
+        AppGradients.primary,
+        6,
+      ),
+    ];
+
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: isDesktop ? 4 : 2,
-      crossAxisSpacing: 20,
-      mainAxisSpacing: 20,
-      children: [
-        _navCard("Library", Icons.local_library_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()))),
-        _navCard("Marketplace", Icons.store_mall_directory_rounded, AppGradients.accent, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MarketplaceScreen()))),
-        _navCard("Assignments", Icons.assignment_rounded, AppGradients.success, () {}),
-        _navCard("Resources", Icons.folder_shared_rounded, AppGradients.surface, () {}),
-      ],
-    );
-  }
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 4 : 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: items.where((i) => i is _NavItem).length,
+      itemBuilder: (context, index) {
+        final navItems = items.whereType<_NavItem>().toList();
+        final item = navItems[index];
 
-  Widget _navCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
-    return DashboardCard(
-      title: title,
-      value: "Open",
-      icon: icon,
-      gradient: gradient,
-      onTap: onTap,
-      showArrow: true,
+        return DashboardCard(
+          title: item.title,
+          value: "",
+          icon: item.icon,
+          gradient: item.gradient,
+          onTap: () => widget.onNavigate(item.index),
+          showArrow: true,
+        );
+      },
     );
   }
+}
+
+class _NavItem {
+  final String title;
+  final IconData icon;
+  final Gradient gradient;
+  final int index;
+  _NavItem(this.title, this.icon, this.gradient, this.index);
+}
+
+class _NavDivider {
+  final String title;
+  _NavDivider(this.title);
 }

@@ -57,17 +57,33 @@ class AppTextField extends StatelessWidget {
       focusNode: focusNode,
       style: AppTheme.bodyLarge.copyWith(
         color: theme.colorScheme.onSurface,
+        height: 1.4,
       ),
+      cursorColor: theme.colorScheme.primary,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: AppTheme.bodyMedium.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
         hintText: hint,
+        hintStyle: AppTheme.bodyMedium.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.4),
+        ),
         errorText: errorText,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacingM,
+          vertical: AppTheme.spacingL,
+        ),
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: theme.colorScheme.primary)
+            ? Icon(prefixIcon, color: theme.colorScheme.primary, size: 20)
             : null,
         suffixIcon: suffixIcon != null
             ? IconButton(
-                icon: Icon(suffixIcon, color: theme.colorScheme.primary),
+                icon: Icon(
+                  suffixIcon,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
                 onPressed: onSuffixTap,
               )
             : null,
@@ -75,4 +91,3 @@ class AppTextField extends StatelessWidget {
     );
   }
 }
-

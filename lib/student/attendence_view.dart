@@ -18,6 +18,7 @@ class StudentAttendanceView extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
       appBar: CustomAppBar(
         title: 'My Attendance',
         subtitle: 'Today\'s Status',
@@ -30,7 +31,7 @@ class StudentAttendanceView extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               AppGradients.blue.colors.first.withOpacity(0.05),
-              Colors.white,
+              AppTheme.darkBackground,
             ],
           ),
         ),
@@ -58,7 +59,7 @@ class StudentAttendanceView extends StatelessWidget {
                       'Loading attendance...',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
-                        color: AppTheme.lightTextSecondary,
+                        color: AppTheme.darkTextSecondary,
                       ),
                     ),
                   ],
@@ -108,84 +109,6 @@ class StudentAttendanceView extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: AppAnimations.fadeIn(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor.withOpacity(0.1),
-                    AppTheme.primaryColor.withOpacity(0.05),
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.event_busy_rounded,
-                size: 80,
-                color: AppTheme.primaryColor.withOpacity(0.5),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Not Marked Yet',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.lightTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Your attendance has not been marked for today',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  color: AppTheme.lightTextSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.schedule_rounded,
-                    size: 18,
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Check back later',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _AttendanceStatusCard extends StatelessWidget {
@@ -225,7 +148,6 @@ class _AttendanceStatusCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon with pulse animation
           AppAnimations.pulse(
             minScale: 0.95,
             maxScale: 1.05,
@@ -246,8 +168,6 @@ class _AttendanceStatusCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Status text
           Text(
             status,
             style: GoogleFonts.poppins(
@@ -265,8 +185,6 @@ class _AttendanceStatusCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Message
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
@@ -298,20 +216,16 @@ class _AttendanceInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface : Colors.white,
+        color: AppTheme.darkSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
-        ),
+        border: Border.all(color: AppTheme.darkBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -319,7 +233,6 @@ class _AttendanceInfo extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               Container(
@@ -340,28 +253,22 @@ class _AttendanceInfo extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppTheme.darkTextPrimary
-                      : AppTheme.lightTextPrimary,
+                  color: AppTheme.darkTextPrimary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-
-          // Info rows
           _InfoRow(
             icon: Icons.calendar_today_rounded,
             label: 'Date',
             value: _formatDate(date),
-            isDark: isDark,
           ),
           const SizedBox(height: 12),
           _InfoRow(
             icon: Icons.access_time_rounded,
             label: 'Day',
             value: _getDayOfWeek(date),
-            isDark: isDark,
           ),
           const SizedBox(height: 12),
           _InfoRow(
@@ -371,7 +278,6 @@ class _AttendanceInfo extends StatelessWidget {
             label: 'Status',
             value: present ? 'Present' : 'Absent',
             valueColor: present ? AppTheme.successColor : AppTheme.errorColor,
-            isDark: isDark,
           ),
         ],
       ),
@@ -407,14 +313,12 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  final bool isDark;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
     this.valueColor,
-    required this.isDark,
   });
 
   @override
@@ -435,9 +339,7 @@ class _InfoRow extends StatelessWidget {
             label,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: isDark
-                  ? AppTheme.darkTextSecondary
-                  : AppTheme.lightTextSecondary,
+              color: AppTheme.darkTextSecondary,
             ),
           ),
         ),
@@ -446,9 +348,7 @@ class _InfoRow extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color:
-                valueColor ??
-                (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
+            color: valueColor ?? AppTheme.darkTextPrimary,
           ),
         ),
       ],

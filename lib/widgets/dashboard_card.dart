@@ -49,13 +49,15 @@ class _DashboardCardState extends State<DashboardCard>
       duration: Duration(milliseconds: 400 + (widget.index * 100)),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
@@ -86,10 +88,7 @@ class _DashboardCardState extends State<DashboardCard>
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: child,
-            ),
+            child: ScaleTransition(scale: _scaleAnimation, child: child),
           ),
         );
       },
@@ -107,8 +106,9 @@ class _DashboardCardState extends State<DashboardCard>
               borderRadius: BorderRadius.circular(AppTheme.radiusL),
               boxShadow: [
                 BoxShadow(
-                  color: (widget.gradient?.colors.first ?? AppTheme.primaryColor)
-                      .withOpacity(0.3),
+                  color:
+                      (widget.gradient?.colors.first ?? AppTheme.primaryColor)
+                          .withOpacity(0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                   spreadRadius: 0,
@@ -158,10 +158,12 @@ class _DashboardCardState extends State<DashboardCard>
                       children: [
                         // Icon with glow effect
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusM,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.white.withOpacity(0.1),
@@ -173,15 +175,15 @@ class _DashboardCardState extends State<DashboardCard>
                           child: Icon(
                             widget.icon,
                             color: Colors.white,
-                            size: 28,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         // Value
                         Text(
                           widget.value,
                           style: GoogleFonts.poppins(
-                            fontSize: 24,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             shadows: [
@@ -196,13 +198,13 @@ class _DashboardCardState extends State<DashboardCard>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         // Title
                         Text(
                           widget.title,
                           style: GoogleFonts.poppins(
                             color: Colors.white.withOpacity(0.9),
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.5,
                           ),
@@ -211,22 +213,23 @@ class _DashboardCardState extends State<DashboardCard>
                           overflow: TextOverflow.ellipsis,
                         ),
                         if (widget.subtitle != null) ...[
-                          const SizedBox(height: 2),
                           Text(
                             widget.subtitle!,
                             style: GoogleFonts.poppins(
                               color: Colors.white.withOpacity(0.7),
-                              fontSize: 11,
+                              fontSize: 10,
                             ),
                             textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                         if (widget.showArrow) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
+                              horizontal: 10,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -239,7 +242,7 @@ class _DashboardCardState extends State<DashboardCard>
                                   'View',
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 11,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -247,7 +250,7 @@ class _DashboardCardState extends State<DashboardCard>
                                 const Icon(
                                   Icons.arrow_forward_rounded,
                                   color: Colors.white,
-                                  size: 14,
+                                  size: 12,
                                 ),
                               ],
                             ),
@@ -265,7 +268,6 @@ class _DashboardCardState extends State<DashboardCard>
     );
   }
 }
-
 
 /// Stats card for displaying key metrics
 class StatsCard extends StatelessWidget {
@@ -330,10 +332,11 @@ class StatsCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: (isPositiveTrend
-                            ? AppTheme.successColor
-                            : AppTheme.errorColor)
-                        .withOpacity(0.1),
+                    color:
+                        (isPositiveTrend
+                                ? AppTheme.successColor
+                                : AppTheme.errorColor)
+                            .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -536,11 +539,7 @@ class FeatureCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
               ],
             ),
           ],

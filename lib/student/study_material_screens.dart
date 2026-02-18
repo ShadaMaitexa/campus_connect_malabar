@@ -3,8 +3,6 @@ import 'package:campus_connect_malabar/student/chatbot_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../profile/profile_screen.dart';
-import '../widgets/custom_app_bar.dart';
 import '../widgets/dashboard_card.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
@@ -14,27 +12,27 @@ class StudyMaterialsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(floatingActionButton: FloatingActionButton(
-  backgroundColor: const Color(0xFF6366F1),
-  child: const Icon(Icons.smart_toy, color: Colors.white),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const StudyChatbotScreen(),
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 8,
+        child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudyChatbotScreen()),
+          );
+        },
       ),
-    );
-  },
-),
-
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppGradients.teal.colors.first.withOpacity(0.05),
-              Colors.white,
+              AppTheme.primaryColor.withOpacity(0.05),
+              AppTheme.darkBackground,
             ],
           ),
         ),
@@ -46,29 +44,29 @@ class StudyMaterialsScreen extends StatelessWidget {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
-      
+
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const EmptyStateWidget(
                 icon: Icons.menu_book_rounded,
-                title: 'No Study Materials',
-                subtitle: 'Check back later for new materials',
+                title: 'No materials available',
+                subtitle: 'Check back later for newly shared study resources',
               );
             }
-      
+
             return ListView.builder(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                100,
+              ), // Extra space for FAB
               itemCount: snapshot.data!.docs.length,
               itemBuilder: (context, index) {
                 return AnimatedListItem(
                   index: index,
-                  child: _MaterialCard(
-                    doc: snapshot.data!.docs[index],
-                    index: index,
-                  ),
+                  child: _MaterialCard(doc: snapshot.data!.docs[index]),
                 );
               },
             );
@@ -81,437 +79,173 @@ class StudyMaterialsScreen extends StatelessWidget {
 
 class _MaterialCard extends StatefulWidget {
   final QueryDocumentSnapshot doc;
-  final int index;
-
-  const _MaterialCard({required this.doc, required this.index});
+  const _MaterialCard({required this.doc});
 
   @override
   State<_MaterialCard> createState() => _MaterialCardState();
 }
 
 class _MaterialCardState extends State<_MaterialCard> {
-  bool _isPressed = false;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('users')
           .doc(widget.doc['postedBy'])
           .get(),
       builder: (context, userSnap) {
-        if (!userSnap.hasData) {
-          return const SizedBox(height: 280);
-        }
+        if (!userSnap.hasData) return const SizedBox(height: 200);
 
         final user = userSnap.data!;
         final data = widget.doc.data() as Map<String, dynamic>;
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: GestureDetector(
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapUp: (_) => setState(() => _isPressed = false),
-            onTapCancel: () => setState(() => _isPressed = false),
-            child: AnimatedScale(
-              scale: _isPressed ? 0.98 : 1.0,
-              duration: const Duration(milliseconds: 150),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark
-                        ? AppTheme.darkBorder
-                        : AppTheme.lightBorder.withOpacity(0.5),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image Section
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                    child: Image.network(
+                      data['imageUrl'] ?? '',
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 180,
+                        decoration: const BoxDecoration(
+                          gradient: AppGradients.glass,
+                        ),
+                        child: const Icon(
+                          Icons.bookmark_rounded,
+                          size: 50,
+                          color: Colors.white24,
+                        ),
+                      ),
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppGradients.teal.colors.first.withOpacity(0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                  Positioned(
+                    top: 15,
+                    right: 15,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AppGradients.success,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "₹ ${data['price']}",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Image with overlay
-                    Stack(
+                    Text(
+                      data['title'] ?? 'Study Material',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      data['description'] ?? '',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: AppTheme.darkTextSecondary,
+                        height: 1.5,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    Row(
                       children: [
-                        // Image
-                        Hero(
-                          tag: 'material_${widget.doc.id}',
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              topRight: Radius.circular(24),
-                            ),
-                            child: Image.network(
-                              data['imageUrl'] ?? '',
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  gradient: AppGradients.teal,
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.menu_book_rounded,
-                                    size: 64,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  height: 200,
-                                  color: isDark
-                                      ? AppTheme.darkBorder
-                                      : AppTheme.lightBorder,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              },
-                            ),
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppTheme.primaryColor,
+                          child: Text(
+                            user['name'][0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
-
-                        // Gradient overlay
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 100,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.7),
-                                ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user['name'],
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                "Student Seller",
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppTheme.darkTextSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(
+                                userId: user.id,
+                                name: user['name'],
                               ),
                             ),
                           ),
-                        ),
-
-                        // Price tag
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: AppGradients.success,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppGradients.success.colors.first
-                                      .withOpacity(0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.currency_rupee,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                Text(
-                                  data['price']?.toString() ?? '0',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Status badge
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (data['status'] == 'available')
-                                  ? AppTheme.successColor
-                                  : AppTheme.errorColor,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  (data['status'] == 'available')
-                                      ? Icons.check_circle_rounded
-                                      : Icons.cancel_rounded,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  (data['status'] == 'available')
-                                      ? 'Available'
-                                      : 'Taken',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          icon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
                       ],
                     ),
-
-                    // Content
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title
-                          Text(
-                            data['title'] ?? 'Study Material',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? AppTheme.darkTextPrimary
-                                  : AppTheme.lightTextPrimary,
-                            ),
-                          ),
-
-                          if (data['description'] != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              data['description'],
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                height: 1.5,
-                                color: isDark
-                                    ? AppTheme.darkTextSecondary
-                                    : AppTheme.lightTextSecondary,
-                              ),
-                            ),
-                          ],
-
-                          const Divider(height: 32),
-
-                          // User info
-                          Row(
-                            children: [
-                              // Avatar
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: AppGradients.teal,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppGradients.teal.colors.first
-                                          .withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: CircleAvatar(
-                                  radius: 22,
-                                  backgroundColor: Colors.transparent,
-                                  backgroundImage: user['photoUrl'] != null &&
-                                          user['photoUrl'].toString().isNotEmpty
-                                      ? NetworkImage(user['photoUrl'])
-                                      : null,
-                                  child: (user['photoUrl'] == null ||
-                                          user['photoUrl'].toString().isEmpty)
-                                      ? Text(
-                                          user['name'][0].toUpperCase(),
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Name
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user['name'] ?? 'User',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: isDark
-                                            ? AppTheme.darkTextPrimary
-                                            : AppTheme.lightTextPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Seller',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: isDark
-                                            ? AppTheme.darkTextSecondary
-                                            : AppTheme.lightTextSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Actions
-                              Row(
-                                children: [
-                                  _ActionButton(
-                                    icon: Icons.person_outline_rounded,
-                                    tooltip: 'View Profile',
-                                    gradient: AppGradients.blue,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              ProfileScreen(userId: user.id),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _ActionButton(
-                                    icon: Icons.chat_bubble_outline_rounded,
-                                    tooltip: 'Chat',
-                                    gradient: AppGradients.success,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => ChatScreen(
-                                            userId: user.id,
-                                            name: user['name'],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
-    );
-  }
-}
-
-class _ActionButton extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final Gradient gradient;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.gradient,
-    required this.onTap,
-  });
-
-  @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.85 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: widget.gradient,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.gradient.colors.first.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              widget.icon,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

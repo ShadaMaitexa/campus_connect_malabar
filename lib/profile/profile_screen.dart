@@ -287,12 +287,10 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = true; // Dashboard pages are always dark for consistency
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
+      backgroundColor: AppTheme.darkBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
