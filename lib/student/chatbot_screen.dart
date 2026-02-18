@@ -1,5 +1,6 @@
 import 'package:campus_connect_malabar/services/gemini_service.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -81,17 +82,51 @@ class _StudyChatbotScreenState extends State<StudyChatbotScreen> {
       data: AppTheme.darkTheme,
       child: Scaffold(
         backgroundColor: AppTheme.darkBackground,
+        extendBody: true,
         appBar: AppBar(
-          title: Text(
-            "Study Assistant",
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          title: Column(
+            children: [
+              Text(
+                "Study Assistant",
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.successColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "AI Powered",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.darkBackground,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded),
+            icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
             onPressed: () => Navigator.pop(context),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(color: Colors.white.withOpacity(0.05), height: 1),
           ),
         ),
         body: Container(
@@ -100,7 +135,7 @@ class _StudyChatbotScreenState extends State<StudyChatbotScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppTheme.primaryColor.withOpacity(0.05),
+                AppTheme.primaryColor.withOpacity(0.03),
                 AppTheme.darkBackground,
               ],
             ),
@@ -112,112 +147,83 @@ class _StudyChatbotScreenState extends State<StudyChatbotScreen> {
                     ? _buildWelcomeState()
                     : ListView.builder(
                         controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 20,
-                        ),
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
                           final msg = _messages[index];
                           final isUser = msg['role'] == 'user';
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: isUser
-                                  ? MainAxisAlignment.end
-                                  : MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (!isUser) ...[
-                                  CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: AppTheme.primaryColor
-                                        .withOpacity(0.2),
-                                    child: const Icon(
-                                      Icons.smart_toy_rounded,
-                                      size: 18,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                ],
-                                Flexible(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isUser
-                                          ? AppTheme.primaryColor
-                                          : AppTheme.darkSurface,
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: const Radius.circular(20),
-                                        topRight: const Radius.circular(20),
-                                        bottomLeft: Radius.circular(
-                                          isUser ? 20 : 4,
-                                        ),
-                                        bottomRight: Radius.circular(
-                                          isUser ? 4 : 20,
-                                        ),
-                                      ),
-                                      border: isUser
-                                          ? null
-                                          : Border.all(
-                                              color: Colors.white.withOpacity(
-                                                0.05,
-                                              ),
-                                            ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      msg['text']!,
-                                      style: GoogleFonts.inter(
+                          return AppAnimations.slideInFromBottom(
+                            delay: const Duration(milliseconds: 50),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Row(
+                                mainAxisAlignment: isUser
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (!isUser) ...[
+                                    _buildAvatar(false),
+                                    const SizedBox(width: 12),
+                                  ],
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
                                         color: isUser
-                                            ? Colors.white
-                                            : AppTheme.darkTextPrimary,
-                                        height: 1.4,
-                                        fontSize: 14.5,
+                                            ? AppTheme.primaryColor
+                                            : AppTheme.darkSurface,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: const Radius.circular(20),
+                                          topRight: const Radius.circular(20),
+                                          bottomLeft: Radius.circular(
+                                            isUser ? 20 : 4,
+                                          ),
+                                          bottomRight: Radius.circular(
+                                            isUser ? 4 : 20,
+                                          ),
+                                        ),
+                                        border: isUser
+                                            ? null
+                                            : Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  0.05,
+                                                ),
+                                              ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        msg['text']!,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          height: 1.5,
+                                          fontSize: 14.5,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                if (isUser) ...[
-                                  const SizedBox(width: 10),
-                                  const CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: Colors.white10,
-                                    child: Icon(
-                                      Icons.person_rounded,
-                                      size: 18,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
+                                  if (isUser) ...[
+                                    const SizedBox(width: 12),
+                                    _buildAvatar(true),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           );
                         },
                       ),
               ),
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
+              if (_loading) _buildThinkingIndicator(),
               _buildInputBar(),
             ],
           ),
@@ -226,93 +232,260 @@ class _StudyChatbotScreenState extends State<StudyChatbotScreen> {
     );
   }
 
-  Widget _buildWelcomeState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildAvatar(bool isUser) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: isUser
+            ? Colors.white.withOpacity(0.1)
+            : AppTheme.primaryColor.withOpacity(0.1),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isUser
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.primaryColor.withOpacity(0.2),
+        ),
+      ),
+      child: Icon(
+        isUser ? Icons.person_rounded : Icons.psychology_rounded,
+        size: 18,
+        color: isUser ? Colors.white70 : AppTheme.primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildThinkingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Row(
         children: [
+          _buildAvatar(false),
+          const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
+              color: AppTheme.darkSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
             ),
-            child: const Icon(
-              Icons.smart_toy_rounded,
-              size: 48,
-              color: AppTheme.primaryColor,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                3,
+                (i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: AppAnimations.pulse(
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(
+                          0.5 + (i * 0.2),
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "How can I help you today?",
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Ask me anything about your studies",
-            style: GoogleFonts.inter(color: Colors.white60),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildWelcomeState() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            AppAnimations.pulse(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor.withOpacity(0.2),
+                      AppTheme.primaryColor.withOpacity(0.05),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.psychology_rounded,
+                  size: 56,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "Start Your Learning Session",
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "I can help you with complex topics, \nexam prep, or quick summaries.",
+              style: GoogleFonts.inter(
+                color: Colors.white60,
+                fontSize: 15,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 48),
+            _buildSuggestedPrompts(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestedPrompts() {
+    final prompts = [
+      "Explain Photosynthesis simply",
+      "Summary of Newton's Laws",
+      "Study tips for final exams",
+      "How to balance chemical equations",
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Suggested Topics",
+          style: GoogleFonts.outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: prompts.map((p) => _promptChip(p)).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _promptChip(String text) {
+    return GestureDetector(
+      onTap: () {
+        _controller.text = text;
+        _sendMessage();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: Colors.white70,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputBar() {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
         12,
         16,
-        12 + (bottomPadding > 0 ? 0 : 20),
+        12 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: AppTheme.darkSurface,
         border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _controller,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Ask a question...",
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                  border: InputBorder.none,
-                ),
-                onSubmitted: (_) => _sendMessage(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                gradient: AppGradients.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.send_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -10),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+                  maxLines: 4,
+                  minLines: 1,
+                  decoration: InputDecoration(
+                    hintText: "Ask a study question...",
+                    hintStyle: GoogleFonts.inter(
+                      color: Colors.white24,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            _buildSendButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSendButton() {
+    return GestureDetector(
+      onTap: _sendMessage,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
     );
   }
