@@ -6,11 +6,7 @@ class ChatScreen extends StatefulWidget {
   final String userId; // receiver
   final String name;
 
-  const ChatScreen({
-    super.key,
-    required this.userId,
-    required this.name,
-  });
+  const ChatScreen({super.key, required this.userId, required this.name});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -29,9 +25,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _getChatId(String uid1, String uid2) {
-    return uid1.hashCode <= uid2.hashCode
-        ? "${uid1}_$uid2"
-        : "${uid2}_$uid1";
+    return uid1.hashCode <= uid2.hashCode ? "${uid1}_$uid2" : "${uid2}_$uid1";
   }
 
   Future<void> _sendMessage() async {
@@ -40,8 +34,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _messageController.clear();
 
-    final chatRef =
-        FirebaseFirestore.instance.collection('chats').doc(chatId);
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
 
     // create/update chat
     await chatRef.set({
@@ -62,6 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: Text(widget.name),
         flexibleSpace: Container(
@@ -81,12 +75,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   .collection('chats')
                   .doc(chatId)
                   .collection('messages')
-                  .orderBy('timestamp')
+                  .orderBy('timestamp', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 final messages = snapshot.data!.docs;
@@ -101,13 +94,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 return ListView.builder(
+                  reverse: true,
                   padding: const EdgeInsets.all(16),
+                  physics: const BouncingScrollPhysics(),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final msg =
-                        messages[index].data() as Map<String, dynamic>;
-                    final isMe =
-                        msg['senderId'] == currentUserId;
+                    final msg = messages[index].data() as Map<String, dynamic>;
+                    final isMe = msg['senderId'] == currentUserId;
 
                     return Align(
                       alignment: isMe
@@ -126,9 +119,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Text(
                           msg['text'],
                           style: TextStyle(
-                            color: isMe
-                                ? Colors.white
-                                : Colors.black87,
+                            color: isMe ? Colors.white : Colors.black87,
                           ),
                         ),
                       ),
@@ -169,8 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onTap: _sendMessage,
                   child: CircleAvatar(
                     backgroundColor: const Color(0xFF6366F1),
-                    child:
-                        const Icon(Icons.send, color: Colors.white),
+                    child: const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
               ],

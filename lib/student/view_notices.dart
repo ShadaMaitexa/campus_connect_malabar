@@ -22,6 +22,7 @@ class ViewNotices extends StatelessWidget {
           gradient: AppGradients.blue,
         ),
         body: Container(
+          constraints: BoxConstraints.expand(),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -88,11 +89,12 @@ class ViewNotices extends StatelessWidget {
   }
 
   Widget _noticeCard(QueryDocumentSnapshot doc) {
-    final role = (doc['role'] ?? 'ADMIN').toString().toUpperCase();
+    final data = doc.data() as Map<String, dynamic>;
+    final role = (data['role'] ?? 'ADMIN').toString().toUpperCase();
     final isAdmin = role == 'ADMIN';
-    final title = doc['title'] ?? 'Notice';
-    final content = doc['content'] ?? 'No description provided';
-    final date = _formatDate(doc['createdAt']);
+    final title = data['title'] ?? 'Notice';
+    final content = data['content'] ?? 'No description provided';
+    final date = _formatDate(data['createdAt']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),

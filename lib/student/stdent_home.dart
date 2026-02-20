@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../alumini/community_screen.dart';
 import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import '../widgets/custom_app_bar.dart';
+import '../library/library_screen.dart';
 
 class StudentHome extends StatefulWidget {
   final ValueChanged<int> onNavigate;
@@ -262,25 +263,46 @@ class _StudentHomeState extends State<StudentHome>
           value: "",
           icon: item.icon,
           gradient: item.gradient,
-          onTap: () {
-            if (item.index >= 0) {
-              widget.onNavigate(item.index);
-            } else if (item.index == -1) {
-              // Library
-            } else if (item.index == -2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MarketplaceScreen()),
-              );
-            } else if (item.index == -3) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Internal Marks coming soon!")),
-              );
-            } else if (item.index == -4) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CommunityScreen()),
-              );
+          onTap: () async {
+            try {
+              if (item.index >= 0) {
+                widget.onNavigate(item.index);
+              } else if (item.index == -1) {
+                if (!mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LibraryScreen(),
+                  ),
+                );
+              } else if (item.index == -2) {
+                if (!mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MarketplaceScreen(),
+                  ),
+                );
+              } else if (item.index == -3) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Internal Marks coming soon!")),
+                );
+              } else if (item.index == -4) {
+                if (!mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CommunityScreen(),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Navigation error: $e")));
+              }
             }
           },
           showArrow: true,
