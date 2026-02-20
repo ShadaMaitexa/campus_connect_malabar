@@ -75,14 +75,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   .collection('chats')
                   .doc(chatId)
                   .collection('messages')
-                  .orderBy('timestamp', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final messages = snapshot.data!.docs;
+                var messages = snapshot.data!.docs;
+
+                // Sort messages client-side by timestamp (descending)
+                messages.sort((a, b) {
+                  final timestampA =
+                      (a['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
+                  final timestampB =
+                      (b['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
+                  return timestampB.compareTo(timestampA);
+                });
 
                 if (messages.isEmpty) {
                   return Center(
