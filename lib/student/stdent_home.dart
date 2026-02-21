@@ -68,7 +68,7 @@ class _StudentHomeState extends State<StudentHome>
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  const SectionHeader(title: "Academic Navigation",),
+                  const SectionHeader(title: "Academic Navigation", textColor: Colors.white),
                   const SizedBox(height: 24),
                   _buildNavigationGrid(isDesktop),
                   const SizedBox(height: 40),
@@ -83,7 +83,6 @@ class _StudentHomeState extends State<StudentHome>
 
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
-      expandedHeight: 120,
       floating: false,
       pinned: true,
       backgroundColor: AppTheme.darkBackground,

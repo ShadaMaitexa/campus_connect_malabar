@@ -5,9 +5,10 @@ class EmailService {
   static const String _emailJsUrl =
       'https://api.emailjs.com/api/v1.0/email/send';
 
-  static Future<void> sendMentorApprovalEmail({
-    required String mentorName,
-    required String mentorEmail,
+  static Future<void> sendApprovalEmail({
+    required String userName,
+    required String userEmail,
+    required String role,
   }) async {
     final response = await http.post(
       Uri.parse(_emailJsUrl),
@@ -17,11 +18,12 @@ class EmailService {
       },
       body: jsonEncode({
         'service_id': 'service_kzcfqpu',
-        'template_id': 'template_gw3t7xn',
+        'template_id': 'template_gw3t7xn', // make sure this ID is correct in EmailJS
         'user_id': 'dIGm53WkqVsUlfDrm',
         'template_params': {
-          'mentor_name': mentorName,
-          'mentor_email': mentorEmail,
+          'user_name': userName,
+          'user_email': userEmail,
+          'user_role': role,
         },
       }),
     );

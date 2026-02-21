@@ -379,6 +379,7 @@ class SectionHeader extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onActionTap;
   final IconData? actionIcon;
+  final Color? textColor;
 
   const SectionHeader({
     super.key,
@@ -386,6 +387,7 @@ class SectionHeader extends StatelessWidget {
     this.actionLabel,
     this.onActionTap,
     this.actionIcon,
+    this.textColor,
   });
 
   @override
@@ -403,9 +405,9 @@ class SectionHeader extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: isDark
+              color: textColor ?? (isDark
                   ? const Color.fromARGB(255, 251, 253, 255)
-                  : AppTheme.lightTextPrimary,
+                  : AppTheme.lightTextPrimary),
             ),
           ),
           if (actionLabel != null || actionIcon != null)

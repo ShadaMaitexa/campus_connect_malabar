@@ -18,12 +18,27 @@ class ApproveUserService {
       'approvedAt': Timestamp.now(),
     });
 
-    // 2️⃣ Send email ONLY if mentor
-    if (role == 'mentor') {
-      await EmailService.sendMentorApprovalEmail(
-        mentorName: name,
-        mentorEmail: email,
-      );
-    }
+    // 2️⃣ Send email to the approved user
+    await EmailService.sendApprovalEmail(
+      userName: name,
+      userEmail: email,
+      role: role,
+    );
+  }
+
+  /// Reject any user
+  static Future<void> rejectUser({
+    required String userId,
+    required String role,
+    required String name,
+    required String email,
+  }) async {
+    // 1️⃣ Delete from Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .delete();
+
+    // 2️⃣ Could potentially send rejection email here if EmailService supports it, but for now just delete.
   }
 }

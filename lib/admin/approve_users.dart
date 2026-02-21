@@ -144,15 +144,32 @@ class _UserApprovalCard extends StatelessWidget {
               ],
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            onPressed: () => _approve(context),
-            child: const Text("Approve"),
+          Column(
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.successColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: const Size(100, 36),
+                ),
+                onPressed: () => _approve(context),
+                child: const Text("Approve", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.errorColor,
+                  side: const BorderSide(color: AppTheme.errorColor),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: const Size(100, 36),
+                ),
+                onPressed: () => _reject(context),
+                child: const Text("Reject", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
         ],
       ),
@@ -172,6 +189,49 @@ class _UserApprovalCard extends StatelessWidget {
         SnackBar(
           content: const Text('User approved successfully'),
           backgroundColor: AppTheme.successColor,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reject(BuildContext context) async {
+    // Show confirmation dialog before rejecting
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.darkSurface,
+          title: Text("Reject User", style: GoogleFonts.outfit(color: Colors.white)),
+          content: Text("Are you sure you want to reject and delete this user application?", style: GoogleFonts.inter(color: Colors.white70)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("Reject", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    await ApproveUserService.rejectUser(
+      userId: user.id,
+      role: user['role'],
+      name: user['name'],
+      email: user['email'],
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('User rejected and removed'),
+          backgroundColor: AppTheme.errorColor,
         ),
       );
     }
