@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/dashboard_card.dart';
 import '../widgets/custom_app_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import 'post_item.dart';
+import 'post_job.dart';
 
 class MyListings extends StatelessWidget {
   const MyListings({super.key});
@@ -14,90 +15,94 @@ class MyListings extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          // Custom Tab Bar
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            // Custom Tab Bar
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.darkSurface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppGradients.secondary.colors.first.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TabBar(
-                  indicator: BoxDecoration(
-                    gradient: AppGradients.secondary,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppGradients.secondary.colors.first.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppGradients.secondary.colors.first.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                  ),
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      gradient: AppGradients.secondary,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppGradients.secondary.colors.first
+                              .withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white.withOpacity(0.5),
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.menu_book_rounded, size: 18),
+                            SizedBox(width: 8),
+                            Text('Materials'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.work_rounded, size: 18),
+                            SizedBox(width: 8),
+                            Text('Jobs'),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  unselectedLabelStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                  labelColor: Colors.white,
-                  unselectedLabelColor: AppGradients.secondary.colors.first,
-                  tabs: [
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.menu_book_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text('Materials'),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.work_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text('Jobs'),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
-          ),
 
-          // Tab Views
-          Expanded(
-            child: TabBarView(
-              children: [
-                _buildList(uid, 'material'),
-                _buildList(uid, 'job'),
-              ],
+            // Tab Views
+            Expanded(
+              child: TabBarView(
+                children: [_buildList(uid, 'material'), _buildList(uid, 'job')],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -105,12 +110,13 @@ class MyListings extends StatelessWidget {
   Widget _buildList(String uid, String type) {
     return Container(
       decoration: BoxDecoration(
+        color: AppTheme.darkBackground,
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppGradients.secondary.colors.first.withOpacity(0.05),
-            Colors.white,
+            AppTheme.primaryColor.withOpacity(0.08),
+            AppTheme.darkBackground,
           ],
         ),
       ),
@@ -123,9 +129,7 @@ class MyListings extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -136,7 +140,18 @@ class MyListings extends StatelessWidget {
               title: type == 'material'
                   ? 'No Study Materials'
                   : 'No Job Postings',
-              subtitle: 'Start by creating your first listing',
+              subtitle: 'Start by creating your first listing to help others',
+              actionLabel: type == 'material' ? 'Post Material' : 'Post Job',
+              onActionTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => type == 'material'
+                        ? const PostItemScreen()
+                        : const PostJobScreen(),
+                  ),
+                );
+              },
             );
           }
 
@@ -163,10 +178,7 @@ class _ListingCard extends StatefulWidget {
   final QueryDocumentSnapshot doc;
   final String type;
 
-  const _ListingCard({
-    required this.doc,
-    required this.type,
-  });
+  const _ListingCard({required this.doc, required this.type});
 
   @override
   State<_ListingCard> createState() => _ListingCardState();
@@ -226,12 +238,13 @@ class _ListingCardState extends State<_ListingCard> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: (isMaterial
-                                ? AppGradients.teal
-                                : AppGradients.purple)
-                            .colors
-                            .first
-                            .withOpacity(0.3),
+                        color:
+                            (isMaterial
+                                    ? AppGradients.teal
+                                    : AppGradients.purple)
+                                .colors
+                                .first
+                                .withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -373,9 +386,8 @@ class _ListingCardState extends State<_ListingCard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        backgroundColor: AppTheme.darkSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -396,13 +408,14 @@ class _ListingCardState extends State<_ListingCard> {
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 18,
+                color: Colors.white,
               ),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to delete this listing? This action cannot be undone.',
-          style: GoogleFonts.poppins(fontSize: 14),
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -411,6 +424,7 @@ class _ListingCardState extends State<_ListingCard> {
               'Cancel',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
+                color: Colors.white54,
               ),
             ),
           ),
@@ -466,9 +480,7 @@ class _ListingCardState extends State<_ListingCard> {
             ),
             child: Text(
               'Delete',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-              ),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -524,11 +536,7 @@ class _ActionButtonState extends State<_ActionButton> {
                 ),
               ],
             ),
-            child: Icon(
-              widget.icon,
-              color: Colors.white,
-              size: 20,
-            ),
+            child: Icon(widget.icon, color: Colors.white, size: 20),
           ),
         ),
       ),

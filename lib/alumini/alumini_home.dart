@@ -37,14 +37,19 @@ class _AlumniHomeState extends State<AlumniHome> {
   Future<void> _loadData() async {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      
-      final materialsSnap = await FirebaseFirestore.instance.collection('marketplace')
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      final materialsSnap = await FirebaseFirestore.instance
+          .collection('marketplace')
           .where('postedBy', isEqualTo: uid)
           .where('type', isEqualTo: 'material')
           .get();
-          
-      final jobsSnap = await FirebaseFirestore.instance.collection('marketplace')
+
+      final jobsSnap = await FirebaseFirestore.instance
+          .collection('marketplace')
           .where('postedBy', isEqualTo: uid)
           .where('type', isEqualTo: 'job')
           .get();
@@ -68,8 +73,9 @@ class _AlumniHomeState extends State<AlumniHome> {
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           _buildSliverAppBar(isDesktop),
           SliverPadding(
@@ -78,7 +84,7 @@ class _AlumniHomeState extends State<AlumniHome> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildGreetingSection(isDesktop),
+                  _buildGreetingSection(isDesktop),
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
@@ -96,26 +102,81 @@ class _AlumniHomeState extends State<AlumniHome> {
 
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       pinned: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      stretch: true,
+      elevation: 0,
+      scrolledUnderElevation: 4,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppTheme.darkBackground,
+      centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        stretchModes: const [
+          StretchMode.blurBackground,
+          StretchMode.zoomBackground,
+        ],
+        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        centerTitle: false,
         title: Text(
           "Alumni Network",
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            color: Colors.white,
+            letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.8),
+                offset: const Offset(0, 2),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.darkBackground,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.7, 1.0],
+                    colors: [
+                      AppTheme.primaryColor.withOpacity(0.2),
+                      AppTheme.darkBackground.withOpacity(0.4),
+                      AppTheme.darkBackground,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      actions: const [
-        ProfileMenu(),
-        SizedBox(width: 16),
-      ],
+      actions: const [ProfileMenu(), SizedBox(width: 16)],
     );
   }
 
   Widget _buildGreetingSection(bool isDesktop) {
     final hour = DateTime.now().hour;
-    String greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+    String greeting = hour < 12
+        ? "Good Morning"
+        : hour < 17
+        ? "Good Afternoon"
+        : "Good Evening";
 
     return AppAnimations.slideInFromLeft(
       child: Column(
@@ -143,7 +204,10 @@ class _AlumniHomeState extends State<AlumniHome> {
           if (_company != null)
             Text(
               "Global Alumni • $_company",
-              style: GoogleFonts.inter(color: AppTheme.secondaryColor, fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                color: AppTheme.secondaryColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
         ],
       ),
@@ -176,16 +240,16 @@ class _AlumniHomeState extends State<AlumniHome> {
           ),
         ),
         if (isDesktop)
-        const SizedBox(
-          width: 300,
-          child: PremiumStatCard(
-            title: "Network Nodes",
-            value: "1.2k",
-            icon: Icons.hub_rounded,
-            gradient: AppGradients.secondary,
-            trend: "Global reach",
+          const SizedBox(
+            width: 300,
+            child: PremiumStatCard(
+              title: "Network Nodes",
+              value: "1.2k",
+              icon: Icons.hub_rounded,
+              gradient: AppGradients.secondary,
+              trend: "Global reach",
+            ),
           ),
-        ),
       ],
     );
   }
@@ -198,15 +262,46 @@ class _AlumniHomeState extends State<AlumniHome> {
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _navCard("Post Material", Icons.publish_rounded, AppGradients.primary, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PostItemScreen()))),
-        _navCard("Hiring / Job", Icons.work_outline_rounded, AppGradients.info, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PostJobScreen()))),
-        _navCard("My Contributions", Icons.analytics_outlined, AppGradients.teal, () => widget.onNavigate(1)),
-        _navCard("Global Community", Icons.public_rounded, AppGradients.secondary, () => widget.onNavigate(2)),
+        _navCard(
+          "Post Material",
+          Icons.publish_rounded,
+          AppGradients.primary,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PostItemScreen()),
+          ),
+        ),
+        _navCard(
+          "Hiring / Job",
+          Icons.work_outline_rounded,
+          AppGradients.info,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PostJobScreen()),
+          ),
+        ),
+        _navCard(
+          "My Contributions",
+          Icons.analytics_outlined,
+          AppGradients.teal,
+          () => widget.onNavigate(1),
+        ),
+        _navCard(
+          "Global Community",
+          Icons.public_rounded,
+          AppGradients.secondary,
+          () => widget.onNavigate(2),
+        ),
       ],
     );
   }
 
-  Widget _navCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
+  Widget _navCard(
+    String title,
+    IconData icon,
+    Gradient gradient,
+    VoidCallback onTap,
+  ) {
     return DashboardCard(
       title: title,
       value: "Action",

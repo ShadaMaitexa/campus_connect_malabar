@@ -21,7 +21,8 @@ class MentorHome extends StatefulWidget {
   State<MentorHome> createState() => _MentorHomeState();
 }
 
-class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateMixin {
+class _MentorHomeState extends State<MentorHome>
+    with SingleTickerProviderStateMixin {
   String? _userName;
   String? _department;
   bool _isLoading = true;
@@ -35,7 +36,10 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
   Future<void> _loadData() async {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (mounted && doc.exists) {
         setState(() {
           _userName = doc.data()?['name'] ?? 'Mentor';
@@ -53,8 +57,10 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor:
+          Colors.transparent, // Let Dashboard background show through
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           _buildSliverAppBar(isDesktop),
           SliverPadding(
@@ -63,7 +69,7 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildGreetingSection(isDesktop),
+                  _buildGreetingSection(isDesktop),
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
@@ -81,26 +87,81 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
 
   Widget _buildSliverAppBar(bool isDesktop) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 140,
       pinned: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      stretch: true,
+      elevation: 0,
+      scrolledUnderElevation: 4,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppTheme.darkBackground,
+      centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [
+          StretchMode.blurBackground,
+          StretchMode.zoomBackground,
+        ],
         titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        centerTitle: false,
         title: Text(
           "Mentor Dashboard",
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            color: Colors.white,
+            letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.8),
+                offset: const Offset(0, 2),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.darkBackground,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.7, 1.0],
+                    colors: [
+                      AppTheme.primaryColor.withOpacity(0.2),
+                      AppTheme.darkBackground.withOpacity(0.4),
+                      AppTheme.darkBackground,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      actions: const [
-        ProfileMenu(),
-        SizedBox(width: 16),
-      ],
+      actions: const [ProfileMenu(), SizedBox(width: 16)],
     );
   }
 
   Widget _buildGreetingSection(bool isDesktop) {
     final hour = DateTime.now().hour;
-    String greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+    String greeting = hour < 12
+        ? "Good Morning"
+        : hour < 17
+        ? "Good Afternoon"
+        : "Good Evening";
 
     return AppAnimations.slideInFromLeft(
       child: Column(
@@ -113,7 +174,11 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
                 style: GoogleFonts.inter(color: Colors.white54, fontSize: 16),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 16),
+              const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.amber,
+                size: 16,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -128,7 +193,10 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
           if (_department != null)
             Text(
               "Department of $_department",
-              style: GoogleFonts.inter(color: AppTheme.primaryColor, fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
         ],
       ),
@@ -144,7 +212,11 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
         SizedBox(
           width: isDesktop ? 300 : double.infinity,
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'student').where('department', isEqualTo: dept).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .where('role', isEqualTo: 'student')
+                .where('department', isEqualTo: dept)
+                .snapshots(),
             builder: (context, snap) {
               final count = snap.hasData ? snap.data!.docs.length : 0;
               return PremiumStatCard(
@@ -160,7 +232,10 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
         SizedBox(
           width: isDesktop ? 300 : double.infinity,
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('notices').where('department', isEqualTo: dept).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('notices')
+                .where('department', isEqualTo: dept)
+                .snapshots(),
             builder: (context, snap) {
               final count = snap.hasData ? snap.data!.docs.length : 0;
               return PremiumStatCard(
@@ -174,22 +249,25 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
           ),
         ),
         if (isDesktop)
-        SizedBox(
-          width: 300,
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('events').where('department', isEqualTo: dept).snapshots(),
-            builder: (context, snap) {
-              final count = snap.hasData ? snap.data!.docs.length : 0;
-              return PremiumStatCard(
-                title: "Events Scheduled",
-                value: "$count",
-                icon: Icons.event_available_rounded,
-                gradient: AppGradients.success,
-                trend: "Upcoming items",
-              );
-            },
+          SizedBox(
+            width: 300,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('events')
+                  .where('department', isEqualTo: dept)
+                  .snapshots(),
+              builder: (context, snap) {
+                final count = snap.hasData ? snap.data!.docs.length : 0;
+                return PremiumStatCard(
+                  title: "Events Scheduled",
+                  value: "$count",
+                  icon: Icons.event_available_rounded,
+                  gradient: AppGradients.success,
+                  trend: "Upcoming items",
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -202,15 +280,40 @@ class _MentorHomeState extends State<MentorHome> with SingleTickerProviderStateM
       crossAxisSpacing: 20,
       mainAxisSpacing: 20,
       children: [
-        _navCard("Mark Attendance", Icons.how_to_reg_rounded, AppGradients.primary, () => widget.onNavigate(1)),
-        _navCard("Post Notice", Icons.add_alert_rounded, AppGradients.accent, () => widget.onNavigate(2)),
-        _navCard("New Event", Icons.event_note_rounded, AppGradients.success, () => widget.onNavigate(3)),
-        _navCard("Student Reports", Icons.analytics_rounded, AppGradients.surface, () {}),
+        _navCard(
+          "Mark Attendance",
+          Icons.how_to_reg_rounded,
+          AppGradients.primary,
+          () => widget.onNavigate(1),
+        ),
+        _navCard(
+          "Post Notice",
+          Icons.add_alert_rounded,
+          AppGradients.accent,
+          () => widget.onNavigate(2),
+        ),
+        _navCard(
+          "New Event",
+          Icons.event_note_rounded,
+          AppGradients.success,
+          () => widget.onNavigate(3),
+        ),
+        _navCard(
+          "Student Reports",
+          Icons.analytics_rounded,
+          AppGradients.surface,
+          () => widget.onNavigate(4),
+        ),
       ],
     );
   }
 
-  Widget _navCard(String title, IconData icon, Gradient gradient, VoidCallback onTap) {
+  Widget _navCard(
+    String title,
+    IconData icon,
+    Gradient gradient,
+    VoidCallback onTap,
+  ) {
     return DashboardCard(
       title: title,
       value: "Manage",

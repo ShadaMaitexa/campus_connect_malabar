@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,12 +19,16 @@ class PostItemScreen extends StatefulWidget {
 class _PostItemScreenState extends State<PostItemScreen> {
   final title = TextEditingController();
   final description = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   File? image;
   bool loading = false;
 
   Future<void> pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
     if (picked != null) {
       setState(() => image = File(picked.path));
     }
@@ -31,26 +37,29 @@ class _PostItemScreenState extends State<PostItemScreen> {
   Future<void> postMaterial() async {
     if (loading) return;
 
-    if (title.text.trim().isEmpty ||
-        description.text.trim().isEmpty ||
-        image == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Fill all fields")));
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (image == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please upload an image of the material"),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      // 🔹 Upload image
       final imageUrl = await CloudinaryService.upload(image!);
 
       if (imageUrl == null || imageUrl.isEmpty) {
         throw Exception("Image upload failed");
       }
 
-      // 🔹 Save to Firestore
       await FirebaseFirestore.instance.collection('marketplace').add({
         'type': 'material',
         'title': title.text.trim(),
@@ -64,16 +73,21 @@ class _PostItemScreenState extends State<PostItemScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Material posted successfully")),
+        SnackBar(
+          content: Text("Material posted successfully"),
+          backgroundColor: AppTheme.successColor,
+        ),
       );
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to post material")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to post material"),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => loading = false);
@@ -83,48 +97,249 @@ class _PostItemScreenState extends State<PostItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: "Post Study Material", showBackButton: true),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: AppAnimations.slideInFromBottom(
-              child: _page(
-                child: _card(
-                  children: [
-                    GestureDetector(
-                      onTap: pickImage,
-                      child: Container(
-                        height: 160,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.grey.shade200,
-                          image: image != null
-                              ? DecorationImage(
-                                  image: FileImage(image!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: image == null
-                            ? const Center(child: Icon(Icons.upload, size: 42))
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _input(title, "Material Title", Icons.menu_book),
-                    _input(
-                      description,
-                      "Description",
-                      Icons.description,
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 24),
-                    loading
-                        ? const CircularProgressIndicator()
-                        : _button("Post Material", postMaterial),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (context) {
+          const isDark = true;
+          return Scaffold(
+            backgroundColor: AppTheme.darkBackground,
+            appBar: CustomAppBar(
+              title: "Post Study Material",
+              showBackButton: true,
+              gradient: AppGradients.primary,
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.05),
+                    AppTheme.darkBackground,
                   ],
                 ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: AppAnimations.slideInFromBottom(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Material Details", isDark),
+                        const SizedBox(height: 16),
+                        _card(
+                          isDark: isDark,
+                          children: [
+                            _buildImageUpload(isDark),
+                            const SizedBox(height: 24),
+                            _input(
+                              title,
+                              "Material Title",
+                              Icons.menu_book,
+                              isDark,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Title is required" : null,
+                            ),
+                            _input(
+                              description,
+                              "Description",
+                              Icons.description,
+                              isDark,
+                              maxLines: 4,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Description is required" : null,
+                            ),
+                            const SizedBox(height: 32),
+                            loading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : _button("Post Material", postMaterial),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, bool isDark) {
+    return Text(
+      title,
+      style: GoogleFonts.outfit(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+      ),
+    );
+  }
+
+  Widget _buildImageUpload(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Upload Photo",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+              ),
+            ),
+            Text(" *", style: TextStyle(color: AppTheme.errorColor)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "JPG, PNG supported • Max 5MB file size",
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.primaryColor.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: pickImage,
+          child: Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: isDark
+                  ? AppTheme.darkSurfaceSecondary
+                  : Colors.grey.shade100,
+              border: Border.all(
+                color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                width: 2,
+                style: BorderStyle.solid,
+              ),
+              image: image != null
+                  ? DecorationImage(image: FileImage(image!), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: image == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 48,
+                        color: AppTheme.primaryColor.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Click to select image",
+                        style: GoogleFonts.inter(
+                          color: AppTheme.primaryColor.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _card({required List<Widget> children, required bool isDark}) =>
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.darkSurface : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      );
+
+  Widget _input(
+    TextEditingController c,
+    String label,
+    IconData icon,
+    bool isDark, {
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                ),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                  color: AppTheme.errorColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: c,
+            maxLines: maxLines,
+            validator: validator,
+            style: TextStyle(
+              color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: "Enter $label",
+              prefixIcon: Icon(icon, color: AppTheme.primaryColor, size: 20),
+              filled: true,
+              fillColor: isDark
+                  ? AppTheme.darkSurfaceSecondary
+                  : Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
               ),
             ),
           ),
@@ -132,76 +347,39 @@ class _PostItemScreenState extends State<PostItemScreen> {
       ),
     );
   }
-}
 
-/// ---------------- UI HELPERS (UNCHANGED) ----------------
-
-PreferredSizeWidget _appBar(String title) => AppBar(
-  elevation: 0,
-  title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-  flexibleSpace: Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
-    ),
-  ),
-);
-
-Widget _page({required Widget child}) => Container(
-  decoration: BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [const Color(0xFF6366F1).withOpacity(0.06), Colors.white],
-    ),
-  ),
-  child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: child),
-);
-
-Widget _card({required List<Widget> children}) => Container(
-  padding: const EdgeInsets.all(26),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(26),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.08),
-        blurRadius: 16,
-        offset: const Offset(0, 10),
+  Widget _button(String label, VoidCallback onTap) => SizedBox(
+    width: double.infinity,
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-    ],
-  ),
-  child: Column(children: children),
-);
-
-Widget _input(
-  TextEditingController c,
-  String label,
-  IconData icon, {
-  int maxLines = 1,
-  TextInputType type = TextInputType.text,
-}) => Padding(
-  padding: const EdgeInsets.only(bottom: 16),
-  child: TextField(
-    controller: c,
-    maxLines: maxLines,
-    keyboardType: type,
-    decoration: InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.white,
+          ),
+        ),
+      ),
     ),
-  ),
-);
-
-Widget _button(String label, VoidCallback onTap) => SizedBox(
-  width: double.infinity,
-  child: ElevatedButton(
-    onPressed: onTap,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF6366F1),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-    child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-  ),
-);
+  );
+}

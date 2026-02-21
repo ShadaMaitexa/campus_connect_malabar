@@ -1,6 +1,9 @@
+import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId; // receiver
@@ -54,126 +57,264 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Text(widget.name),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (context) {
+          const isDark = true;
+          return Scaffold(
+            backgroundColor: AppTheme.darkBackground,
+            appBar: CustomAppBar(
+              title: widget.name,
+              showBackButton: true,
+              gradient: AppGradients.primary,
+              leading: Hero(
+                tag: 'avatar_${widget.userId}',
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white24,
+                    child: Text(
+                      widget.name.isNotEmpty
+                          ? widget.name[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
+            body: Column(
+              children: [
+                /// MESSAGES
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId)
+                        .collection('messages')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData) {
+                        return const Center(child: Text("Connecting..."));
+                      }
+
+                      var messages = snapshot.data!.docs;
+
+                      // Sort messages client-side by timestamp (descending)
+                      messages.sort((a, b) {
+                        final timestampA =
+                            (a['timestamp'] as Timestamp?)?.toDate() ??
+                            DateTime.now();
+                        final timestampB =
+                            (b['timestamp'] as Timestamp?)?.toDate() ??
+                            DateTime.now();
+                        return timestampB.compareTo(timestampA);
+                      });
+
+                      if (messages.isEmpty) {
+                        return _buildEmptyChat(isDark);
+                      }
+
+                      return ListView.builder(
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final msg =
+                              messages[index].data() as Map<String, dynamic>;
+                          final isMe = msg['senderId'] == currentUserId;
+
+                          return _buildMessageBubble(msg['text'], isMe, isDark);
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                /// INPUT BAR
+                _buildInputBar(isDark),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyChat(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 64,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "Start a Connection",
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Send a message to ${widget.name}\nand start your professional exchange.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                color: Colors.white.withOpacity(0.6),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(String text, bool isMe, bool isDark) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        decoration: BoxDecoration(
+          gradient: isMe ? AppGradients.primary : null,
+          color: isMe
+              ? null
+              : (isDark ? AppTheme.darkSurfaceSecondary : Colors.grey.shade200),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isMe ? 20 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            color: isMe
+                ? Colors.white
+                : (isDark ? Colors.white : Colors.black87),
+            fontSize: 15,
           ),
         ),
       ),
-      body: Column(
+    );
+  }
+
+  Widget _buildInputBar(bool isDark) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        (bottomInset > 0) ? 12 : (bottomPadding > 0 ? bottomPadding : 16),
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          /// 🔹 MESSAGES
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chats')
-                  .doc(chatId)
-                  .collection('messages')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                var messages = snapshot.data!.docs;
-
-                // Sort messages client-side by timestamp (descending)
-                messages.sort((a, b) {
-                  final timestampA =
-                      (a['timestamp'] as Timestamp?)?.toDate() ??
-                      DateTime.now();
-                  final timestampB =
-                      (b['timestamp'] as Timestamp?)?.toDate() ??
-                      DateTime.now();
-                  return timestampB.compareTo(timestampA);
-                });
-
-                if (messages.isEmpty) {
-                  return Center(
-                    child: Text(
-                      "Start the conversation",
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.all(16),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index].data() as Map<String, dynamic>;
-                    final isMe = msg['senderId'] == currentUserId;
-
-                    return Align(
-                      alignment: isMe
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        padding: const EdgeInsets.all(12),
-                        constraints: const BoxConstraints(maxWidth: 260),
-                        decoration: BoxDecoration(
-                          color: isMe
-                              ? const Color(0xFF6366F1)
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          msg['text'],
-                          style: TextStyle(
-                            color: isMe ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppTheme.darkSurfaceSecondary
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: TextField(
+                controller: _messageController,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: const InputDecoration(
+                  hintText: "Type a message...",
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
           ),
-
-          /// 🔹 INPUT BAR
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: "Type a message...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _sendMessage,
-                  child: CircleAvatar(
-                    backgroundColor: const Color(0xFF6366F1),
-                    child: const Icon(Icons.send, color: Colors.white),
-                  ),
-                ),
-              ],
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _sendMessage,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                gradient: AppGradients.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],

@@ -223,19 +223,29 @@ class PremiumStatCard extends StatelessWidget {
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: (isPositive ? Colors.green : Colors.red).withOpacity(
-                    0.1,
+                  color: (isPositive ? Colors.green : Colors.blue).withOpacity(
+                    0.35,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: (isPositive ? Colors.greenAccent : Colors.blueAccent)
+                        .withOpacity(0.5),
+                    width: 1.5,
+                  ),
                 ),
                 child: Text(
                   trend,
                   style: TextStyle(
-                    color: isPositive ? Colors.green : Colors.red,
+                    color: isPositive
+                        ? Colors.greenAccent
+                        : Colors.lightBlueAccent,
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),

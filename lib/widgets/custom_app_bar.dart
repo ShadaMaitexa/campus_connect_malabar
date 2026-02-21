@@ -479,67 +479,74 @@ class EmptyStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.08),
+                color: isDark
+                    ? AppTheme.primaryColor.withOpacity(0.12)
+                    : AppTheme.primaryColor.withOpacity(0.08),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  color: AppTheme.primaryColor.withOpacity(0.25),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.05),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    blurRadius: 32,
+                    spreadRadius: 8,
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: AppTheme.primaryColor.withOpacity(0.8),
-              ),
+              child: Icon(icon, size: 72, color: AppTheme.primaryColor),
             ),
             const SizedBox(height: 32),
             // Title
             Text(
               title,
               style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : AppTheme.lightTextPrimary,
                 letterSpacing: -0.5,
+                shadows: isDark
+                    ? [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.5),
+                          offset: const Offset(0, 2),
+                          blurRadius: 10,
+                        ),
+                      ]
+                    : null,
               ),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               // Subtitle
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   subtitle!,
                   style: GoogleFonts.inter(
-                    fontSize: 15,
+                    fontSize: 16,
                     color: isDark
-                        ? AppTheme.darkTextSecondary
+                        ? Colors.white.withOpacity(0.7)
                         : AppTheme.lightTextSecondary,
-                    height: 1.5,
+                    height: 1.6,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
             ],
             if (actionLabel != null && onActionTap != null) ...[
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
               // Action Button
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      color: AppTheme.primaryColor.withOpacity(0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
@@ -549,20 +556,32 @@ class EmptyStateWidget extends StatelessWidget {
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      horizontal: 40,
+                      vertical: 20,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    actionLabel!,
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.add_rounded,
+                        size: 24,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        actionLabel!,
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
+import '../widgets/custom_app_bar.dart';
+import '../widgets/app_text_field.dart';
+import '../utils/animations.dart';
 
 class MentorPostEvent extends StatefulWidget {
   const MentorPostEvent({super.key});
@@ -12,186 +17,277 @@ class MentorPostEvent extends StatefulWidget {
 class _MentorPostEventState extends State<MentorPostEvent> {
   final title = TextEditingController();
   final description = TextEditingController();
-  DateTime eventDate = DateTime.now();
-
+  DateTime? eventDate;
   bool loading = false;
 
   Future<void> postEvent() async {
-    if (title.text.isEmpty || description.text.isEmpty) {
+    if (title.text.isEmpty || description.text.isEmpty || eventDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            "Please fill all required fields and select an event date",
+          ),
+        ),
       );
       return;
     }
 
     setState(() => loading = true);
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final mentorDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final mentorDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
 
-    await FirebaseFirestore.instance.collection('events').add({
-      'title': title.text.trim(),
-      'description': description.text.trim(),
-      'date': Timestamp.fromDate(eventDate),
-      'department': mentorDoc['department'],
-      'postedBy': mentorDoc['name'],
-      'role': 'mentor',
-      'createdAt': Timestamp.now(),
-    });
+      await FirebaseFirestore.instance.collection('events').add({
+        'title': title.text.trim(),
+        'description': description.text.trim(),
+        'date': Timestamp.fromDate(eventDate!),
+        'department': mentorDoc['department'],
+        'postedBy': mentorDoc['name'],
+        'role': 'mentor',
+        'createdAt': Timestamp.now(),
+      });
 
-    title.clear();
-    description.clear();
+      title.clear();
+      description.clear();
+      setState(() => eventDate = null);
 
-    setState(() => loading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Event posted successfully")),
-    );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppTheme.successColor,
+            content: Text("Event scheduled successfully"),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppTheme.errorColor,
+            content: Text("Error: $e"),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          "Post Event",
-          style: TextStyle(fontWeight: FontWeight.w600),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        appBar: CustomAppBar(
+          title: "Schedule Event",
+          subtitle: "Plan department activities",
+          gradient: AppGradients.success,
         ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
+        body: Container(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF4B6CB7), Color(0xFF182848)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.05),
+                AppTheme.darkBackground,
+              ],
             ),
           ),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            // MAIN CARD
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Create an Event",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                AppAnimations.slideInFromBottom(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    "This event will be visible to students of your department.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // TITLE
-                  TextField(
-                    controller: title,
-                    decoration: InputDecoration(
-                      labelText: "Event Title",
-                      prefixIcon: const Icon(Icons.event_note),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // DESCRIPTION
-                  TextField(
-                    controller: description,
-                    maxLines: 5,
-                    decoration: InputDecoration(
-                      labelText: "Event Description",
-                      prefixIcon: const Icon(Icons.description),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // DATE PICKER
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: eventDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(() => eventDate = picked);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade400),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today,
-                              color: Color(0xFF4B6CB7)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              "Event Date: ${eventDate.toLocal().toString().split(' ')[0]}",
-                              style: const TextStyle(fontSize: 15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.successColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.event_available_rounded,
+                                color: AppTheme.successColor,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              "Event Details",
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        AppTextField(
+                          controller: title,
+                          label: "Event Title",
+                          prefixIcon: Icons.title_rounded,
+                        ),
+                        const SizedBox(height: 20),
+                        AppTextField(
+                          controller: description,
+                          label: "Event Description",
+                          prefixIcon: Icons.description_rounded,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          "Set Event Date *",
+                          style: GoogleFonts.inter(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  eventDate ??
+                                  DateTime.now().add(const Duration(days: 1)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2100),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: ThemeData.dark().copyWith(
+                                    colorScheme: const ColorScheme.dark(
+                                      primary: AppTheme.primaryColor,
+                                      onPrimary: Colors.white,
+                                      surface: AppTheme.darkSurface,
+                                      onSurface: Colors.white,
+                                    ),
+                                    dialogBackgroundColor: AppTheme.darkSurface,
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              setState(() => eventDate = picked);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: eventDate == null
+                                    ? Colors.white24
+                                    : AppTheme.successColor.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_month_rounded,
+                                  color: eventDate == null
+                                      ? Colors.white38
+                                      : AppTheme.successColor,
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  eventDate == null
+                                      ? "Click to Choose Date"
+                                      : "${eventDate!.day}/${eventDate!.month}/${eventDate!.year}",
+                                  style: GoogleFonts.inter(
+                                    color: eventDate == null
+                                        ? Colors.white38
+                                        : Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: eventDate == null
+                                        ? FontWeight.normal
+                                        : FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (eventDate == null)
+                                  const Icon(
+                                    Icons.priority_high_rounded,
+                                    color: Colors.amber,
+                                    size: 16,
+                                  ),
+                              ],
                             ),
                           ),
-                          const Icon(Icons.edit_calendar,
-                              color: Color(0xFF4B6CB7)),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 32),
+                AppAnimations.slideInFromBottom(
+                  delay: const Duration(milliseconds: 200),
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: postEvent,
+                            icon: const Icon(Icons.publish_rounded),
+                            label: Text(
+                              "Schedule Event",
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.successColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 8,
+                              shadowColor: AppTheme.successColor.withOpacity(
+                                0.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 24),
-
-            // POST BUTTON
-            loading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton.icon(
-                    onPressed: postEvent,
-                    icon: const Icon(Icons.send),
-                    label: const Text("Post Event"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-          ],
+          ),
         ),
       ),
     );
