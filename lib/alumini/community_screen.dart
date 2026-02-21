@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'chat_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_menu.dart';
+import '../widgets/custom_app_bar.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
@@ -12,6 +13,7 @@ class CommunityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final canPop = Navigator.of(context).canPop();
 
     return Theme(
       data: AppTheme.darkTheme,
@@ -25,10 +27,12 @@ class CommunityScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading: canPop
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_rounded),
+                  onPressed: () => Navigator.pop(context),
+                )
+              : null,
           actions: const [ProfileMenu(), SizedBox(width: 10)],
         ),
         body: currentUserId == null
@@ -74,26 +78,17 @@ class CommunityScreen extends StatelessWidget {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (!snap.hasData || snap.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No other users found",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      );
-                    }
-
-                    /// 🔹 FILTER OUT LOGGED-IN USER
-                    final users = snap.data!.docs
-                        .where((doc) => doc.id != currentUserId)
-                        .toList();
+                    final users = snap.hasData
+                        ? snap.data!.docs
+                              .where((doc) => doc.id != currentUserId)
+                              .toList()
+                        : [];
 
                     if (users.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No other users found",
-                          style: TextStyle(color: Colors.white54),
-                        ),
+                      return const EmptyStateWidget(
+                        icon: Icons.people_outline_rounded,
+                        title: "No Users Found",
+                        subtitle: "Check back later for new community members",
                       );
                     }
 
@@ -137,16 +132,19 @@ class CommunityScreen extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 26,
-                                  backgroundColor: AppTheme.primaryColor,
-                                  child: Text(
-                                    name.isNotEmpty
-                                        ? name[0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                                Hero(
+                                  tag: 'avatar_${studentDoc.id}',
+                                  child: CircleAvatar(
+                                    radius: 26,
+                                    backgroundColor: AppTheme.primaryColor,
+                                    child: Text(
+                                      name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : '?',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -158,16 +156,19 @@ class CommunityScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         name,
-                                        style: const TextStyle(
+                                        style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
+                                          fontSize: 16,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        data['department'] ?? '',
-                                        style: const TextStyle(
+                                        data['department'] ??
+                                            'Dept Not Specified',
+                                        style: GoogleFonts.inter(
                                           color: Colors.white60,
+                                          fontSize: 13,
                                         ),
                                       ),
                                     ],

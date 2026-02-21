@@ -479,32 +479,30 @@ class EmptyStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.08),
+                color: isDark
+                    ? AppTheme.primaryColor.withOpacity(0.12)
+                    : AppTheme.primaryColor.withOpacity(0.08),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  color: AppTheme.primaryColor.withOpacity(0.25),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.05),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    blurRadius: 32,
+                    spreadRadius: 8,
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: AppTheme.primaryColor.withOpacity(0.8),
-              ),
+              child: Icon(icon, size: 72, color: AppTheme.primaryColor),
             ),
             const SizedBox(height: 32),
             // Title
             Text(
               title,
               style: GoogleFonts.outfit(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : AppTheme.lightTextPrimary,
                 letterSpacing: -0.5,
@@ -515,11 +513,11 @@ class EmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 12),
               // Subtitle
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
                   subtitle!,
                   style: GoogleFonts.inter(
-                    fontSize: 15,
+                    fontSize: 16,
                     color: isDark
                         ? AppTheme.darkTextSecondary
                         : AppTheme.lightTextSecondary,
@@ -549,20 +547,27 @@ class EmptyStateWidget extends StatelessWidget {
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      horizontal: 36,
+                      vertical: 18,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    actionLabel!,
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        actionLabel!,
+                        style: GoogleFonts.outfit(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

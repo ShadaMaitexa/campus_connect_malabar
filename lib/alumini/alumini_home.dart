@@ -106,9 +106,9 @@ class _AlumniHomeState extends State<AlumniHome> {
       pinned: true,
       stretch: true,
       elevation: 0,
-      scrolledUnderElevation: 4,
-      backgroundColor:
-          AppTheme.darkBackground, // Solid background to prevent overlap
+      scrolledUnderElevation: 8, // Increased for better separation
+      surfaceTintColor: Colors.transparent, // Prevents M3 tinting issues
+      backgroundColor: AppTheme.darkBackground,
       centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [
@@ -124,12 +124,29 @@ class _AlumniHomeState extends State<AlumniHome> {
             fontSize: 24,
             color: Colors.white,
             letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.5),
+                offset: const Offset(0, 2),
+                blurRadius: 10,
+              ),
+            ],
           ),
         ),
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Container(color: AppTheme.darkBackground),
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.darkBackground,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.05),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -137,7 +154,7 @@ class _AlumniHomeState extends State<AlumniHome> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppTheme.secondaryColor.withOpacity(0.15),
+                      AppTheme.secondaryColor.withOpacity(0.2),
                       Colors.transparent,
                     ],
                   ),
