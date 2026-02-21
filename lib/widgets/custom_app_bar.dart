@@ -404,7 +404,7 @@ class SectionHeader extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: isDark
-                  ? AppTheme.darkTextPrimary
+                  ? const Color.fromARGB(255, 251, 253, 255)
                   : AppTheme.lightTextPrimary,
             ),
           ),
