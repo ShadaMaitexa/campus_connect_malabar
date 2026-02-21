@@ -106,8 +106,8 @@ class _AlumniHomeState extends State<AlumniHome> {
       pinned: true,
       stretch: true,
       elevation: 0,
-      scrolledUnderElevation: 8, // Increased for better separation
-      surfaceTintColor: Colors.transparent, // Prevents M3 tinting issues
+      scrolledUnderElevation: 4,
+      surfaceTintColor: Colors.transparent,
       backgroundColor: AppTheme.darkBackground,
       centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
@@ -115,7 +115,7 @@ class _AlumniHomeState extends State<AlumniHome> {
           StretchMode.blurBackground,
           StretchMode.zoomBackground,
         ],
-        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         centerTitle: false,
         title: Text(
           "Alumni Network",
@@ -126,9 +126,9 @@ class _AlumniHomeState extends State<AlumniHome> {
             letterSpacing: 0.5,
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withOpacity(0.8),
                 offset: const Offset(0, 2),
-                blurRadius: 10,
+                blurRadius: 12,
               ),
             ],
           ),
@@ -141,7 +141,7 @@ class _AlumniHomeState extends State<AlumniHome> {
                 color: AppTheme.darkBackground,
                 border: Border(
                   bottom: BorderSide(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withOpacity(0.08),
                     width: 1,
                   ),
                 ),
@@ -153,9 +153,11 @@ class _AlumniHomeState extends State<AlumniHome> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.7, 1.0],
                     colors: [
-                      AppTheme.secondaryColor.withOpacity(0.2),
-                      Colors.transparent,
+                      AppTheme.primaryColor.withOpacity(0.2),
+                      AppTheme.darkBackground.withOpacity(0.4),
+                      AppTheme.darkBackground,
                     ],
                   ),
                 ),

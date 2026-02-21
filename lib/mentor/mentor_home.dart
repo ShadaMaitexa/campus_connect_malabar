@@ -92,8 +92,8 @@ class _MentorHomeState extends State<MentorHome>
       stretch: true,
       elevation: 0,
       scrolledUnderElevation: 4,
-      backgroundColor:
-          AppTheme.darkBackground, // Fixed: Solid background to prevent overlap
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppTheme.darkBackground,
       centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [
@@ -105,25 +105,44 @@ class _MentorHomeState extends State<MentorHome>
         title: Text(
           "Mentor Dashboard",
           style: GoogleFonts.outfit(
-            fontWeight: FontWeight.w800, // Maximized weight
-            fontSize: 24, // Increased size
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
             color: Colors.white,
             letterSpacing: 0.5,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.8),
+                offset: const Offset(0, 2),
+                blurRadius: 12,
+              ),
+            ],
           ),
         ),
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Container(color: AppTheme.darkBackground), // Base solid color
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.darkBackground,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.7, 1.0],
                     colors: [
-                      AppTheme.primaryColor.withOpacity(0.15),
-                      Colors.transparent,
+                      AppTheme.primaryColor.withOpacity(0.2),
+                      AppTheme.darkBackground.withOpacity(0.4),
+                      AppTheme.darkBackground,
                     ],
                   ),
                 ),
@@ -283,7 +302,7 @@ class _MentorHomeState extends State<MentorHome>
           "Student Reports",
           Icons.analytics_rounded,
           AppGradients.surface,
-          () {},
+          () => widget.onNavigate(4),
         ),
       ],
     );

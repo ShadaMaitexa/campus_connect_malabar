@@ -57,133 +57,154 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
-      appBar: CustomAppBar(
-        title: widget.name,
-        showBackButton: true,
-        gradient: AppGradients.primary,
-        leading: Hero(
-          tag: 'avatar_${widget.userId}',
-          child: Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white24,
-              child: Text(
-                widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (context) {
+          const isDark = true;
+          return Scaffold(
+            backgroundColor: AppTheme.darkBackground,
+            appBar: CustomAppBar(
+              title: widget.name,
+              showBackButton: true,
+              gradient: AppGradients.primary,
+              leading: Hero(
+                tag: 'avatar_${widget.userId}',
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white24,
+                    child: Text(
+                      widget.name.isNotEmpty
+                          ? widget.name[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          /// 🔹 MESSAGES
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chats')
-                  .doc(chatId)
-                  .collection('messages')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            body: Column(
+              children: [
+                /// MESSAGES
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId)
+                        .collection('messages')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (!snapshot.hasData) {
-                  return const Center(child: Text("Connecting..."));
-                }
+                      if (!snapshot.hasData) {
+                        return const Center(child: Text("Connecting..."));
+                      }
 
-                var messages = snapshot.data!.docs;
+                      var messages = snapshot.data!.docs;
 
-                // Sort messages client-side by timestamp (descending)
-                messages.sort((a, b) {
-                  final timestampA =
-                      (a['timestamp'] as Timestamp?)?.toDate() ??
-                      DateTime.now();
-                  final timestampB =
-                      (b['timestamp'] as Timestamp?)?.toDate() ??
-                      DateTime.now();
-                  return timestampB.compareTo(timestampA);
-                });
+                      // Sort messages client-side by timestamp (descending)
+                      messages.sort((a, b) {
+                        final timestampA =
+                            (a['timestamp'] as Timestamp?)?.toDate() ??
+                            DateTime.now();
+                        final timestampB =
+                            (b['timestamp'] as Timestamp?)?.toDate() ??
+                            DateTime.now();
+                        return timestampB.compareTo(timestampA);
+                      });
 
-                if (messages.isEmpty) {
-                  return _buildEmptyChat(isDark);
-                }
+                      if (messages.isEmpty) {
+                        return _buildEmptyChat(isDark);
+                      }
 
-                return ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 20,
+                      return ListView.builder(
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final msg =
+                              messages[index].data() as Map<String, dynamic>;
+                          final isMe = msg['senderId'] == currentUserId;
+
+                          return _buildMessageBubble(msg['text'], isMe, isDark);
+                        },
+                      );
+                    },
                   ),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index].data() as Map<String, dynamic>;
-                    final isMe = msg['senderId'] == currentUserId;
+                ),
 
-                    return _buildMessageBubble(msg['text'], isMe, isDark);
-                  },
-                );
-              },
+                /// INPUT BAR
+                _buildInputBar(isDark),
+              ],
             ),
-          ),
-
-          /// 🔹 INPUT BAR
-          _buildInputBar(isDark),
-        ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildEmptyChat(bool isDark) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 64,
+                color: AppTheme.primaryColor,
+              ),
             ),
-            child: Icon(
-              Icons.chat_bubble_outline_rounded,
-              size: 48,
-              color: AppTheme.primaryColor.withOpacity(0.5),
+            const SizedBox(height: 32),
+            Text(
+              "Start a Connection",
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Start the conversation",
-            style: GoogleFonts.poppins(
-              color: isDark
-                  ? AppTheme.darkTextSecondary
-                  : AppTheme.lightTextSecondary,
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 12),
+            Text(
+              "Send a message to ${widget.name}\nand start your professional exchange.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                color: Colors.white.withOpacity(0.6),
+                height: 1.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Say hello to ${widget.name}!",
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: isDark ? Colors.white38 : Colors.black38,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -230,14 +251,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputBar(bool isDark) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
         12,
         16,
-        12 +
-            MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom,
+        (bottomInset > 0) ? 12 : (bottomPadding > 0 ? bottomPadding : 16),
       ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : Colors.white,

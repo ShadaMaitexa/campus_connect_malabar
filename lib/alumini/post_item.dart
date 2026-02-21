@@ -97,76 +97,77 @@ class _PostItemScreenState extends State<PostItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
-      appBar: CustomAppBar(
-        title: "Post Study Material",
-        showBackButton: true,
-        gradient: AppGradients.primary,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (context) {
+          const isDark = true;
+          return Scaffold(
+            backgroundColor: AppTheme.darkBackground,
+            appBar: CustomAppBar(
+              title: "Post Study Material",
+              showBackButton: true,
+              gradient: AppGradients.primary,
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
                     AppTheme.primaryColor.withOpacity(0.05),
                     AppTheme.darkBackground,
-                  ]
-                : [
-                    AppTheme.primaryColor.withOpacity(0.05),
-                    AppTheme.lightBackground,
                   ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: AppAnimations.slideInFromBottom(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle("Material Details", isDark),
-                  const SizedBox(height: 16),
-                  _card(
-                    isDark: isDark,
-                    children: [
-                      _buildImageUpload(isDark),
-                      const SizedBox(height: 24),
-                      _input(
-                        title,
-                        "Material Title",
-                        Icons.menu_book,
-                        isDark,
-                        validator: (v) =>
-                            v!.isEmpty ? "Title is required" : null,
-                      ),
-                      _input(
-                        description,
-                        "Description",
-                        Icons.description,
-                        isDark,
-                        maxLines: 4,
-                        validator: (v) =>
-                            v!.isEmpty ? "Description is required" : null,
-                      ),
-                      const SizedBox(height: 32),
-                      loading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _button("Post Material", postMaterial),
-                    ],
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: AppAnimations.slideInFromBottom(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Material Details", isDark),
+                        const SizedBox(height: 16),
+                        _card(
+                          isDark: isDark,
+                          children: [
+                            _buildImageUpload(isDark),
+                            const SizedBox(height: 24),
+                            _input(
+                              title,
+                              "Material Title",
+                              Icons.menu_book,
+                              isDark,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Title is required" : null,
+                            ),
+                            _input(
+                              description,
+                              "Description",
+                              Icons.description,
+                              isDark,
+                              maxLines: 4,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Description is required" : null,
+                            ),
+                            const SizedBox(height: 32),
+                            loading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : _button("Post Material", postMaterial),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -200,12 +201,11 @@ class _PostItemScreenState extends State<PostItemScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          "Supported: JPG, PNG • Max 5MB",
+          "JPG, PNG supported • Max 5MB file size",
           style: GoogleFonts.inter(
-            fontSize: 12,
-            color: isDark
-                ? AppTheme.darkTextSecondary
-                : AppTheme.lightTextSecondary,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.primaryColor.withOpacity(0.9),
           ),
         ),
         const SizedBox(height: 12),
@@ -300,10 +300,17 @@ class _PostItemScreenState extends State<PostItemScreen> {
                   color: isDark ? Colors.white : AppTheme.lightTextPrimary,
                 ),
               ),
-              Text(" *", style: TextStyle(color: AppTheme.errorColor)),
+              Text(
+                " *",
+                style: TextStyle(
+                  color: AppTheme.errorColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           TextFormField(
             controller: c,
             maxLines: maxLines,

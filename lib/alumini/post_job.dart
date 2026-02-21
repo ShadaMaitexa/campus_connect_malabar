@@ -64,91 +64,94 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
-      appBar: CustomAppBar(
-        title: "Post Job Opening",
-        showBackButton: true,
-        gradient: AppGradients.info,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (context) {
+          const isDark = true;
+          return Scaffold(
+            backgroundColor: AppTheme.darkBackground,
+            appBar: CustomAppBar(
+              title: "Post Job Opening",
+              showBackButton: true,
+              gradient: AppGradients.info,
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
                     AppTheme.primaryColor.withOpacity(0.05),
                     AppTheme.darkBackground,
-                  ]
-                : [
-                    AppTheme.primaryColor.withOpacity(0.05),
-                    AppTheme.lightBackground,
                   ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: AppAnimations.slideInFromBottom(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle("Job Information", isDark),
-                  const SizedBox(height: 16),
-                  _card(
-                    isDark: isDark,
-                    children: [
-                      _input(
-                        title,
-                        "Job Title",
-                        Icons.work_outline,
-                        isDark,
-                        validator: (v) =>
-                            v!.isEmpty ? "Title is required" : null,
-                      ),
-                      _input(
-                        company,
-                        "Company Name",
-                        Icons.business,
-                        isDark,
-                        validator: (v) =>
-                            v!.isEmpty ? "Company name is required" : null,
-                      ),
-                      _input(
-                        description,
-                        "Job Description",
-                        Icons.description,
-                        isDark,
-                        maxLines: 4,
-                        validator: (v) =>
-                            v!.isEmpty ? "Description is required" : null,
-                      ),
-                      _input(
-                        link,
-                        "Apply Link / Contact",
-                        Icons.link,
-                        isDark,
-                        hint: "URL, Email or Phone Number",
-                        validator: (v) =>
-                            v!.isEmpty ? "Contact info is required" : null,
-                      ),
-                      const SizedBox(height: 32),
-                      loading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _button("Post Job", postJob),
-                    ],
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: AppAnimations.slideInFromBottom(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Job Information", isDark),
+                        const SizedBox(height: 16),
+                        _card(
+                          isDark: isDark,
+                          children: [
+                            _input(
+                              title,
+                              "Job Title",
+                              Icons.work_outline,
+                              isDark,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Title is required" : null,
+                            ),
+                            _input(
+                              company,
+                              "Company Name",
+                              Icons.business,
+                              isDark,
+                              validator: (v) => v!.isEmpty
+                                  ? "Company name is required"
+                                  : null,
+                            ),
+                            _input(
+                              description,
+                              "Job Description",
+                              Icons.description,
+                              isDark,
+                              maxLines: 4,
+                              validator: (v) =>
+                                  v!.isEmpty ? "Description is required" : null,
+                            ),
+                            _input(
+                              link,
+                              "Apply Link / Contact",
+                              Icons.link,
+                              isDark,
+                              hint: "Enter URL, Email or Phone Number",
+                              validator: (v) => v!.isEmpty
+                                  ? "Contact info is required"
+                                  : null,
+                            ),
+                            const SizedBox(height: 32),
+                            loading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : _button("Post Job", postJob),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -211,10 +214,17 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   color: isDark ? Colors.white : AppTheme.lightTextPrimary,
                 ),
               ),
-              Text(" *", style: TextStyle(color: AppTheme.errorColor)),
+              Text(
+                " *",
+                style: TextStyle(
+                  color: AppTheme.errorColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           TextFormField(
             controller: c,
             maxLines: maxLines,

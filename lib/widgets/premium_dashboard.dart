@@ -229,13 +229,13 @@ class PremiumStatCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: (isPositive ? Colors.green : Colors.blue).withOpacity(
-                    0.25,
+                    0.35,
                   ),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: (isPositive ? Colors.greenAccent : Colors.blueAccent)
-                        .withOpacity(0.35),
-                    width: 1,
+                        .withOpacity(0.5),
+                    width: 1.5,
                   ),
                 ),
                 child: Text(
@@ -245,7 +245,7 @@ class PremiumStatCard extends StatelessWidget {
                         ? Colors.greenAccent
                         : Colors.lightBlueAccent,
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
