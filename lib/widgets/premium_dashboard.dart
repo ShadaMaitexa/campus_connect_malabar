@@ -226,16 +226,16 @@ class PremiumStatCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: (isPositive ? Colors.green : Colors.red).withOpacity(
-                    0.1,
+                    0.2,
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   trend,
                   style: TextStyle(
-                    color: isPositive ? Colors.green : Colors.red,
+                    color: isPositive ? Colors.greenAccent : Colors.redAccent,
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

@@ -19,9 +19,11 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
   int _selectedIndex = 0;
 
   late final List<Widget> _screens = [
-    AlumniHome(onNavigate: (index) {
-      setState(() => _selectedIndex = index);
-    }),
+    AlumniHome(
+      onNavigate: (index) {
+        setState(() => _selectedIndex = index);
+      },
+    ),
     const MyListings(),
     const CommunityScreen(),
     const ProfileScreen(),
@@ -30,7 +32,10 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
   final List<SidebarDestination> _destinations = [
     const SidebarDestination(icon: Icons.dashboard_rounded, label: "Home"),
     const SidebarDestination(icon: Icons.storefront_rounded, label: "Listings"),
-    const SidebarDestination(icon: Icons.people_alt_rounded, label: "Community"),
+    const SidebarDestination(
+      icon: Icons.people_alt_rounded,
+      label: "Community",
+    ),
     const SidebarDestination(icon: Icons.person_rounded, label: "Profile"),
   ];
 
@@ -55,15 +60,14 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
           Row(
             children: [
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
-                onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+                onDestinationSelected: (index) =>
+                    setState(() => _selectedIndex = index),
                 destinations: _destinations,
                 onLogout: _handleLogout,
               ),
@@ -93,16 +97,18 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
   Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _handleLogout,
-            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-          ),
-        ],
-      ),
+      appBar: _selectedIndex == 0
+          ? null
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  onPressed: _handleLogout,
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+                ),
+              ],
+            ),
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -113,9 +119,7 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
           SafeArea(
             child: AnimatedSwitcher(
@@ -130,7 +134,9 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+          border: Border(
+            top: BorderSide(color: Colors.white.withOpacity(0.05)),
+          ),
         ),
         child: NavigationBar(
           selectedIndex: _selectedIndex,
@@ -142,8 +148,16 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
           elevation: 0,
           destinations: [
             _navItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Home"),
-            _navItem(Icons.storefront_outlined, Icons.storefront_rounded, "Listings"),
-            _navItem(Icons.people_alt_outlined, Icons.people_alt_rounded, "Community"),
+            _navItem(
+              Icons.storefront_outlined,
+              Icons.storefront_rounded,
+              "Listings",
+            ),
+            _navItem(
+              Icons.people_alt_outlined,
+              Icons.people_alt_rounded,
+              "Community",
+            ),
             _navItem(Icons.person_outline, Icons.person_rounded, "Profile"),
           ],
         ),
@@ -157,24 +171,41 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
         title: const Text("Logout", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to exit?", style: TextStyle(color: Colors.white70)),
+        content: const Text(
+          "Are you sure you want to exit?",
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            onPressed: () => Navigator.pop(context, true), 
-            child: const Text("Logout")
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
           ),
         ],
       ),
     );
     if (confirmed == true) {
       await FirebaseAuth.instance.signOut();
-      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+      if (mounted)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
     }
   }
 
-  NavigationDestination _navItem(IconData icon, IconData activeIcon, String label) {
+  NavigationDestination _navItem(
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
     return NavigationDestination(
       icon: Icon(icon, color: Colors.white54, size: 22),
       selectedIcon: Icon(activeIcon, color: AppTheme.primaryColor, size: 24),
