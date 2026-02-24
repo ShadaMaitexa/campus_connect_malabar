@@ -11,6 +11,7 @@ import '../alumini/community_screen.dart';
 import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import '../widgets/custom_app_bar.dart';
 import '../library/library_screen.dart';
+import 'internal_marks_screen.dart';
 
 class StudentHome extends StatefulWidget {
   final ValueChanged<int> onNavigate;
@@ -68,7 +69,10 @@ class _StudentHomeState extends State<StudentHome>
                   const SizedBox(height: 32),
                   _buildStatsOverview(isDesktop),
                   const SizedBox(height: 48),
-                  const SectionHeader(title: "Academic Navigation", textColor: Colors.white),
+                  const SectionHeader(
+                    title: "Academic Navigation",
+                    textColor: Colors.white,
+                  ),
                   const SizedBox(height: 24),
                   _buildNavigationGrid(isDesktop),
                   const SizedBox(height: 40),
@@ -284,8 +288,11 @@ class _StudentHomeState extends State<StudentHome>
                 );
               } else if (item.index == -3) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Internal Marks coming soon!")),
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const StudentInternalMarksScreen(),
+                  ),
                 );
               } else if (item.index == -4) {
                 if (!mounted) return;

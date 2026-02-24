@@ -125,11 +125,35 @@ class MyListings extends StatelessWidget {
             .collection('marketplace')
             .where('postedBy', isEqualTo: uid)
             .where('type', isEqualTo: type)
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading listings',
+                    style: GoogleFonts.poppins(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    style: GoogleFonts.poppins(
+                      color: Colors.red.shade300,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -155,16 +179,24 @@ class MyListings extends StatelessWidget {
             );
           }
 
+          // Sort client-side by createdAt descending (avoids composite index requirement)
+          final docs = List.of(snapshot.data!.docs);
+          docs.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aTime = aData['createdAt'];
+            final bTime = bData['createdAt'];
+            if (aTime == null || bTime == null) return 0;
+            return (bTime as dynamic).compareTo(aTime as dynamic);
+          });
+
           return ListView.builder(
             padding: const EdgeInsets.all(20),
-            itemCount: snapshot.data!.docs.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
               return AnimatedListItem(
                 index: index,
-                child: _ListingCard(
-                  doc: snapshot.data!.docs[index],
-                  type: type,
-                ),
+                child: _ListingCard(doc: docs[index], type: type),
               );
             },
           );

@@ -55,7 +55,6 @@ class CommunityScreen extends StatelessWidget {
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('users')
-                    .where('role', whereIn: ['student', 'alumni'])
                     .snapshots(),
                 builder: (context, snap) {
                   if (snap.hasError) {
@@ -73,6 +72,15 @@ class CommunityScreen extends StatelessWidget {
                             "Something went wrong",
                             style: GoogleFonts.poppins(color: Colors.white70),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            snap.error.toString(),
+                            style: GoogleFonts.poppins(
+                              color: Colors.red.shade300,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     );
@@ -82,10 +90,17 @@ class CommunityScreen extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  // Filter client-side: show students and alumni (handles both 'alumni' and 'alumini' spelling)
+                  final allowedRoles = {'student', 'alumni', 'alumini'};
                   final users = snap.hasData
-                      ? snap.data!.docs
-                            .where((doc) => doc.id != currentUserId)
-                            .toList()
+                      ? snap.data!.docs.where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final role = (data['role'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                          return doc.id != currentUserId &&
+                              allowedRoles.contains(role);
+                        }).toList()
                       : [];
 
                   if (users.isEmpty) {
