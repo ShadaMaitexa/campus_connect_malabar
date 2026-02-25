@@ -18,6 +18,7 @@ class StudentReportsScreen extends StatefulWidget {
 class _StudentReportsScreenState extends State<StudentReportsScreen> {
   String? _department;
   bool _isLoading = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
         });
       }
     } catch (e) {
+      debugPrint('StudentReportsScreen _loadDept error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -72,94 +74,169 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
               ],
             ),
           ),
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .where('role', isEqualTo: 'student')
-                .where('department', isEqualTo: _department)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                );
-              }
-
-              final students = snapshot.data?.docs ?? [];
-
-              if (students.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.group_off_rounded,
-                          size: 56,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'No students found',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No students in your department yet',
-                        style: GoogleFonts.inter(color: Colors.white54),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemCount: students.length,
-                itemBuilder: (context, index) {
-                  final student = students[index];
-                  final data = student.data() as Map<String, dynamic>;
-                  final name = data['name'] ?? 'Student';
-                  final email = data['email'] ?? '';
-                  final semester = data['semester'] ?? '';
-
-                  return _StudentCard(
-                    name: name,
-                    email: email,
-                    semester: semester.toString(),
-                    initials: name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => StudentDetailReportScreen(
-                          studentId: student.id,
-                          studentName: name,
-                          department: _department ?? '',
-                        ),
+          child: Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: TextField(
+                  onChanged: (v) =>
+                      setState(() => _searchQuery = v.toLowerCase()),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search students...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppTheme.primaryColor,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.darkSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.darkBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.darkBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
                       ),
                     ),
-                  );
-                },
-              );
-            },
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
+              // Student list — query only by role, filter department client-side
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .where('role', isEqualTo: 'student')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      debugPrint(
+                        'StudentReports stream error: ${snapshot.error}',
+                      );
+                      return Center(
+                        child: Text(
+                          'Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+
+                    // Filter by department client-side (avoids composite Firestore index)
+                    final allDocs = snapshot.data?.docs ?? [];
+                    var students = allDocs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return data['department'] == _department;
+                    }).toList();
+
+                    // Apply search filter
+                    if (_searchQuery.isNotEmpty) {
+                      students = students.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final name = (data['name'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        final email = (data['email'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        return name.contains(_searchQuery) ||
+                            email.contains(_searchQuery);
+                      }).toList();
+                    }
+
+                    if (students.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.group_off_rounded,
+                                size: 56,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'No students found'
+                                  : 'No students in your department',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'Try a different search term'
+                                  : 'Students will appear here once they register',
+                              style: GoogleFonts.inter(color: Colors.white54),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemCount: students.length,
+                      itemBuilder: (context, index) {
+                        final student = students[index];
+                        final data = student.data() as Map<String, dynamic>;
+                        final name = data['name'] ?? 'Student';
+                        final email = data['email'] ?? '';
+                        final semester = data['semester'] ?? '';
+
+                        return _StudentCard(
+                          name: name,
+                          email: email,
+                          semester: semester.toString(),
+                          initials: name.isNotEmpty
+                              ? name[0].toUpperCase()
+                              : 'S',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => StudentDetailReportScreen(
+                                studentId: student.id,
+                                studentName: name,
+                                studentEmail: email,
+                                department: _department ?? '',
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -167,6 +244,9 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
   }
 }
 
+// ─────────────────────────────────────────────
+//  Student Card
+// ─────────────────────────────────────────────
 class _StudentCard extends StatelessWidget {
   final String name;
   final String email;
@@ -202,7 +282,7 @@ class _StudentCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Avatar with gradient
+            // Avatar
             Container(
               width: 52,
               height: 52,
@@ -295,17 +375,19 @@ class _StudentCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-//  Student Detail Report + Internal Marks Screen
+//  Student Detail Report Screen
 // ─────────────────────────────────────────────
 class StudentDetailReportScreen extends StatefulWidget {
   final String studentId;
   final String studentName;
+  final String studentEmail;
   final String department;
 
   const StudentDetailReportScreen({
     super.key,
     required this.studentId,
     required this.studentName,
+    required this.studentEmail,
     required this.department,
   });
 
@@ -318,8 +400,6 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isMarksTab = false;
-
-  // Key to access the marks tab state for the FAB dialog
   final GlobalKey<_InternalMarksTabState> _marksTabKey = GlobalKey();
 
   @override
@@ -357,6 +437,9 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen>
                   onPressed: () =>
                       _marksTabKey.currentState?._showAddMarksDialog(),
                   backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   icon: const Icon(Icons.add_rounded, color: Colors.white),
                   label: Text(
                     'Add Marks',
@@ -370,6 +453,12 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen>
         ),
         body: Column(
           children: [
+            // Student profile banner
+            _StudentProfileBanner(
+              name: widget.studentName,
+              email: widget.studentEmail,
+              department: widget.department,
+            ),
             // Tab Bar
             Container(
               color: AppTheme.darkSurface,
@@ -409,6 +498,88 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Student Profile Banner (shown at top of detail screen)
+// ─────────────────────────────────────────────
+class _StudentProfileBanner extends StatelessWidget {
+  final String name;
+  final String email;
+  final String department;
+
+  const _StudentProfileBanner({
+    required this.name,
+    required this.email,
+    required this.department,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      color: AppTheme.darkSurface,
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: AppGradients.primary,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              department,
+              style: GoogleFonts.inter(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -630,6 +801,11 @@ class _AttendanceSummaryTab extends StatelessWidget {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              // Detailed attendance from attendance subcollection
+              _AttendanceDetailSection(studentId: studentId),
             ],
           ),
         );
@@ -638,6 +814,149 @@ class _AttendanceSummaryTab extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+//  Attendance Detail Section (subject-wise)
+// ─────────────────────────────────────────────
+class _AttendanceDetailSection extends StatelessWidget {
+  final String studentId;
+  const _AttendanceDetailSection({required this.studentId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('attendance')
+          .where('studentId', isEqualTo: studentId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        // Group by subject
+        final docs = snapshot.data!.docs;
+        final Map<String, Map<String, int>> subjectMap = {};
+        for (final doc in docs) {
+          final d = doc.data() as Map<String, dynamic>;
+          final subject = (d['subject'] ?? 'General').toString();
+          final isPresent = d['status'] == 'present';
+          subjectMap.putIfAbsent(subject, () => {'present': 0, 'total': 0});
+          subjectMap[subject]!['total'] =
+              (subjectMap[subject]!['total'] ?? 0) + 1;
+          if (isPresent) {
+            subjectMap[subject]!['present'] =
+                (subjectMap[subject]!['present'] ?? 0) + 1;
+          }
+        }
+
+        if (subjectMap.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12, left: 4),
+              child: Text(
+                'Subject-wise Attendance',
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            ...subjectMap.entries.map((e) {
+              final pct = e.value['total']! > 0
+                  ? (e.value['present']! / e.value['total']!) * 100
+                  : 0.0;
+              final color = pct >= 75
+                  ? AppTheme.successColor
+                  : pct >= 60
+                  ? AppTheme.warningColor
+                  : AppTheme.errorColor;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              e.key,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${e.value['present']}/${e.value['total']}',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${pct.toStringAsFixed(0)}%',
+                              style: GoogleFonts.robotoMono(
+                                color: color,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: pct / 100,
+                          backgroundColor: Colors.white12,
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                          minHeight: 6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Stat Box
+// ─────────────────────────────────────────────
 class _StatBox extends StatelessWidget {
   final String label;
   final String value;
@@ -683,7 +1002,7 @@ class _StatBox extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-//  Internal Marks Tab
+//  Internal Marks Tab (Teacher View)
 // ─────────────────────────────────────────────
 class _InternalMarksTab extends StatefulWidget {
   final String studentId;
@@ -720,7 +1039,11 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Padding(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 40,
+          ),
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -916,9 +1239,14 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                               : () async {
                                   final subject = subjectController.text.trim();
                                   final marks =
-                                      int.tryParse(marksController.text) ?? 0;
+                                      int.tryParse(
+                                        marksController.text.trim(),
+                                      ) ??
+                                      0;
                                   final maxMarks =
-                                      int.tryParse(maxMarksController.text) ??
+                                      int.tryParse(
+                                        maxMarksController.text.trim(),
+                                      ) ??
                                       50;
 
                                   if (subject.isEmpty) {
@@ -987,13 +1315,16 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                                       );
                                     }
                                   } catch (e) {
+                                    debugPrint('Add marks error: $e');
                                     setDState(() => saving = false);
                                     if (mounted) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Failed to save marks'),
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to save marks: $e',
+                                          ),
                                           backgroundColor: AppTheme.errorColor,
                                         ),
                                       );
@@ -1112,13 +1443,12 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
           ),
         ),
 
-        // Marks List
+        // Marks List — query only by studentId, filter semester client-side
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('internal_marks')
                 .where('studentId', isEqualTo: widget.studentId)
-                .where('semester', isEqualTo: _selectedSemester)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1126,17 +1456,46 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
               }
 
               if (snapshot.hasError) {
+                debugPrint('InternalMarks stream error: ${snapshot.error}');
                 return Center(
-                  child: Text(
-                    'Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                    textAlign: TextAlign.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Error loading marks',
+                          style: GoogleFonts.poppins(color: Colors.white70),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          snapshot.error.toString(),
+                          style: GoogleFonts.inter(
+                            color: Colors.red.shade300,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
 
-              // Sort client-side by createdAt
-              final docs = List.of(snapshot.data?.docs ?? []);
+              // Filter by semester client-side (avoids composite Firestore index)
+              final allDocs = snapshot.data?.docs ?? [];
+              var docs = allDocs.where((doc) {
+                final d = doc.data() as Map<String, dynamic>;
+                return d['semester'] == _selectedSemester;
+              }).toList();
+
+              // Sort by createdAt
               docs.sort((a, b) {
                 final aD = a.data() as Map<String, dynamic>;
                 final bD = b.data() as Map<String, dynamic>;
@@ -1174,11 +1533,12 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Tap + to add marks for $_selectedSemester',
+                        'Tap + Add Marks to add marks for $_selectedSemester',
                         style: GoogleFonts.inter(
                           color: Colors.white54,
                           fontSize: 13,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -1239,6 +1599,13 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                                   color: Colors.white,
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${docs.length} subject${docs.length != 1 ? 's' : ''} graded',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white60,
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
@@ -1408,12 +1775,26 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  'Slide left to delete',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white24,
-                                    fontSize: 10,
-                                  ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Swipe left to delete',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white24,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                    Text(
+                                      _getGrade(pct),
+                                      style: GoogleFonts.robotoMono(
+                                        color: pctColor,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -1430,10 +1811,20 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
       ],
     );
   }
+
+  String _getGrade(double pct) {
+    if (pct >= 90) return 'Grade: O';
+    if (pct >= 80) return 'Grade: A+';
+    if (pct >= 70) return 'Grade: A';
+    if (pct >= 60) return 'Grade: B+';
+    if (pct >= 50) return 'Grade: B';
+    if (pct >= 40) return 'Grade: C';
+    return 'Grade: F';
+  }
 }
 
 // ─────────────────────────────────────────────
-//  Reusable input widget for the dialog
+//  Reusable input widget for dialog
 // ─────────────────────────────────────────────
 class _MarkField extends StatelessWidget {
   final TextEditingController controller;

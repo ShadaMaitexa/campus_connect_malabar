@@ -57,6 +57,8 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
             child: Image.asset(
               "assets/images/generated_background.png",
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: AppTheme.darkBackground),
             ),
           ),
           Positioned.fill(
@@ -116,6 +118,8 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
             child: Image.asset(
               "assets/images/generated_background.png",
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: AppTheme.darkBackground),
             ),
           ),
           Positioned.fill(

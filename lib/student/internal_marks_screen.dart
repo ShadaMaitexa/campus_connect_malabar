@@ -125,10 +125,11 @@ class _StudentInternalMarksScreenState
               // ── Marks List ──
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
+                  // Query only by studentId — filter semester client-side
+                  // to avoid a composite Firestore index requirement.
                   stream: FirebaseFirestore.instance
                       .collection('internal_marks')
                       .where('studentId', isEqualTo: _uid)
-                      .where('semester', isEqualTo: _selectedSemester)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -170,7 +171,13 @@ class _StudentInternalMarksScreenState
                       );
                     }
 
-                    final docs = List.of(snapshot.data?.docs ?? []);
+                    final allDocs = List.of(snapshot.data?.docs ?? []);
+
+                    // Filter by semester client-side (avoids composite Firestore index)
+                    final docs = allDocs.where((doc) {
+                      final d = doc.data() as Map<String, dynamic>;
+                      return d['semester'] == _selectedSemester;
+                    }).toList();
 
                     // Sort by createdAt client-side
                     docs.sort((a, b) {

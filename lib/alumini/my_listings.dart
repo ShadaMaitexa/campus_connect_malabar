@@ -121,10 +121,11 @@ class MyListings extends StatelessWidget {
         ),
       ),
       child: StreamBuilder<QuerySnapshot>(
+        // Query only by postedBy to avoid composite index requirement.
+        // Type filtering is done client-side below.
         stream: FirebaseFirestore.instance
             .collection('marketplace')
             .where('postedBy', isEqualTo: uid)
-            .where('type', isEqualTo: type)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -132,6 +133,7 @@ class MyListings extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
+            debugPrint('Firestore error in my_listings: ${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,7 +158,14 @@ class MyListings extends StatelessWidget {
             );
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          // Filter by type client-side (avoids composite Firestore index)
+          final allDocs = snapshot.hasData ? snapshot.data!.docs : [];
+          final filteredDocs = allDocs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['type'] == type;
+          }).toList();
+
+          if (filteredDocs.isEmpty) {
             return EmptyStateWidget(
               icon: type == 'material'
                   ? Icons.menu_book_outlined
@@ -179,9 +188,8 @@ class MyListings extends StatelessWidget {
             );
           }
 
-          // Sort client-side by createdAt descending (avoids composite index requirement)
-          final docs = List.of(snapshot.data!.docs);
-          docs.sort((a, b) {
+          // Sort client-side by createdAt descending
+          filteredDocs.sort((a, b) {
             final aData = a.data() as Map<String, dynamic>;
             final bData = b.data() as Map<String, dynamic>;
             final aTime = aData['createdAt'];
@@ -192,11 +200,11 @@ class MyListings extends StatelessWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(20),
-            itemCount: docs.length,
+            itemCount: filteredDocs.length,
             itemBuilder: (context, index) {
               return AnimatedListItem(
                 index: index,
-                child: _ListingCard(doc: docs[index], type: type),
+                child: _ListingCard(doc: filteredDocs[index], type: type),
               );
             },
           );

@@ -42,28 +42,31 @@ class _AlumniHomeState extends State<AlumniHome> {
           .doc(uid)
           .get();
 
-      final materialsSnap = await FirebaseFirestore.instance
+      // Single query by postedBy only — avoids needing a composite Firestore index.
+      // Type filtering is done client-side.
+      final allSnap = await FirebaseFirestore.instance
           .collection('marketplace')
           .where('postedBy', isEqualTo: uid)
-          .where('type', isEqualTo: 'material')
           .get();
 
-      final jobsSnap = await FirebaseFirestore.instance
-          .collection('marketplace')
-          .where('postedBy', isEqualTo: uid)
-          .where('type', isEqualTo: 'job')
-          .get();
+      final materialsCount = allSnap.docs
+          .where((d) => (d.data())['type'] == 'material')
+          .length;
+      final jobsCount = allSnap.docs
+          .where((d) => (d.data())['type'] == 'job')
+          .length;
 
       if (mounted) {
         setState(() {
           _userName = userDoc.data()?['name'] ?? 'Alumni';
           _company = userDoc.data()?['company'] ?? 'Mentoring';
-          _materialsCount = materialsSnap.docs.length;
-          _jobsCount = jobsSnap.docs.length;
+          _materialsCount = materialsCount;
+          _jobsCount = jobsCount;
           _isLoading = false;
         });
       }
     } catch (e) {
+      debugPrint('AlumniHome _loadData error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
