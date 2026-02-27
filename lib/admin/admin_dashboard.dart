@@ -384,37 +384,6 @@ class _AdminOverviewState extends State<AdminOverview> {
       title: Row(
         children: [
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.search_rounded,
-                  color: Colors.white54,
-                  size: 18,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  "Search metrics...",
-                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.white70,
-            ),
-          ),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: widget.onLogout,
             icon: const Icon(Icons.logout_rounded, color: Colors.white70),

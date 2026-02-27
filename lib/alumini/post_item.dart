@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:campus_connect_malabar/widgets/custom_app_bar.dart';
@@ -21,7 +21,8 @@ class _PostItemScreenState extends State<PostItemScreen> {
   final description = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  File? image;
+  XFile? image;
+  Uint8List? imageBytes;
   bool loading = false;
 
   Future<void> pickImage() async {
@@ -30,7 +31,11 @@ class _PostItemScreenState extends State<PostItemScreen> {
       imageQuality: 80,
     );
     if (picked != null) {
-      setState(() => image = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        image = picked;
+        imageBytes = bytes;
+      });
     }
   }
 
@@ -54,7 +59,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
     setState(() => loading = true);
 
     try {
-      final imageUrl = await CloudinaryService.upload(image!);
+      final imageUrl = await CloudinaryService.upload(imageBytes!, filename: image!.name);
 
       if (imageUrl == null || imageUrl.isEmpty) {
         throw Exception("Image upload failed");
@@ -224,8 +229,8 @@ class _PostItemScreenState extends State<PostItemScreen> {
                 width: 2,
                 style: BorderStyle.solid,
               ),
-              image: image != null
-                  ? DecorationImage(image: FileImage(image!), fit: BoxFit.cover)
+              image: imageBytes != null
+                  ? DecorationImage(image: MemoryImage(imageBytes!), fit: BoxFit.cover)
                   : null,
             ),
             child: image == null

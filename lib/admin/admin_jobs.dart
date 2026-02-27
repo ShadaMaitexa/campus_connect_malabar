@@ -10,25 +10,50 @@ class AdminJobs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: _buildPremiumAppBar(context, "Jobs & Study Materials"),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        centerTitle: false,
+        title: Text(
+          "Jobs & Study Materials",
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: StreamBuilder(
+        child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('marketplace')
               .orderBy('createdAt', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            if (snapshot.data!.docs.isEmpty) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text("Error: ${snapshot.error}",
+                    style: const TextStyle(color: Colors.redAccent)),
+              );
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.inventory_2_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                    Icon(Icons.inventory_2_rounded,
+                        size: 64, color: Colors.white.withOpacity(0.1)),
                     const SizedBox(height: 16),
-                    Text("No items found", style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.3))),
+                    Text("No items found",
+                        style: GoogleFonts.outfit(
+                            color: Colors.white.withOpacity(0.3))),
                   ],
                 ),
               );
@@ -40,10 +65,23 @@ class AdminJobs extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final doc = snapshot.data!.docs[index];
+                final data = doc.data() as Map<String, dynamic>;
+                final type = data['type'] ?? 'unknown';
+                final title = data['title'] ?? 'Untitled';
+                final description = data['description'] ?? '';
+                final imageUrl = data['imageUrl'] ?? '';
+
                 return _adminCard(
-                  title: doc['title'],
-                  subtitle: doc['type'].toString().toUpperCase(),
-                  onDelete: () => doc.reference.delete(),
+                  context: context,
+                  title: title,
+                  subtitle: type.toString().toUpperCase(),
+                  description: description,
+                  imageUrl: imageUrl,
+                  type: type,
+                  onDelete: () async {
+                    final confirm = await _confirmDelete(context, title);
+                    if (confirm) await doc.reference.delete();
+                  },
                 );
               },
             );
@@ -53,31 +91,25 @@ class AdminJobs extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildPremiumAppBar(BuildContext context, String title) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: false,
-      title: Text(
-        title,
-        style: GoogleFonts.outfit(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 24,
-        ),
-      ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-        onPressed: () => Navigator.maybePop(context),
-      ),
-    );
-  }
-
   Widget _adminCard({
+    required BuildContext context,
     required String title,
     required String subtitle,
+    required String description,
+    required String imageUrl,
+    required String type,
     required VoidCallback onDelete,
   }) {
+    final IconData typeIcon = type == 'job'
+        ? Icons.work_rounded
+        : type == 'material'
+            ? Icons.menu_book_rounded
+            : Icons.library_books_rounded;
+
+    final Color typeColor = type == 'job'
+        ? AppTheme.accentColor
+        : AppTheme.primaryColor;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -86,45 +118,72 @@ class AdminJobs extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.library_books_rounded, color: AppTheme.primaryColor, size: 24),
+          // Image or Icon
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _iconBox(typeIcon, typeColor),
+                  )
+                : _iconBox(typeIcon, typeColor),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: typeColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        subtitle,
+                        style: GoogleFonts.inter(
+                          color: typeColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    subtitle,
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
                     style: GoogleFonts.inter(
                       color: Colors.white.withOpacity(0.4),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      fontSize: 12,
+                      height: 1.4,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -135,12 +194,55 @@ class AdminJobs extends StatelessWidget {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+              child: const Icon(Icons.delete_outline_rounded,
+                  color: Colors.redAccent, size: 20),
             ),
             onPressed: onDelete,
           ),
         ],
       ),
     );
+  }
+
+  Widget _iconBox(IconData icon, Color color) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 28),
+    );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, String title) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppTheme.darkSurface,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text("Delete Item",
+                style: GoogleFonts.outfit(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text('Remove "$title" permanently?',
+                style: GoogleFonts.inter(color: Colors.white70)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text("Cancel",
+                    style: TextStyle(color: Colors.white.withOpacity(0.5))),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Delete"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

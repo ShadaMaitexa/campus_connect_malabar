@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -57,7 +56,8 @@ class _ManageBooksState extends State<ManageBooks> {
 
     try {
       final String imageUrl = await CloudinaryService.uploadBookImage(
-        File(_pickedImage!.path),
+        _bookImageBytes!,
+        filename: _pickedImage!.name,
       );
 
       await LibraryService.addBook(
