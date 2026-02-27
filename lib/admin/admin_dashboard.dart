@@ -14,6 +14,8 @@ import '../auth/login_screen.dart';
 import 'admin_jobs.dart';
 import 'approve_users.dart';
 import 'admin_library.dart';
+import 'manage_departments.dart';
+import '../mentor/student_reports.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -31,8 +33,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       icon: Icons.work_rounded,
       label: "Jobs & Materials",
     ),
-    const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
-    const SidebarDestination(icon: Icons.campaign_rounded, label: "Notices"),
+    const SidebarDestination(icon: Icons.event_rounded, label: "Manage Events"),
+    const SidebarDestination(icon: Icons.campaign_rounded, label: "Broadcast Notice"),
     const SidebarDestination(
       icon: Icons.verified_user_rounded,
       label: "Approvals",
@@ -44,6 +46,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
     const SidebarDestination(
       icon: Icons.library_books_rounded,
       label: "Library",
+    ),
+    const SidebarDestination(
+      icon: Icons.apartment_rounded,
+      label: "Departments",
+    ),
+    const SidebarDestination(
+      icon: Icons.analytics_rounded,
+      label: "Reports",
     ),
     const SidebarDestination(icon: Icons.logout_rounded, label: "Logout"),
   ];
@@ -69,6 +79,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return const AdminUsers();
       case 6:
         return const AdminLibrary();
+      case 7:
+        return const ManageDepartments();
+      case 8:
+        return const StudentReportsScreen();
       default:
         return const SizedBox.shrink();
     }
@@ -107,7 +121,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) {
-                  if (index == 7) {
+                  if (index == 9) {
                     _handleLogout();
                   } else {
                     setState(() => _selectedIndex = index);
@@ -171,7 +185,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         child: PremiumSidebar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
-            if (index == 7) {
+            if (index == 9) {
               Navigator.pop(context);
               _handleLogout();
             } else {
@@ -213,14 +227,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to exit?"),
+        backgroundColor: AppTheme.darkSurface,
+        title: Text("Logout", style: GoogleFonts.outfit(color: Colors.white)),
+        content: Text("Are you sure you want to exit?", style: GoogleFonts.inter(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             onPressed: () => Navigator.pop(context, true),
             child: const Text("Logout"),
           ),
@@ -608,6 +624,18 @@ class _AdminOverviewState extends State<AdminOverview> {
           Icons.library_books_rounded,
           AppGradients.surface,
           () => widget.onNavigate(6),
+        ),
+        _actionCard(
+          "Departments",
+          Icons.apartment_rounded,
+          AppGradients.primary,
+          () => widget.onNavigate(7),
+        ),
+        _actionCard(
+          "Reports",
+          Icons.analytics_rounded,
+          AppGradients.accent,
+          () => widget.onNavigate(8),
         ),
       ],
     );
