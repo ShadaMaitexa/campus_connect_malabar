@@ -26,7 +26,7 @@ class _AlumniDashboardState extends State<AlumniDashboard> {
     ),
     const MyListings(),
     const CommunityScreen(),
-    const ProfileScreen(),
+    const ProfileScreen(showBackButton: false),
   ];
 
   final List<SidebarDestination> _destinations = [

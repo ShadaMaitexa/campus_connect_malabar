@@ -30,7 +30,6 @@ class ViewEvents extends StatelessWidget {
         appBar: const CustomAppBar(
           title: "Events",
           subtitle: "Institutional Calendar",
-          showBackButton: true,
           gradient: AppGradients.purple,
         ),
         body: Container(

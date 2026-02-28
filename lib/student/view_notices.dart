@@ -18,7 +18,6 @@ class ViewNotices extends StatelessWidget {
         appBar: const CustomAppBar(
           title: "Announcements",
           subtitle: "Latest Updates",
-          showBackButton: true,
           gradient: AppGradients.blue,
         ),
         body: Container(

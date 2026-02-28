@@ -16,12 +16,14 @@ class ProfileScreen extends StatefulWidget {
   final String? userId;
   final String? role;
   final bool isFirstTime;
+  final bool showBackButton;
 
   const ProfileScreen({
     super.key,
     this.userId,
     this.role,
     this.isFirstTime = false,
+    this.showBackButton = true,
   });
 
   @override
@@ -353,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               Row(
                 children: [
-                  if (!widget.isFirstTime)
+                  if (!widget.isFirstTime && widget.showBackButton)
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Container(
@@ -369,7 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       ),
                     ),
-                  if (!widget.isFirstTime) const SizedBox(width: 16),
+                  if (!widget.isFirstTime && widget.showBackButton) const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       widget.isFirstTime ? 'Complete Profile' : 'Edit Profile',
