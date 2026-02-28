@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import 'department_users_screen.dart';
 
 class ManageDepartments extends StatefulWidget {
   const ManageDepartments({super.key});
@@ -136,6 +137,14 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                           border: Border.all(color: Colors.white.withOpacity(0.03)),
                         ),
                         child: ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DepartmentUsersScreen(department: doc['name']),
+                              ),
+                            );
+                          },
                           contentPadding: EdgeInsets.zero,
                           title: Text(
                             doc['name'],
