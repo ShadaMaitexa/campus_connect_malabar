@@ -38,7 +38,7 @@ class AuthWrapper extends StatelessWidget {
 
         // Check profile completion
         if (!userModel.profileCompleted) {
-          return const ProfileScreen();
+          return const ProfileScreen(isFirstTime: true);
         }
 
         return RoleRouter(role: userModel.role);

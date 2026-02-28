@@ -90,7 +90,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!userModel.profileCompleted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(isFirstTime: true),
+        ),
       );
       return;
     }

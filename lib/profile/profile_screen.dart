@@ -8,6 +8,9 @@ import 'package:campus_connect_malabar/widgets/dashboard_card.dart';
 import 'package:campus_connect_malabar/widgets/loading_shimmer.dart';
 import 'package:campus_connect_malabar/utils/animations.dart';
 import 'package:campus_connect_malabar/widgets/app_text_field.dart';
+import 'package:campus_connect_malabar/routing/role_router.dart';
+import 'package:provider/provider.dart';
+import 'package:campus_connect_malabar/providers/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;
@@ -198,8 +201,24 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
       );
 
-      if (widget.isFirstTime) {
-        Navigator.pop(context, true);
+      if (mounted) {
+        // Refresh the user model in AuthProvider
+        await Provider.of<AuthProvider>(context, listen: false).refreshUserData();
+
+        if (widget.isFirstTime) {
+          // If first time, navigate to RoleRouter and clear stack to go home
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+               builder: (_) => RoleRouter(role: _role),
+            ),
+            (route) => false,
+          );
+        } else {
+          // If not first time, just pop back
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context, true);
+          }
+        }
       }
     }
   }

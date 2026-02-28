@@ -45,7 +45,7 @@ class RoleRouter extends StatelessWidget {
 
         /// 🔒 Force profile setup after login
         if (data['profileCompleted'] == false) {
-          return const ProfileScreen();
+          return const ProfileScreen(isFirstTime: true);
         }
 
         final lowerRole = role.toLowerCase();

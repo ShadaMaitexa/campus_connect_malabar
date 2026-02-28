@@ -30,6 +30,12 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
+  Future<void> refreshUserData() async {
+    if (_user != null) {
+      await _loadUserData(_user!.uid);
+    }
+  }
+
   Future<void> _loadUserData(String uid) async {
     try {
       final data = await _firestore.getUserData(uid);
