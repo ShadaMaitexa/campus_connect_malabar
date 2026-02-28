@@ -172,6 +172,17 @@ class _StudentInternalMarksScreenState
                     }
 
                     final allDocs = List.of(snapshot.data?.docs ?? []);
+                    
+                    if (allDocs.isNotEmpty) {
+                       final availableSemesters = allDocs.map((d) => (d.data() as Map<String, dynamic>)['semester'].toString()).toSet();
+                       if (!availableSemesters.contains(_selectedSemester)) {
+                           WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) {
+                                  setState(() => _selectedSemester = availableSemesters.first);
+                              }
+                           });
+                       }
+                    }
 
                     // Filter by semester client-side (avoids composite Firestore index)
                     final docs = allDocs.where((doc) {

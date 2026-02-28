@@ -1,0 +1,222 @@
+﻿Compiling lib\main.dart for the Web...                          
+flutter : Wasm dry run 
+succeeded. Consider building 
+and testing your application 
+with the `--wasm` flag. See 
+docs for more info: https://do
+cs.flutter.dev/platform-integr
+ation/web/wasm
+At line:1 char:1
++ flutter build web > 
+build.txt 2>&1 ; Get-Content 
+build.txt | Out-File ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Wasm dry   
+  run su...ration/web/wasm:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+Use --no-wasm-dry-run to 
+disable these warnings.
+Target dart2js failed: 
+ProcessException: Process 
+exited abnormally with exit 
+code 1:
+lib/profile/profile_screen.dar
+t:13:1:
+Error: 'AuthProvider' is 
+imported from both 'package:ca
+mpus_connect_malabar/providers
+/auth_provider.dart' and 'pack
+age:firebase_auth_platform_int
+erface/src/auth_provider.dart'
+.
+import 'package:campus_connect
+_malabar/providers/auth_provid
+er.dart';
+^^^^^^^^^^^^
+lib/library/issue_history.dart
+:328:7:
+Error: Expected ';' after 
+this.
+      ),
+      ^
+lib/library/issue_history.dart
+:328:8:
+Error: Expected an 
+identifier, but got ','.
+      ),
+       ^
+lib/library/issue_history.dart
+:328:8:
+Error: Unexpected token ';'.
+      ),
+       ^
+lib/library/issue_history.dart
+:329:5:
+Error: Expected an 
+identifier, but got ')'.
+    );
+    ^
+lib/library/issue_history.dart
+:328:8:
+Error: Expected ';' after 
+this.
+      ),
+       ^
+lib/library/issue_history.dart
+:329:5:
+Error: Unexpected token ';'.
+    );
+    ^
+Error: Compilation failed.
+  Command: C:\Users\shadajifri
+n\Downloads\flutter_windows_3.
+22.1-stable\flutter\bin\cache\
+dart-sdk\bin\dart.exe compile 
+js --platform-binaries=C:\User
+s\shadajifrin\Downloads\flutte
+r_windows_3.22.1-stable\flutte
+r\bin\cache\flutter_web_sdk\ke
+rnel --invoker=flutter_tool 
+-Ddart.vm.product=true 
+-DFLUTTER_VERSION=3.22.1 
+-DFLUTTER_CHANNEL=stable -DFLU
+TTER_GIT_URL=https://github.co
+m/flutter/flutter.git -DFLUTTE
+R_FRAMEWORK_REVISION=a14f74ff3
+a -DFLUTTER_ENGINE_REVISION=c2
+98091351 
+-DFLUTTER_DART_VERSION=3.9.2 
+-DFLUTTER_WEB_USE_SKIA=true -D
+FLUTTER_WEB_USE_SKWASM=false -
+DFLUTTER_WEB_CANVASKIT_URL=htt
+ps://www.gstatic.com/flutter-c
+anvaskit/c29809135135e262a912c
+f583b2c90deb9ded610/ 
+--native-null-assertions 
+--no-source-maps -O4 --minify 
+-o C:\Users\shadajifrin\Deskto
+p\Projects\campus_connect_mala
+bar\.dart_tool\flutter_build\2
+4a52b0e55a4ac8215b1e1d76a394c4
+6\app.dill --packages=C:\Users
+\shadajifrin\Desktop\Projects\
+campus_connect_malabar\.dart_t
+ool\package_config.json 
+--cfe-only C:\Users\shadajifri
+n\Desktop\Projects\campus_conn
+ect_malabar\.dart_tool\flutter
+_build\24a52b0e55a4ac8215b1e1d
+76a394c46\main.dart
+#0      
+RunResult.throwException (pack
+age:flutter_tools/src/base/pro
+cess.dart:118:5)
+#1      
+_DefaultProcessUtils.run (pack
+age:flutter_tools/src/base/pro
+cess.dart:344:19)
+<asynchronous suspension>
+#2      Dart2JSTarget.build (p
+ackage:flutter_tools/src/build
+_system/targets/web.dart:204:5
+)
+<asynchronous suspension>
+#3      _BuildInstance._invoke
+Internal (package:flutter_tool
+s/src/build_system/build_syste
+m.dart:873:9)
+<asynchronous suspension>
+#4      
+Future.wait.<anonymous 
+closure> (dart:async/future.da
+rt:525:21)
+<asynchronous suspension>
+#5      
+_BuildInstance.invokeTarget (p
+ackage:flutter_tools/src/build
+_system/build_system.dart:811:
+32)
+<asynchronous suspension>
+#6      
+Future.wait.<anonymous 
+closure> (dart:async/future.da
+rt:525:21)
+<asynchronous suspension>
+#7      
+_BuildInstance.invokeTarget (p
+ackage:flutter_tools/src/build
+_system/build_system.dart:811:
+32)
+<asynchronous suspension>
+#8      
+FlutterBuildSystem.build (pack
+age:flutter_tools/src/build_sy
+stem/build_system.dart:631:16)
+<asynchronous suspension>
+#9      WebBuilder.buildWeb (p
+ackage:flutter_tools/src/web/c
+ompile.dart:90:34)
+<asynchronous suspension>
+#10     
+BuildWebCommand.runCommand (pa
+ckage:flutter_tools/src/comman
+ds/build_web.dart:282:5)
+<asynchronous suspension>
+#11     
+FlutterCommand.run.<anonymous 
+closure> (package:flutter_tool
+s/src/runner/flutter_command.d
+art:1581:27)
+<asynchronous suspension>
+#12     
+AppContext.run.<anonymous 
+closure> (package:flutter_tool
+s/src/base/context.dart:154:19
+)
+<asynchronous suspension>
+#13     
+CommandRunner.runCommand (pack
+age:args/command_runner.dart:2
+12:13)
+<asynchronous suspension>
+#14     FlutterCommandRunner.r
+unCommand.<anonymous closure> 
+(package:flutter_tools/src/run
+ner/flutter_command_runner.dar
+t:503:9)
+<asynchronous suspension>
+#15     
+AppContext.run.<anonymous 
+closure> (package:flutter_tool
+s/src/base/context.dart:154:19
+)
+<asynchronous suspension>
+#16     FlutterCommandRunner.r
+unCommand (package:flutter_too
+ls/src/runner/flutter_command_
+runner.dart:438:5)
+<asynchronous suspension>
+#17     run.<anonymous 
+closure>.<anonymous closure> (
+package:flutter_tools/runner.d
+art:98:11)
+<asynchronous suspension>
+#18     
+AppContext.run.<anonymous 
+closure> (package:flutter_tool
+s/src/base/context.dart:154:19
+)
+<asynchronous suspension>
+#19     main (package:flutter_
+tools/executable.dart:101:3)
+<asynchronous suspension>
+
+Compiling lib\main.dart for the Web...                             25.1s
+Error: Failed to compile 
+application for the Web.

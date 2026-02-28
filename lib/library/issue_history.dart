@@ -273,7 +273,7 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
                                       FutureBuilder<DocumentSnapshot>(
                                         future: FirebaseFirestore.instance.collection('users').doc(data['studentId']).get(),
                                         builder: (context, userSnap) {
-                                          final name = userSnap.hasData ? (userSnap.data!.data() as Map<String, dynamic>?)?['name'] ?? 'Unknown' : 'Loading...';
+                                          final String name = userSnap.hasData ? '${(userSnap.data?.data() as Map<String, dynamic>?)?['name'] ?? 'Unknown'}' : 'Loading...';
                                           return Row(
                                             children: [
                                               Icon(Icons.person_outline_rounded, size: 14, color: Colors.white.withOpacity(0.4)),
@@ -325,8 +325,7 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
             },
           ),
         ],
-      ),
-    );
+      );
   }
 }
 

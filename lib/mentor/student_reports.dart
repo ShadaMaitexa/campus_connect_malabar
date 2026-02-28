@@ -1490,6 +1490,19 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
 
               // Filter by semester client-side (avoids composite Firestore index)
               final allDocs = snapshot.data?.docs ?? [];
+              
+              // Automatically set selected semester if not set or not in current docs
+              if (allDocs.isNotEmpty) {
+                 final availableSemesters = allDocs.map((d) => (d.data() as Map<String, dynamic>)['semester'].toString()).toSet();
+                 if (!availableSemesters.contains(_selectedSemester)) {
+                     WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                            setState(() => _selectedSemester = availableSemesters.first);
+                        }
+                     });
+                 }
+              }
+
               var docs = allDocs.where((doc) {
                 final d = doc.data() as Map<String, dynamic>;
                 return d['semester'] == _selectedSemester;
