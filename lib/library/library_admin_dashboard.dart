@@ -76,12 +76,10 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   }
 
   final List<SidebarDestination> _destinations = [
-    const SidebarDestination(
-      icon: Icons.library_books_rounded,
-      label: "Library Management",
-    ),
+    const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
+    const SidebarDestination(icon: Icons.assignment_ind_rounded, label: "Issued Books"),
+    const SidebarDestination(icon: Icons.menu_book_rounded, label: "Manage Books"),
     const SidebarDestination(icon: Icons.analytics_rounded, label: "Analytics"),
-    const SidebarDestination(icon: Icons.history_rounded, label: "History"),
   ];
 
   Future<void> _handleLogout() async {
@@ -181,9 +179,11 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       case 0:
         return _buildOverviewScreen();
       case 1:
-        return const LibraryAnalyticsScreen();
-      case 2:
         return const IssueHistoryScreen(isEmbedded: true);
+      case 2:
+        return const ManageBooks();
+      case 3:
+        return const LibraryAnalyticsScreen();
       default:
         return _buildOverviewScreen();
     }
@@ -192,7 +192,6 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   Widget _buildOverviewScreen() {
     return CustomScrollView(
       slivers: [
-        _buildDesktopAppBar(),
         SliverPadding(
           padding: const EdgeInsets.all(40),
           sliver: SliverToBoxAdapter(
@@ -210,7 +209,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
                       )
                     : _buildLibraryStatsRow(),
                 const SizedBox(height: 60),
-                const SectionHeader(title: "Inventory Control"),
+                const SectionHeader(title: "Quick Actions"),
                 const SizedBox(height: 24),
                 _buildLibraryOpsGrid(isDesktop: true),
               ],
@@ -243,40 +242,6 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopAppBar() {
-    return SliverAppBar(
-      floating: true,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      actions: [
-        FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser?.uid)
-              .get(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data!['role'] == 'admin') {
-              return Padding(
-                padding: const EdgeInsets.only(right: 20, top: 10),
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.maybePop(context),
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: const Text("Back to Admin"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.darkSurface,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
         ),
       ],
     );
@@ -395,20 +360,34 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
         ),
         const SizedBox(width: 24),
         Expanded(
-          child: PremiumStatCard(
-            title: "Active Issues",
-            value: "$_issuedBooks",
-            icon: Icons.outbound_rounded,
-            gradient: AppGradients.accent,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const IssueHistoryScreen(showOnlyActive: true)),
+            ),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Active Issues",
+              value: "$_issuedBooks",
+              icon: Icons.outbound_rounded,
+              gradient: AppGradients.accent,
+            ),
           ),
         ),
         const SizedBox(width: 24),
         Expanded(
-          child: PremiumStatCard(
-            title: "Pending Returns",
-            value: "$_pendingReturns",
-            icon: Icons.assignment_return_rounded,
-            gradient: AppGradients.success,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const IssueHistoryScreen(showOnlyActive: true)),
+            ),
+            borderRadius: BorderRadius.circular(20),
+            child: PremiumStatCard(
+              title: "Pending Returns",
+              value: "$_pendingReturns",
+              icon: Icons.assignment_return_rounded,
+              gradient: AppGradients.success,
+            ),
           ),
         ),
         const SizedBox(width: 24),
@@ -434,17 +413,29 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       childAspectRatio: 1.2,
       children: [
         _miniStat(Icons.book, "$_totalBooks", "Books", AppGradients.primary),
-        _miniStat(
-          Icons.outbound,
-          "$_issuedBooks",
-          "Issued",
-          AppGradients.accent,
+        InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const IssueHistoryScreen(showOnlyActive: true)),
+          ),
+          child: _miniStat(
+            Icons.outbound,
+            "$_issuedBooks",
+            "Issued",
+            AppGradients.accent,
+          ),
         ),
-        _miniStat(
-          Icons.assignment_return,
-          "$_pendingReturns",
-          "Pending",
-          AppGradients.success,
+        InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const IssueHistoryScreen(showOnlyActive: true)),
+          ),
+          child: _miniStat(
+            Icons.assignment_return,
+            "$_pendingReturns",
+            "Pending",
+            AppGradients.success,
+          ),
         ),
         _miniStat(
           Icons.payments,
@@ -526,8 +517,8 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
           ),
         ),
         _opCard(
-          "Issue History",
-          Icons.history_rounded,
+          "Track Issued",
+          Icons.assignment_ind_rounded,
           AppGradients.surface,
           () => Navigator.push(
             context,

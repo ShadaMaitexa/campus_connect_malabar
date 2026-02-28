@@ -76,8 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final userModel = authProvider.userModel;
     if (userModel == null) return;
 
-    if ((userModel.role == 'mentor' || userModel.role == 'alumni') &&
-        !userModel.approved) {
+    if (!userModel.approved) {
       await authProvider.logout();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

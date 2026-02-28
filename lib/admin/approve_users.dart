@@ -29,7 +29,7 @@ class ApproveUsers extends StatelessWidget {
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('approved', isEqualTo: false)
-                .where('role', whereIn: ['mentor', 'alumni'])
+                .where('role', whereIn: ['mentor', 'alumni', 'alumini', 'student'])
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {

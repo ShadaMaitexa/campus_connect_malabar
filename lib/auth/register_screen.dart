@@ -50,10 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await authProvider.logout();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _role == 'student'
-                ? "Registration successful. Please login."
-                : "Registration successful. Await admin approval.",
+          content: const Text(
+            "Registration successful. Await admin approval.",
           ),
           backgroundColor: AppTheme.successColor,
           behavior: SnackBarBehavior.floating,

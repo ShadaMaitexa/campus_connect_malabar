@@ -16,7 +16,7 @@ class FirestoreService {
         'email': email,
         'role': role,
      
-        'approved': role == 'student',
+        'approved': false,
         'profileCompleted': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
