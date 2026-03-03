@@ -3,6 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String role;
+  final String department;
   final String registerNumber;
   final String photoUrl;
   final bool approved;

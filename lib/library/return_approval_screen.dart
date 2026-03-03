@@ -181,7 +181,11 @@ class _ReturnApprovalState extends State<ReturnApproval> {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(studentId).get(),
       builder: (context, snap) {
-        final name = snap.hasData ? (snap.data?.data() as Map<String, dynamic>?)?['name'] ?? 'Unknown' : '...';
+        String name = '...';
+        if (snap.hasData) {
+          final userData = snap.data?.data() as Map<String, dynamic>?;
+          name = userData?['name'] ?? 'Unknown';
+        }
         return Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
