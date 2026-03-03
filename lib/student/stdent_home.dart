@@ -11,6 +11,7 @@ import '../alumini/community_screen.dart';
 import 'package:campus_connect_malabar/student/market_place_screen.dart';
 import '../widgets/custom_app_bar.dart';
 import '../library/library_screen.dart';
+import '../library/digital_library_card.dart';
 import 'internal_marks_screen.dart';
 
 class StudentHome extends StatefulWidget {
@@ -246,6 +247,12 @@ class _StudentHomeState extends State<StudentHome>
         AppGradients.purple,
         -3,
       ),
+      _NavItem(
+        "Library Card",
+        Icons.badge_rounded,
+        AppGradients.blue,
+        -5,
+      ),
     ];
 
     return GridView.builder(
@@ -302,6 +309,26 @@ class _StudentHomeState extends State<StudentHome>
                     builder: (context) => const CommunityScreen(),
                   ),
                 );
+              } else if (item.index == -5) {
+                if (!mounted) return;
+                // Fetch full data for library card
+                final uid = FirebaseAuth.instance.currentUser!.uid;
+                final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                if (doc.exists && mounted) {
+                  final data = doc.data()!;
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DigitalLibraryCard(
+                        registerNumber: data['registerNumber'] ?? '',
+                        studentName: data['name'] ?? '',
+                        department: data['department'] ?? '',
+                        photoUrl: data['photoUrl'],
+                        uid: uid,
+                      ),
+                    ),
+                  );
+                }
               }
             } catch (e) {
               if (mounted) {

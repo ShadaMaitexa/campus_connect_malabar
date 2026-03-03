@@ -11,6 +11,9 @@ import 'package:campus_connect_malabar/widgets/app_text_field.dart';
 import 'package:campus_connect_malabar/routing/role_router.dart';
 import 'package:provider/provider.dart';
 import 'package:campus_connect_malabar/providers/auth_provider.dart';
+import 'package:campus_connect_malabar/library/digital_library_card.dart';
+import 'package:campus_connect_malabar/services/cloudinary_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;
@@ -38,6 +41,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   late String _role;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
 
   // Common fields
   final nameController = TextEditingController();
@@ -53,6 +58,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   // Student fields
   final semesterController = TextEditingController();
   final courseDurationController = TextEditingController();
+  final registerNumberController = TextEditingController();
+  String? _photoUrl;
 
   // Alumni fields
   final currentPositionController = TextEditingController();
@@ -105,6 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         // Student fields
         semesterController.text = data['semester'] ?? '';
         courseDurationController.text = data['courseDuration'] ?? '';
+        registerNumberController.text = data['registerNumber'] ?? '';
+        _photoUrl = data['photoUrl'];
 
         // Alumni
         currentPositionController.text = data['currentPosition'] ?? '';
@@ -137,6 +146,34 @@ class _ProfileScreenState extends State<ProfileScreen>
     setState(() => _isLoading = false);
   }
 
+  Future<void> _pickAndUploadImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+
+    if (image == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final String? url = await CloudinaryService.upload(image);
+      if (url != null) {
+        setState(() {
+          _photoUrl = url;
+          _isUploading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -150,6 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       'gender': gender,
       'dob': dob,
       'role': _role,
+      'photoUrl': _photoUrl,
       'profileCompleted': true,
     };
 
@@ -158,6 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         'department': _department ?? '',
         'semester': semesterController.text.trim(),
         'courseDuration': courseDurationController.text.trim(),
+        'registerNumber': registerNumberController.text.trim(),
       });
     }
 
@@ -387,35 +426,72 @@ class _ProfileScreenState extends State<ProfileScreen>
               const SizedBox(height: 20),
               // Avatar
               AppAnimations.bounce(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.5),
-                      width: 3,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
+                child: GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.2),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.5),
+                            width: 3,
+                          ),
+                          image: _photoUrl != null && _photoUrl!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(_photoUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: _photoUrl == null || _photoUrl!.isEmpty
+                            ? Center(
+                                child: _isUploading
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : Text(
+                                        nameController.text.isNotEmpty
+                                            ? nameController.text[0].toUpperCase()
+                                            : '?',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                              )
+                            : _isUploading
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.black45,
+                                    ),
+                                    child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                                  )
+                                : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                        ),
                       ),
                     ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      nameController.text.isNotEmpty
-                          ? nameController.text[0].toUpperCase()
-                          : '?',
-                      style: GoogleFonts.outfit(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -540,6 +616,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                     hint: 'e.g., 4 Years',
                     prefixIcon: Icons.schedule_outlined,
                   ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: registerNumberController,
+                    label: 'Register Number',
+                    hint: 'Enter your Unique Register Number',
+                    prefixIcon: Icons.badge_outlined,
+                  ),
+                  if (!widget.isFirstTime) ...[
+                    const SizedBox(height: 24),
+                    _buildLibraryCardPreview(isDark),
+                  ],
                 ],
               ),
             ),
@@ -950,6 +1037,89 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
           ),
         ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildLibraryCardPreview(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.library_books_rounded, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Digital Library Card",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Access code generated automatically",
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DigitalLibraryCard(
+                      registerNumber: registerNumberController.text,
+                      studentName: nameController.text,
+                      department: departmentController.text,
+                      photoUrl: _photoUrl,
+                      uid: _userId,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text(
+                "View My Card",
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

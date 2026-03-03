@@ -3,7 +3,8 @@ class UserModel {
   final String name;
   final String email;
   final String role;
-  final String department;
+  final String registerNumber;
+  final String photoUrl;
   final bool approved;
   final bool profileCompleted;
   final DateTime? createdAt;
@@ -14,6 +15,8 @@ class UserModel {
     required this.email,
     required this.role,
     required this.department,
+    this.registerNumber = '',
+    this.photoUrl = '',
     this.approved = false,
     this.profileCompleted = false,
     this.createdAt,
@@ -26,6 +29,8 @@ class UserModel {
       email: data['email'] as String? ?? '',
       role: data['role'] as String? ?? 'student',
       department: data['department'] as String? ?? '',
+      registerNumber: data['registerNumber'] as String? ?? '',
+      photoUrl: data['photoUrl'] as String? ?? '',
       approved: data['approved'] as bool? ?? false,
       profileCompleted: data['profileCompleted'] as bool? ?? false,
       createdAt: data['createdAt']?.toDate(),
@@ -38,6 +43,8 @@ class UserModel {
       'email': email,
       'role': role,
       'department': department,
+      'registerNumber': registerNumber,
+      'photoUrl': photoUrl,
       'approved': approved,
       'profileCompleted': profileCompleted,
     };

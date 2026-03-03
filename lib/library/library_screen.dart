@@ -255,10 +255,14 @@ class LibraryScreen extends StatelessWidget {
                     if (available)
                       InkWell(
                         onTap: () async {
+                          final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                          final studentName = (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Unknown Student';
+                          
                           await LibraryService.issueBook(
                             bookId: book.id,
                             bookTitle: book['title'],
                             studentId: uid,
+                            studentName: studentName,
                             availableCopies: book['availableCopies'],
                           );
                           if (context.mounted) {

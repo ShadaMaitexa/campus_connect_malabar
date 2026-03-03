@@ -48,6 +48,7 @@ class LibraryService {
     required String bookId,
     required String bookTitle,
     required String studentId,
+    required String studentName,
     required int availableCopies,
   }) async {
     final issuedAt = DateTime.now();
@@ -61,6 +62,7 @@ class LibraryService {
       'bookId': bookId,
       'bookTitle': bookTitle,
       'studentId': studentId,
+      'studentName': studentName,
       'issuedAt': Timestamp.fromDate(issuedAt),
       'returnDate': Timestamp.fromDate(returnDate),
       'returned': false,

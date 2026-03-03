@@ -129,14 +129,7 @@ class _ReturnApprovalState extends State<ReturnApproval> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Issued to: ${data['studentName'] ?? 'Unknown'}",
-                                style: GoogleFonts.inter(
-                                  color: Colors.white.withOpacity(0.4),
-                                  fontSize: 13,
-                                ),
-                              ),
+                              _buildStudentName(data['studentId'], data['studentName']),
                             ],
                           ),
                         ),
@@ -166,6 +159,40 @@ class _ReturnApprovalState extends State<ReturnApproval> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStudentName(String? studentId, String? currentName) {
+    if (currentName != null && currentName.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          "Issued to: $currentName",
+          style: GoogleFonts.inter(
+            color: Colors.white.withOpacity(0.4),
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+    
+    if (studentId == null) return const SizedBox.shrink();
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(studentId).get(),
+      builder: (context, snap) {
+        final name = snap.hasData ? (snap.data?.data() as Map<String, dynamic>?)?['name'] ?? 'Unknown' : '...';
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            "Issued to: $name",
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 13,
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -78,7 +78,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
   final List<SidebarDestination> _destinations = [
     const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
     const SidebarDestination(icon: Icons.assignment_ind_rounded, label: "Issued Books"),
-    const SidebarDestination(icon: Icons.menu_book_rounded, label: "Manage Books"),
+    const SidebarDestination(icon: Icons.menu_book_rounded, label: "Manage Inventory"),
     const SidebarDestination(icon: Icons.analytics_rounded, label: "Analytics"),
   ];
 
@@ -193,7 +193,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(40),
+          padding: const EdgeInsets.fromLTRB(40, 20, 40, 40),
           sliver: SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +280,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
               ? const Center(child: CircularProgressIndicator())
               : SafeArea(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                     child: Column(
                       children: [
                         _buildMobileHeader(),
@@ -490,7 +490,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
       mainAxisSpacing: 20,
       children: [
         _opCard(
-          "Manage Books",
+          "Manage Inventory",
           Icons.menu_book_rounded,
           AppGradients.primary,
           () => Navigator.push(
@@ -517,7 +517,7 @@ class _LibraryAdminDashboardState extends State<LibraryAdminDashboard> {
           ),
         ),
         _opCard(
-          "Track Issued",
+          "Issued Books",
           Icons.assignment_ind_rounded,
           AppGradients.surface,
           () => Navigator.push(
