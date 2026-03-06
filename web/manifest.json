@@ -1,6 +1,6 @@
 {
-    "name": "campus_connect_malabar",
-    "short_name": "campus_connect_malabar",
+    "name": "Campus Connect",
+    "short_name": "Campus Connect",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
