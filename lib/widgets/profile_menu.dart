@@ -4,6 +4,7 @@ import '../profile/profile_screen.dart';
 import '../auth/login_screen.dart';
 import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileMenu extends StatelessWidget {
   const ProfileMenu({super.key});

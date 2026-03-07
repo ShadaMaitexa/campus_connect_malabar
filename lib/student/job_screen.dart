@@ -162,34 +162,10 @@ class _JobCardState extends State<_JobCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      data['description'] ?? '',
-                      maxLines: _isExpanded ? null : 3,
-                      overflow: _isExpanded ? null : TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: AppTheme.darkTextSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (_isExpanded && data['requirements'] != null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        "Requirements",
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        data['requirements'],
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: AppTheme.darkTextSecondary,
-                          height: 1.5,
-                        ),
-                      ),
+                    _buildDetailSection("Description", data['description'] ?? '', Icons.description_outlined, _isExpanded),
+                    if (_isExpanded && data['requirements'] != null && data['requirements'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      _buildDetailSection("Requirements", data['requirements'], Icons.list_alt_rounded, true),
                     ],
                     if (_isExpanded && data['applyLink'] != null && data['applyLink'].toString().isNotEmpty) ...[
                       const SizedBox(height: 24),
@@ -281,6 +257,37 @@ class _JobCardState extends State<_JobCard> {
           ),
         );
       },
+    );
+  Widget _buildDetailSection(String title, String content, IconData icon, bool expanded) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: AppTheme.primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          content,
+          maxLines: expanded ? null : 3,
+          overflow: expanded ? null : TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: AppTheme.darkTextSecondary,
+            height: 1.6,
+          ),
+        ),
+      ],
     );
   }
 }
