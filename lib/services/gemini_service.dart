@@ -4,8 +4,8 @@ class GeminiChatService {
   static const String _apiKey = "AIzaSyAdVc_EIieNsGvebG8vm5dWXKBOd9LAoI4";
 
   final GenerativeModel _model = GenerativeModel(
-    // ✅ Gemini 2.0
-    model: 'gemini-2.0-flash',
+    // ✅ Gemini 1.5
+    model: 'gemini-1.5-flash',
     apiKey: _apiKey,
   );
 

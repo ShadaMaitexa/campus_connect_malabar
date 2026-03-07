@@ -29,10 +29,28 @@ class ProfileMenu extends StatelessWidget {
               width: 2,
             ),
           ),
-          child: const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppTheme.darkSurface,
-            child: Icon(Icons.person_rounded, color: Colors.white, size: 20),
+          child: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.uid)
+                .snapshots(),
+            builder: (context, snapshot) {
+              String? photoUrl;
+              if (snapshot.hasData && snapshot.data!.exists) {
+                photoUrl = (snapshot.data!.data() as Map<String, dynamic>)['photoUrl'];
+              }
+
+              return CircleAvatar(
+                radius: 18,
+                backgroundColor: AppTheme.darkSurface,
+                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: photoUrl == null || photoUrl.isEmpty
+                    ? const Icon(Icons.person_rounded, color: Colors.white, size: 20)
+                    : null,
+              );
+            },
           ),
         ),
         onSelected: (value) async {

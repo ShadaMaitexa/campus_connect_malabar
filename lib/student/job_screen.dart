@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/custom_app_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/animations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/loading_shimmer.dart';
 
 class JobsScreen extends StatelessWidget {
@@ -190,7 +191,40 @@ class _JobCardState extends State<_JobCard> {
                         ),
                       ),
                     ],
-                    const Divider(height: 32, color: Colors.white10),
+                    if (_isExpanded && data['applyLink'] != null && data['applyLink'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final url = Uri.parse(data['applyLink']);
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Could not open link")),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: Text(
+                            "Apply / Register Now",
+                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 40, color: Colors.white10),
                     Row(
                       children: [
                         CircleAvatar(

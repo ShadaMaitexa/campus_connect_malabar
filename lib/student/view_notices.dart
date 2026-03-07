@@ -92,7 +92,7 @@ class ViewNotices extends StatelessWidget {
     final role = (data['role'] ?? 'ADMIN').toString().toUpperCase();
     final isAdmin = role == 'ADMIN';
     final title = data['title'] ?? 'Notice';
-    final content = data['content'] ?? 'No description provided';
+    final content = data['message'] ?? 'No description provided';
     final date = _formatDate(data['createdAt']);
 
     return Container(

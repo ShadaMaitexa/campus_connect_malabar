@@ -71,6 +71,10 @@ class _ProfileScreenState extends State<ProfileScreen>
   final designationController = TextEditingController();
   final semesterInChargeController = TextEditingController();
 
+  // Departments
+  List<String> _departmentsList = [];
+  String? _selectedDepartment;
+
   // Change password
   final oldPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
@@ -83,6 +87,27 @@ class _ProfileScreenState extends State<ProfileScreen>
     _userId = widget.userId ?? FirebaseAuth.instance.currentUser!.uid;
     _role = widget.role ?? 'student';
     _loadProfile();
+    _fetchDepartments();
+  }
+
+  Future<void> _fetchDepartments() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('departments')
+          .orderBy('name')
+          .get();
+      if (mounted) {
+        setState(() {
+          _departmentsList = snapshot.docs.map((doc) => doc['name'] as String).toList();
+          // Ensure current department is in the list if it exists
+          if (_department != null && !_departmentsList.contains(_department)) {
+            _departmentsList.add(_department!);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching departments: $e");
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -101,6 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         gender = data['gender'] ?? 'Male';
         _email = data['email'];
         _department = data['department'];
+        _selectedDepartment = _department;
         departmentController.text = _department ?? '';
 
         if (data['dob'] != null) {
@@ -183,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       'name': nameController.text.trim(),
       'phone': phoneController.text.trim(),
       'address': addressController.text.trim(),
-      'department': departmentController.text.trim(),
+      'department': _selectedDepartment ?? departmentController.text.trim(),
       'gender': gender,
       'dob': dob,
       'role': _role,
@@ -193,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     if (_role == 'student') {
       data.addAll({
-        'department': _department ?? '',
+        'department': _selectedDepartment ?? '',
         'semester': semesterController.text.trim(),
         'courseDuration': courseDurationController.text.trim(),
         'registerNumber': registerNumberController.text.trim(),
@@ -211,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     if (_role == 'mentor') {
       data.addAll({
-        'department': _department ?? '',
+        'department': _selectedDepartment ?? '',
         'designation': designationController.text.trim(),
         'semesterInCharge': semesterInChargeController.text.trim(),
       });
@@ -379,9 +405,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppGradients.blue,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -595,13 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 icon: Icons.school_rounded,
                 isDark: isDark,
                 children: [
-                  AppTextField(
-                    controller: departmentController,
-                    label: 'Department',
-                    hint: 'e.g., Computer Science',
-                    prefixIcon: Icons.business_outlined,
-                    onChanged: (_) => setState(() {}),
-                  ),
+                  _buildDepartmentDropdown(isDark),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: semesterController,
@@ -655,12 +675,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     prefixIcon: Icons.business_outlined,
                   ),
                   const SizedBox(height: 16),
-                  AppTextField(
-                    controller: departmentStudiedController,
-                    label: 'Department Studied',
-                    hint: 'e.g., Computer Science',
-                    prefixIcon: Icons.school_outlined,
-                  ),
+                  _buildDepartmentDropdown(isDark),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: passoutYearController,
@@ -684,13 +699,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 icon: Icons.school_rounded,
                 isDark: isDark,
                 children: [
-                  AppTextField(
-                    controller: departmentController,
-                    label: 'Department',
-                    hint: 'e.g., Computer Science',
-                    prefixIcon: Icons.business_outlined,
-                    onChanged: (_) => setState(() {}),
-                  ),
+                  _buildDepartmentDropdown(isDark),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: designationController,
@@ -1120,6 +1129,65 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ],
       ),
+    );
+  Widget _buildDepartmentDropdown(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Department',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDark
+                ? AppTheme.darkTextSecondary
+                : AppTheme.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.darkSurface : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            border: Border.all(
+              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              dropdownColor: AppTheme.darkSurface,
+              value: _selectedDepartment,
+              hint: Text(
+                'Select Department',
+                style: GoogleFonts.inter(
+                  color: isDark ? Colors.white38 : Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              isExpanded: true,
+              items: _departmentsList.map((String dept) {
+                return DropdownMenuItem<String>(
+                  value: dept,
+                  child: Text(
+                    dept,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedDepartment = newValue;
+                  departmentController.text = newValue ?? '';
+                });
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
