@@ -56,6 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   DateTime? dob;
 
   final semesterController = TextEditingController();
+  final List<String> _semesters = List.generate(8, (i) => 'Semester ${i + 1}');
+  String? _selectedSemester;
   final courseDurationController = TextEditingController();
   final registerNumberController = TextEditingController();
   String? _photoUrl;
@@ -163,7 +165,18 @@ class _ProfileScreenState extends State<ProfileScreen>
         _role = widget.role ?? data['role'] ?? 'student';
 
         // Student fields
-        semesterController.text = data['semester'] ?? '';
+        _selectedSemester = data['semester'];
+        if (_selectedSemester != null && !_semesters.contains(_selectedSemester)) {
+          // Handle legacy numeric values "1", "2" etc.
+          if (RegExp(r'^\d$').hasMatch(_selectedSemester!)) {
+            _selectedSemester = 'Semester $_selectedSemester';
+          }
+          // If still not in list, fallback to null to force a valid selection
+          if (!_semesters.contains(_selectedSemester)) {
+            _selectedSemester = null;
+          }
+        }
+        semesterController.text = _selectedSemester ?? '';
         courseDurationController.text = data['courseDuration'] ?? '';
         registerNumberController.text = data['registerNumber'] ?? '';
         _photoUrl = data['photoUrl'];
@@ -248,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     if (_role == 'student') {
       data.addAll({
         'department': _selectedDepartment ?? '',
-        'semester': semesterController.text.trim(),
+        'semester': _selectedSemester ?? '',
         'courseDuration': courseDurationController.text.trim(),
         'registerNumber': registerNumberController.text.trim(),
       });
@@ -653,12 +666,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   const SizedBox(height: 16),
                   _buildCourseDropdown(isDark),
                   const SizedBox(height: 16),
-                  AppTextField(
-                    controller: semesterController,
-                    label: 'Current Semester',
-                    hint: 'e.g., 4th Semester',
-                    prefixIcon: Icons.class_outlined,
-                  ),
+                  _buildSemesterDropdown(isDark),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: courseDurationController,
@@ -1292,6 +1300,64 @@ class _ProfileScreenState extends State<ProfileScreen>
                         _selectedCourse = newValue;
                       });
                     },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _buildSemesterDropdown(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Current Semester',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.darkSurface : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            border: Border.all(
+              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              dropdownColor: AppTheme.darkSurface,
+              value: _selectedSemester,
+              hint: Text(
+                'Select Semester',
+                style: GoogleFonts.inter(
+                  color: isDark ? Colors.white38 : Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              isExpanded: true,
+              items: _semesters.map((String sem) {
+                return DropdownMenuItem<String>(
+                  value: sem,
+                  child: Text(
+                    sem,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedSemester = newValue;
+                  semesterController.text = newValue ?? '';
+                });
+              },
             ),
           ),
         ),

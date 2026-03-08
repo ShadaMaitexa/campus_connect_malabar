@@ -73,11 +73,12 @@ class StudentAttendanceView extends StatelessWidget {
   }
 
   Widget _buildTodayStatusSection(String uid) {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('attendance')
-          .doc(today())
-          .get(),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('attendance_records')
+          .where('date', isEqualTo: today())
+          .where('studentId', isEqualTo: uid)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -86,12 +87,7 @@ class StudentAttendanceView extends StatelessWidget {
           );
         }
 
-        bool hasData =
-            snapshot.hasData &&
-            snapshot.data!.exists &&
-            (snapshot.data!.data() as Map<String, dynamic>).containsKey(uid);
-
-        if (!hasData) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return AppAnimations.slideInFromBottom(
             delay: const Duration(milliseconds: 300),
             child: const Padding(
@@ -99,25 +95,38 @@ class StudentAttendanceView extends StatelessWidget {
               child: EmptyStateWidget(
                 icon: Icons.event_note_rounded,
                 title: "Not Marked Yet",
-                subtitle: "Checking back later for today's status",
+                subtitle: "Check back later for today's status",
               ),
             ),
           );
         }
 
-        final data = snapshot.data!.data() as Map<String, dynamic>;
-        final present = data[uid]['present'] as bool;
+        final docs = snapshot.data!.docs;
+        int presentCount = docs.where((d) => d['status'] == 'Present').length;
+        bool isOverallPresent = presentCount > 0;
 
         return Column(
           children: [
             AppAnimations.scaleIn(
-              child: _AttendanceStatusCard(present: present),
+              child: _AttendanceStatusCard(present: isOverallPresent),
               duration: const Duration(milliseconds: 600),
             ),
             const SizedBox(height: 24),
-            AppAnimations.slideInFromBottom(
-              delay: const Duration(milliseconds: 300),
-              child: _AttendanceInfo(date: DateTime.now(), present: present),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _AttendanceInfo(
+                      subjectName: data['subjectName'] ?? 'Unknown Subject',
+                      status: data['status'] ?? 'Absent',
+                      date: DateTime.parse(data['date']),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         );
@@ -413,12 +422,18 @@ class _AttendanceStatusCard extends StatelessWidget {
 
 class _AttendanceInfo extends StatelessWidget {
   final DateTime date;
-  final bool present;
+  final String subjectName;
+  final String status;
 
-  const _AttendanceInfo({required this.date, required this.present});
+  const _AttendanceInfo({
+    required this.date,
+    required this.subjectName,
+    required this.status,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bool present = status == 'Present';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -431,6 +446,12 @@ class _AttendanceInfo extends StatelessWidget {
         child: Column(
           children: [
             _InfoRow(
+              icon: Icons.book_outlined,
+              label: 'Subject',
+              value: subjectName,
+            ),
+            const Divider(color: AppTheme.darkBorder, height: 24),
+            _InfoRow(
               icon: Icons.calendar_today_rounded,
               label: 'Date',
               value: '${date.day}/${date.month}/${date.year}',
@@ -439,7 +460,7 @@ class _AttendanceInfo extends StatelessWidget {
             _InfoRow(
               icon: present ? Icons.check_circle_outline : Icons.highlight_off,
               label: 'Status',
-              value: present ? 'Present' : 'Absent',
+              value: status,
               valueColor: present ? AppTheme.successColor : AppTheme.errorColor,
             ),
           ],
