@@ -4,6 +4,7 @@ class UserModel {
   final String email;
   final String role;
   final String department;
+  final String course;
   final String registerNumber;
   final String photoUrl;
   final bool approved;
@@ -16,6 +17,7 @@ class UserModel {
     required this.email,
     required this.role,
     required this.department,
+    this.course = '',
     this.registerNumber = '',
     this.photoUrl = '',
     this.approved = false,
@@ -30,6 +32,7 @@ class UserModel {
       email: data['email'] as String? ?? '',
       role: data['role'] as String? ?? 'student',
       department: data['department'] as String? ?? '',
+      course: data['course'] as String? ?? '',
       registerNumber: data['registerNumber'] as String? ?? '',
       photoUrl: data['photoUrl'] as String? ?? '',
       approved: data['approved'] as bool? ?? false,
@@ -44,6 +47,7 @@ class UserModel {
       'email': email,
       'role': role,
       'department': department,
+      'course': course,
       'registerNumber': registerNumber,
       'photoUrl': photoUrl,
       'approved': approved,

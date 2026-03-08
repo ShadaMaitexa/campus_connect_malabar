@@ -55,11 +55,14 @@ class _ProfileScreenState extends State<ProfileScreen>
   String gender = 'Male';
   DateTime? dob;
 
-  // Student fields
   final semesterController = TextEditingController();
   final courseDurationController = TextEditingController();
   final registerNumberController = TextEditingController();
   String? _photoUrl;
+
+  // Course fields
+  List<String> _coursesList = [];
+  String? _selectedCourse;
 
   // Alumni fields
   final currentPositionController = TextEditingController();
@@ -110,6 +113,25 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  Future<void> _fetchCourses(String departmentName) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('courses')
+          .where('department', isEqualTo: departmentName)
+          .get();
+      if (mounted) {
+        setState(() {
+          _coursesList = snapshot.docs.map((doc) => doc['name'] as String).toList();
+          if (_selectedCourse != null && !_coursesList.contains(_selectedCourse)) {
+            _selectedCourse = null; // Reset if the current course doesn't exist in the new department
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching courses: $e");
+    }
+  }
+
   Future<void> _loadProfile() async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -128,6 +150,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         _department = data['department'];
         _selectedDepartment = _department;
         departmentController.text = _department ?? '';
+        _selectedCourse = data['course'];
+
+        if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+          _fetchCourses(_selectedDepartment!);
+        }
 
         if (data['dob'] != null) {
           dob = (data['dob'] as Timestamp).toDate();
@@ -210,6 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       'phone': phoneController.text.trim(),
       'address': addressController.text.trim(),
       'department': _selectedDepartment ?? departmentController.text.trim(),
+      'course': _selectedCourse ?? '',
       'gender': gender,
       'dob': dob,
       'role': _role,
@@ -623,6 +651,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                 children: [
                   _buildDepartmentDropdown(isDark),
                   const SizedBox(height: 16),
+                  _buildCourseDropdown(isDark),
+                  const SizedBox(height: 16),
                   AppTextField(
                     controller: semesterController,
                     label: 'Current Semester',
@@ -677,6 +707,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                   const SizedBox(height: 16),
                   _buildDepartmentDropdown(isDark),
                   const SizedBox(height: 16),
+                  _buildCourseDropdown(isDark),
+                  const SizedBox(height: 16),
                   AppTextField(
                     controller: passoutYearController,
                     label: 'Passout Year',
@@ -700,6 +732,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                 isDark: isDark,
                 children: [
                   _buildDepartmentDropdown(isDark),
+                  const SizedBox(height: 16),
+                  _buildCourseDropdown(isDark),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: designationController,
@@ -1130,6 +1164,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         ],
       ),
     );
+  }
+
   Widget _buildDepartmentDropdown(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1182,8 +1218,80 @@ class _ProfileScreenState extends State<ProfileScreen>
                 setState(() {
                   _selectedDepartment = newValue;
                   departmentController.text = newValue ?? '';
+                  _selectedCourse = null; // Reset course when department changes
+                  _coursesList = [];
                 });
+                if (newValue != null) {
+                  _fetchCourses(newValue);
+                }
               },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCourseDropdown(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Course',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDark
+                ? AppTheme.darkTextSecondary
+                : AppTheme.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            border: Border.all(
+              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+            ),
+            // Light grey out if no department selected
+            color: _selectedDepartment == null
+                ? (isDark ? Colors.white10 : Colors.black12)
+                : (isDark ? AppTheme.darkSurface : Colors.grey.shade50),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              dropdownColor: AppTheme.darkSurface,
+              value: _selectedCourse,
+              hint: Text(
+                _selectedDepartment == null 
+                  ? 'Select Department first' 
+                  : 'Select Course',
+                style: GoogleFonts.inter(
+                  color: isDark ? Colors.white38 : Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              isExpanded: true,
+              items: _coursesList.map((String course) {
+                return DropdownMenuItem<String>(
+                  value: course,
+                  child: Text(
+                    course,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: _selectedDepartment == null 
+                  ? null 
+                  : (String? newValue) {
+                      setState(() {
+                        _selectedCourse = newValue;
+                      });
+                    },
             ),
           ),
         ),

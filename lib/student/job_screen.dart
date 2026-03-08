@@ -258,6 +258,8 @@ class _JobCardState extends State<_JobCard> {
         );
       },
     );
+  }
+
   Widget _buildDetailSection(String title, String content, IconData icon, bool expanded) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

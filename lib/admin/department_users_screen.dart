@@ -107,6 +107,8 @@ class _RoleUserList extends StatelessWidget {
             final user = users[index].data() as Map<String, dynamic>;
             final name = user['name'] ?? 'Unknown';
             final email = user['email'] ?? '';
+            final course = user['course']?.toString() ?? '';
+            
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -141,6 +143,15 @@ class _RoleUserList extends StatelessWidget {
                           style: GoogleFonts.inter(
                             color: Colors.white54,
                             fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          course.isNotEmpty ? course : 'Course not added',
+                          style: GoogleFonts.inter(
+                            color: course.isNotEmpty ? AppTheme.accentColor : Colors.white38,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

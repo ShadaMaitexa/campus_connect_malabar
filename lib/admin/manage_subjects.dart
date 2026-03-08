@@ -2,35 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
-import 'department_users_screen.dart';
-import 'manage_courses.dart';
+import '../widgets/custom_app_bar.dart';
 
-class ManageDepartments extends StatefulWidget {
-  const ManageDepartments({super.key});
+class ManageSubjectsScreen extends StatefulWidget {
+  final String courseName;
+
+  const ManageSubjectsScreen({super.key, required this.courseName});
 
   @override
-  State<ManageDepartments> createState() => _ManageDepartmentsState();
+  State<ManageSubjectsScreen> createState() => _ManageSubjectsScreenState();
 }
 
-class _ManageDepartmentsState extends State<ManageDepartments> {
-  final deptController = TextEditingController();
+class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
+  final subjectController = TextEditingController();
   bool loading = false;
 
-  Future<void> addDepartment() async {
-    final name = deptController.text.trim();
+  Future<void> addSubject() async {
+    final name = subjectController.text.trim();
     if (name.isEmpty) return;
 
     setState(() => loading = true);
     try {
-      await FirebaseFirestore.instance.collection('departments').add({
+      await FirebaseFirestore.instance.collection('subjects').add({
         'name': name,
+        'course': widget.courseName,
         'createdAt': Timestamp.now(),
       });
-      deptController.clear();
+      subjectController.clear();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Department added successfully"),
+            content: Text("Subject added successfully"),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -49,19 +51,12 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          "Manage Departments",
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
+      backgroundColor: AppTheme.darkBackground,
+      appBar: CustomAppBar(
+        title: '${widget.courseName} Subjects',
+        subtitle: 'Manage subjects in this course',
+        showBackButton: true,
+        gradient: AppGradients.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -78,10 +73,10 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                 children: [
                    Expanded(
                     child: TextField(
-                      controller: deptController,
+                      controller: subjectController,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: "Enter department code (e.g. CS, ME)",
+                        hintText: "Enter subject name (e.g. Data Structures)",
                         hintStyle: const TextStyle(color: Colors.white38),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.05),
@@ -97,7 +92,7 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                   loading 
                     ? const CircularProgressIndicator()
                     : FloatingActionButton(
-                        onPressed: addDepartment,
+                        onPressed: addSubject,
                         backgroundColor: AppTheme.primaryColor,
                         child: const Icon(Icons.add_rounded, color: Colors.white),
                       ),
@@ -108,8 +103,9 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('departments')
-                    .orderBy('name')
+                    .collection('subjects')
+                    .where('course', isEqualTo: widget.courseName)
+                    .orderBy('createdAt', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -119,7 +115,7 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                   if (snapshot.data!.docs.isEmpty) {
                     return Center(
                       child: Text(
-                        "No departments added yet",
+                        "No subjects added yet",
                         style: GoogleFonts.inter(color: Colors.white38),
                       ),
                     );
@@ -138,14 +134,6 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                           border: Border.all(color: Colors.white.withOpacity(0.03)),
                         ),
                         child: ListTile(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ManageCoursesScreen(departmentName: doc['name']),
-                              ),
-                            );
-                          },
                           contentPadding: EdgeInsets.zero,
                           title: Text(
                             doc['name'],
@@ -159,20 +147,8 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.people_alt_rounded, color: AppTheme.primaryColor),
-                                tooltip: 'View Users',
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => DepartmentUsersScreen(department: doc['name']),
-                                    ),
-                                  );
-                                },
-                              ),
-                              IconButton(
                                 icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
-                                onPressed: () => _editDepartment(context, doc),
+                                onPressed: () => _editSubject(context, doc),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
@@ -193,18 +169,18 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
     );
   }
 
-  Future<void> _editDepartment(BuildContext context, DocumentSnapshot doc) async {
+  Future<void> _editSubject(BuildContext context, DocumentSnapshot doc) async {
     final editController = TextEditingController(text: doc['name']);
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: const Text("Edit Department", style: TextStyle(color: Colors.white)),
+        title: const Text("Edit Subject", style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: editController,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: "Department Name",
+            hintText: "Subject Name",
             hintStyle: const TextStyle(color: Colors.white38),
             filled: true,
             fillColor: Colors.white.withOpacity(0.05),
@@ -227,30 +203,6 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
 
     if (newName != null && newName.isNotEmpty && newName != doc['name']) {
       await doc.reference.update({'name': newName});
-      
-      // Update courses under this department
-      final coursesQuery = await FirebaseFirestore.instance
-          .collection('courses')
-          .where('department', isEqualTo: doc['name'])
-          .get();
-          
-      final batch = FirebaseFirestore.instance.batch();
-      for (var courseDoc in coursesQuery.docs) {
-        batch.update(courseDoc.reference, {'department': newName});
-      }
-      await batch.commit();
-
-      // Update users under this department
-      final usersQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('department', isEqualTo: doc['name'])
-          .get();
-
-      final usersBatch = FirebaseFirestore.instance.batch();
-      for (var userDoc in usersQuery.docs) {
-        usersBatch.update(userDoc.reference, {'department': newName});
-      }
-      await usersBatch.commit();
     }
   }
 
@@ -259,8 +211,8 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: const Text("Delete Department", style: TextStyle(color: Colors.white)),
-        content: Text("Remove ${doc['name']}? This will also remove any courses under it.", style: const TextStyle(color: Colors.white70)),
+        title: const Text("Delete Subject", style: TextStyle(color: Colors.white)),
+        content: Text("Remove ${doc['name']}?", style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
           ElevatedButton(
@@ -274,18 +226,6 @@ class _ManageDepartmentsState extends State<ManageDepartments> {
 
     if (confirm == true) {
       await doc.reference.delete();
-
-      // Delete all courses under this department
-      final coursesQuery = await FirebaseFirestore.instance
-          .collection('courses')
-          .where('department', isEqualTo: doc['name'])
-          .get();
-          
-      for (var courseDoc in coursesQuery.docs) {
-        // We do not iteratively delete subjects here to keep it simple, 
-        // as orphaned subjects won't crash the app, but deleting courses is important
-        courseDoc.reference.delete();
-      }
     }
   }
 }
