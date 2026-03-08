@@ -15,6 +15,7 @@ import 'admin_jobs.dart';
 import 'approve_users.dart';
 import 'admin_library.dart';
 import 'manage_departments.dart';
+import 'manage_timetable.dart';
 import '../mentor/student_reports.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -52,6 +53,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       label: "Departments",
     ),
     const SidebarDestination(
+      icon: Icons.calendar_month_rounded, 
+      label: "Timetables"
+    ),
+    const SidebarDestination(
       icon: Icons.analytics_rounded,
       label: "Reports",
     ),
@@ -82,6 +87,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 7:
         return const ManageDepartments();
       case 8:
+        return const ManageTimetableScreen();
+      case 9:
         return const StudentReportsScreen();
       default:
         return const SizedBox.shrink();
@@ -121,7 +128,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) {
-                  if (index == 9) {
+                  if (index == 10) {
                     _handleLogout();
                   } else {
                     setState(() => _selectedIndex = index);
@@ -185,7 +192,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         child: PremiumSidebar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
-            if (index == 9) {
+            if (index == 10) {
               Navigator.pop(context);
               _handleLogout();
             } else {
@@ -632,10 +639,16 @@ class _AdminOverviewState extends State<AdminOverview> {
           () => widget.onNavigate(7),
         ),
         _actionCard(
+          "Timetable",
+          Icons.calendar_month_rounded,
+          AppGradients.danger,
+          () => widget.onNavigate(8),
+        ),
+        _actionCard(
           "Reports",
           Icons.analytics_rounded,
           AppGradients.accent,
-          () => widget.onNavigate(8),
+          () => widget.onNavigate(9),
         ),
       ],
     );

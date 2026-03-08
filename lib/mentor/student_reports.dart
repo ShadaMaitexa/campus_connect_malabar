@@ -16,7 +16,16 @@ class StudentReportsScreen extends StatefulWidget {
 }
 
 class _StudentReportsScreenState extends State<StudentReportsScreen> {
+  String? _role;
   String? _department;
+  String? _selectedDepartment;
+  String? _selectedCourse;
+  String? _selectedSemester;
+  
+  List<String> _departments = [];
+  List<String> _courses = [];
+  final List<String> _semesters = List.generate(8, (i) => 'Semester ${i + 1}');
+
   bool _isLoading = true;
   String _searchQuery = '';
 
@@ -34,14 +43,56 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
           .doc(uid)
           .get();
       if (mounted) {
+        final role = doc.data()?['role'];
+        final dept = doc.data()?['department'];
         setState(() {
-          _department = doc.data()?['department'];
-          _isLoading = false;
+          _role = role;
+          _department = dept;
         });
+        
+        // Fetch all departments for dropdown
+        final deptSnap = await FirebaseFirestore.instance.collection('departments').orderBy('name').get();
+        if (mounted) {
+          setState(() {
+            _departments = deptSnap.docs.map((d) => d['name'] as String).toList();
+            
+            if (_role == 'admin') {
+               // Admin starts with no department selected or first
+            } else {
+               // Mentor starts with their department
+               _selectedDepartment = _department;
+               if (_selectedDepartment != null) {
+                  _fetchCourses(_selectedDepartment!);
+               }
+            }
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint('StudentReportsScreen _loadDept error: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchCourses(String dept) async {
+    setState(() {
+      _courses = [];
+      _selectedCourse = null;
+      _selectedSemester = null;
+    });
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('courses')
+          .where('department', isEqualTo: dept)
+          .get();
+      if (mounted) {
+        setState(() {
+          _courses = snap.docs.map((d) => d['name'] as String).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching courses: $e");
     }
   }
 
@@ -60,7 +111,7 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
         backgroundColor: AppTheme.darkBackground,
         appBar: CustomAppBar(
           title: 'Student Reports',
-          subtitle: _department ?? 'General',
+          subtitle: _role == 'admin' ? 'All Departments' : (_department ?? 'Department'),
           gradient: AppGradients.primary,
         ),
         body: Container(
@@ -76,6 +127,53 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
           ),
           child: Column(
             children: [
+              // Filters Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildDropdown(
+                        label: "Department",
+                        value: _selectedDepartment,
+                        items: _departments,
+                        enabled: _role == 'admin',
+                        onChanged: (val) {
+                          if (val != null && val != _selectedDepartment) {
+                            setState(() => _selectedDepartment = val);
+                            _fetchCourses(val);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildDropdown(
+                        label: "Course",
+                        value: _selectedCourse,
+                        items: _courses,
+                        enabled: _selectedDepartment != null,
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedCourse = val;
+                            _selectedSemester = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildDropdown(
+                        label: "Semester",
+                        value: _selectedSemester,
+                        items: _semesters,
+                        enabled: _selectedCourse != null,
+                        onChanged: (val) {
+                          setState(() => _selectedSemester = val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               // Search bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -138,11 +236,21 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
                       );
                     }
 
-                    // Filter by department client-side (avoids composite Firestore index)
+                    // Filter client-side
                     final allDocs = snapshot.data?.docs ?? [];
                     var students = allDocs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
-                      return data['department'] == _department;
+                      bool matches = true;
+                      if (_selectedDepartment != null) {
+                        matches = matches && data['department'] == _selectedDepartment;
+                      }
+                      if (_selectedCourse != null) {
+                        matches = matches && data['course'] == _selectedCourse;
+                      }
+                      if (_selectedSemester != null) {
+                        matches = matches && data['semester'] == _selectedSemester;
+                      }
+                      return matches;
                     }).toList();
 
                     // Apply search filter
@@ -181,7 +289,7 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
                             Text(
                               _searchQuery.isNotEmpty
                                   ? 'No students found'
-                                  : 'No students in your department',
+                                  : 'No students found in selected filter',
                               style: GoogleFonts.outfit(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -191,8 +299,8 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
                             const SizedBox(height: 8),
                             Text(
                               _searchQuery.isNotEmpty
-                                  ? 'Try a different search term'
-                                  : 'Students will appear here once they register',
+                                  ? 'Try a different search term or change your filters'
+                                  : 'Select a department to view student reports',
                               style: GoogleFonts.inter(color: Colors.white54),
                               textAlign: TextAlign.center,
                             ),
@@ -211,11 +319,15 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
                         final name = data['name'] ?? 'Student';
                         final email = data['email'] ?? '';
                         final semester = data['semester'] ?? '';
+                        final course = data['course'] ?? '';
 
                         return _StudentCard(
+                          studentId: student.id,
                           name: name,
                           email: email,
+                          course: course.toString(),
                           semester: semester.toString(),
+                          department: _selectedDepartment ?? data['department']?.toString() ?? '',
                           initials: name.isNotEmpty
                               ? name[0].toUpperCase()
                               : 'S',
@@ -226,7 +338,8 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
                                 studentId: student.id,
                                 studentName: name,
                                 studentEmail: email,
-                                department: _department ?? '',
+                                department: _selectedDepartment ?? data['department']?.toString() ?? '',
+                                course: course.toString(),
                               ),
                             ),
                           ),
@@ -242,22 +355,58 @@ class _StudentReportsScreenState extends State<StudentReportsScreen> {
       ),
     );
   }
+
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    bool enabled = true,
+  }) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: enabled ? AppTheme.darkSurfaceSecondary : AppTheme.darkSurface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.darkBorder),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          hint: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+          dropdownColor: AppTheme.darkSurfaceSecondary,
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: enabled ? Colors.white54 : Colors.transparent),
+          items: items.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
+          onChanged: enabled ? onChanged : null,
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────
 //  Student Card
 // ─────────────────────────────────────────────
 class _StudentCard extends StatelessWidget {
+  final String studentId;
   final String name;
   final String email;
+  final String course;
   final String semester;
+  final String department;
   final String initials;
   final VoidCallback onTap;
 
   const _StudentCard({
+    required this.studentId,
     required this.name,
     required this.email,
+    required this.course,
     required this.semester,
+    required this.department,
     required this.initials,
     required this.onTap,
   });
@@ -331,27 +480,130 @@ class _StudentCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (semester.isNotEmpty) ...[
+                  if (course.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                    Text(
+                      course,
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Sem $semester',
-                        style: GoogleFonts.robotoMono(
-                          color: AppTheme.primaryColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  if (semester.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Sem $semester',
+                            style: GoogleFonts.robotoMono(
+                              color: AppTheme.primaryColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  // Metrics Row
+                  Row(
+                    children: [
+                      // Attendance Metric
+                      Expanded(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('attendance')
+                              .snapshots(), // In a real large app we'd query by document fields, but here we calculate it client-side as done in summary tab
+                          builder: (context, snapshot) {
+                             if (!snapshot.hasData) return const SizedBox.shrink();
+                             
+                             int totalPeriods = 0;
+                             int presentPeriods = 0;
+                             
+                             for (var doc in snapshot.data!.docs) {
+                               final data = doc.data() as Map<String, dynamic>;
+                               if (data.containsKey(studentId)) {
+                                 final studentData = data[studentId] as Map<String, dynamic>;
+                                 for (var period in studentData.values) {
+                                   totalPeriods++;
+                                   if (period == true) presentPeriods++;
+                                 }
+                               }
+                             }
+                             
+                             if (totalPeriods == 0) return const SizedBox.shrink();
+                             
+                             final double percentage = (presentPeriods / totalPeriods) * 100;
+                             final Color color = percentage >= 75 ? AppTheme.successColor : (percentage >= 60 ? Colors.orange : AppTheme.dangerColor);
+                             
+                             return Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                 Text('Attendance', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54)),
+                                 const SizedBox(height: 2),
+                                 Text(
+                                   '${percentage.toStringAsFixed(1)}%',
+                                    style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                                 ),
+                               ],
+                             );
+                          },
+                        ),
+                      ),
+                      // Internal Marks Metric
+                      Expanded(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('internal_marks')
+                              .where('studentId', isEqualTo: studentId)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+                             
+                             int totalObtained = 0;
+                             int totalMax = 0;
+                             
+                             for (var doc in snapshot.data!.docs) {
+                               final data = doc.data() as Map<String, dynamic>;
+                               totalObtained += (data['marks'] as num?)?.toInt() ?? 0;
+                               totalMax += (data['maxMarks'] as num?)?.toInt() ?? 0;
+                             }
+                             
+                             if (totalMax == 0) return const SizedBox.shrink();
+                             
+                             final double percentage = (totalObtained / totalMax) * 100;
+                             final Color color = percentage >= 75 ? AppTheme.successColor : (percentage >= 40 ? Colors.orange : AppTheme.dangerColor);
+                             
+                             return Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                 Text('Internal Marks', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54)),
+                                 const SizedBox(height: 2),
+                                 Text(
+                                   '$totalObtained/$totalMax',
+                                    style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                                 ),
+                               ],
+                             );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -382,6 +634,7 @@ class StudentDetailReportScreen extends StatefulWidget {
   final String studentName;
   final String studentEmail;
   final String department;
+  final String course;
 
   const StudentDetailReportScreen({
     super.key,
@@ -389,6 +642,7 @@ class StudentDetailReportScreen extends StatefulWidget {
     required this.studentName,
     required this.studentEmail,
     required this.department,
+    required this.course,
   });
 
   @override
@@ -492,6 +746,7 @@ class _StudentDetailReportScreenState extends State<StudentDetailReportScreen>
                     studentId: widget.studentId,
                     studentName: widget.studentName,
                     department: widget.department,
+                    course: widget.course,
                   ),
                 ],
               ),
@@ -1008,12 +1263,14 @@ class _InternalMarksTab extends StatefulWidget {
   final String studentId;
   final String studentName;
   final String department;
+  final String course;
 
   const _InternalMarksTab({
     super.key,
     required this.studentId,
     required this.studentName,
     required this.department,
+    required this.course,
   });
 
   @override
@@ -1025,7 +1282,7 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
   String _selectedSemester = 'Semester 1';
 
   void _showAddMarksDialog() {
-    final subjectController = TextEditingController();
+    String? selectedSubject;
     final marksController = TextEditingController();
     final maxMarksController = TextEditingController(text: '50');
     String selectedSem = _selectedSemester;
@@ -1140,10 +1397,55 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                _MarkField(
-                  controller: subjectController,
-                  hint: 'e.g. Data Structures',
-                  icon: Icons.book_outlined,
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('subjects')
+                      .where('course', isEqualTo: widget.course)
+                      .where('semester', isEqualTo: selectedSem)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Text('Error loading subjects', style: const TextStyle(color: Colors.red));
+                    }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final docs = snapshot.data?.docs ?? [];
+                    if (docs.isEmpty) {
+                      return Text('No subjects found for ${selectedSem}', style: GoogleFonts.inter(color: Colors.white54));
+                    }
+                    
+                    final subjects = docs.map((d) => d['name'] as String).toList();
+                    if (selectedSubject == null || !subjects.contains(selectedSubject)) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (ctx.mounted) {
+                           setDState(() => selectedSubject = subjects.first);
+                        }
+                      });
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurfaceSecondary,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.darkBorder),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: subjects.contains(selectedSubject) ? selectedSubject : null,
+                          isExpanded: true,
+                          dropdownColor: AppTheme.darkSurfaceSecondary,
+                          style: GoogleFonts.inter(color: Colors.white),
+                          hint: Text('Select Subject', style: GoogleFonts.inter(color: Colors.white38)),
+                          items: subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                          onChanged: (v) {
+                            if (v != null) setDState(() => selectedSubject = v);
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -1237,7 +1539,7 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                           onPressed: saving
                               ? null
                               : () async {
-                                  final subject = subjectController.text.trim();
+                                  final subject = selectedSubject ?? '';
                                   final marks =
                                       int.tryParse(
                                         marksController.text.trim(),
@@ -1253,7 +1555,7 @@ class _InternalMarksTabState extends State<_InternalMarksTab> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                          'Please enter a subject name',
+                                          'Please select a subject',
                                         ),
                                         backgroundColor: AppTheme.errorColor,
                                       ),

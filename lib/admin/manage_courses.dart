@@ -28,6 +28,8 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
         'name': name,
         'department': widget.departmentName,
         'createdAt': Timestamp.now(),
+      }).timeout(const Duration(seconds: 10), onTimeout: () {
+        throw Exception("Connection timeout. Please check your internet.");
       });
       courseController.clear();
       if (mounted) {
@@ -106,14 +108,23 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
                 stream: FirebaseFirestore.instance
                     .collection('courses')
                     .where('department', isEqualTo: widget.departmentName)
-                    .orderBy('createdAt', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        "Error loading courses: ${snapshot.error}",
+                        style: const TextStyle(color: Colors.redAccent),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (snapshot.data!.docs.isEmpty) {
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return Center(
                       child: Text(
                         "No courses added yet",
@@ -122,11 +133,23 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
                     );
                   }
 
+                  final docs = snapshot.data!.docs.toList();
+                  docs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+                    final tA = dataA['createdAt'] as Timestamp?;
+                    final tB = dataB['createdAt'] as Timestamp?;
+                    if (tA == null && tB == null) return 0;
+                    if (tA == null) return 1;
+                    if (tB == null) return -1;
+                    return tB.compareTo(tA);
+                  });
+
                   return ListView.separated(
-                    itemCount: snapshot.data!.docs.length,
+                    itemCount: docs.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final doc = snapshot.data!.docs[index];
+                      final doc = docs[index];
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         decoration: BoxDecoration(
@@ -139,7 +162,10 @@ class _ManageCoursesScreenState extends State<ManageCoursesScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => ManageSubjectsScreen(courseName: doc['name']),
+                                builder: (_) => ManageSubjectsScreen(
+                                  departmentName: widget.departmentName,
+                                  courseName: doc['name'],
+                                ),
                               ),
                             );
                           },
