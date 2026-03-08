@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiChatService {
-  final String _apiKey = dotenv.get('GROQ_API_KEY', fallback: '');
+  final String _apiKey =
+      const String.fromEnvironment('GROQ_API_KEY', defaultValue: '') != ''
+      ? const String.fromEnvironment('GROQ_API_KEY')
+      : (dotenv.isInitialized ? dotenv.env['GROQ_API_KEY'] ?? '' : '');
   final String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
   Future<String> sendMessage(String message) async {
@@ -21,14 +24,15 @@ class GeminiChatService {
         body: jsonEncode({
           'model': 'llama-3.3-70b-versatile',
           'messages': [
-            {'role': 'user', 'content': message}
+            {'role': 'user', 'content': message},
           ],
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'] ?? "I couldn't generate a response.";
+        return data['choices'][0]['message']['content'] ??
+            "I couldn't generate a response.";
       } else {
         return "AI error occurred (${response.statusCode}). Please try later.";
       }

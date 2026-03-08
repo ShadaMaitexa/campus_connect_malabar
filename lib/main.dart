@@ -10,10 +10,14 @@ import 'providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await dotenv.load(fileName: ".env");
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    print(
+      "Warning: Failed to load .env file ($e). App will continue using default values.",
+    );
+  }
   runApp(const CampusConnectApp());
 }
 
@@ -29,13 +33,13 @@ class CampusConnectApp extends StatelessWidget {
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
-    return MaterialApp(
-      title: 'Campus Connect',
-      debugShowCheckedModeBanner: false,
+          return MaterialApp(
+            title: 'Campus Connect',
+            debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-      home: const AuthWrapper(),
+            home: const AuthWrapper(),
           );
         },
       ),
