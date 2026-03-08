@@ -33,7 +33,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
         if (mounted && doc.exists) {
           final data = doc.data()!;
           setState(() {
@@ -48,9 +51,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
   }
 
   late final List<Widget> _screens = [
-    StudentHome(onNavigate: (index) {
-      setState(() => _selectedIndex = index);
-    }),
+    StudentHome(
+      onNavigate: (index) {
+        setState(() => _selectedIndex = index);
+      },
+    ),
     const StudentAttendanceView(),
     const ViewNotices(),
     const ViewEvents(),
@@ -58,8 +63,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   final List<SidebarDestination> _destinations = [
     const SidebarDestination(icon: Icons.dashboard_rounded, label: "Home"),
-    const SidebarDestination(icon: Icons.bar_chart_rounded, label: "Attendance"),
-    const SidebarDestination(icon: Icons.notifications_rounded, label: "Notices"),
+    const SidebarDestination(
+      icon: Icons.bar_chart_rounded,
+      label: "Attendance",
+    ),
+    const SidebarDestination(
+      icon: Icons.notifications_rounded,
+      label: "Notices",
+    ),
     const SidebarDestination(icon: Icons.event_rounded, label: "Events"),
   ];
 
@@ -84,15 +95,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
           Row(
             children: [
               PremiumSidebar(
                 selectedIndex: _selectedIndex,
-                onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+                onDestinationSelected: (index) =>
+                    setState(() => _selectedIndex = index),
                 destinations: _destinations,
                 onLogout: _handleLogout,
                 userName: _userName ?? "Loading...",
@@ -124,16 +134,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
   Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _handleLogout,
-            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-          ),
-        ],
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -144,9 +145,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: AppTheme.darkBackground.withOpacity(0.92),
-            ),
+            child: Container(color: AppTheme.darkBackground.withOpacity(0.92)),
           ),
           SafeArea(
             child: AnimatedSwitcher(
@@ -161,7 +160,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+          border: Border(
+            top: BorderSide(color: Colors.white.withOpacity(0.05)),
+          ),
         ),
         child: Theme(
           data: ThemeData.dark().copyWith(
@@ -191,9 +192,21 @@ class _StudentDashboardState extends State<StudentDashboard> {
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             elevation: 0,
             destinations: [
-              _navItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Home"),
-              _navItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, "Attendance"),
-              _navItem(Icons.notifications_outlined, Icons.notifications_rounded, "Notices"),
+              _navItem(
+                Icons.dashboard_outlined,
+                Icons.dashboard_rounded,
+                "Home",
+              ),
+              _navItem(
+                Icons.bar_chart_outlined,
+                Icons.bar_chart_rounded,
+                "Attendance",
+              ),
+              _navItem(
+                Icons.notifications_outlined,
+                Icons.notifications_rounded,
+                "Notices",
+              ),
               _navItem(Icons.event_outlined, Icons.event_rounded, "Events"),
             ],
           ),
@@ -208,24 +221,41 @@ class _StudentDashboardState extends State<StudentDashboard> {
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
         title: const Text("Logout", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to exit?", style: TextStyle(color: Colors.white70)),
+        content: const Text(
+          "Are you sure you want to exit?",
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            onPressed: () => Navigator.pop(context, true), 
-            child: const Text("Logout")
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
           ),
         ],
       ),
     );
     if (confirmed == true) {
       await FirebaseAuth.instance.signOut();
-      if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+      if (mounted)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
     }
   }
 
-  NavigationDestination _navItem(IconData icon, IconData activeIcon, String label) {
+  NavigationDestination _navItem(
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
     return NavigationDestination(
       icon: Icon(icon, color: Colors.white54, size: 22),
       selectedIcon: Icon(activeIcon, color: AppTheme.primaryColor, size: 24),
