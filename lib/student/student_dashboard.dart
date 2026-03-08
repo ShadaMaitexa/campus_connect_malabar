@@ -1,7 +1,9 @@
 import 'package:campus_connect_malabar/student/attendence_view.dart';
-import 'package:campus_connect_malabar/student/stdent_home.dart';
+import 'package:campus_connect_malabar/student/student_home.dart';
 import 'package:campus_connect_malabar/widgets/premium_dashboard.dart';
 import 'package:campus_connect_malabar/theme/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,32 @@ class StudentDashboard extends StatefulWidget {
 
 class _StudentDashboardState extends State<StudentDashboard> {
   int _selectedIndex = 0;
+  String? _userName;
+  String? _userCourse;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (mounted && doc.exists) {
+          final data = doc.data()!;
+          setState(() {
+            _userName = data['name'];
+            _userCourse = data['course'];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading user profile: $e");
+    }
+  }
 
   late final List<Widget> _screens = [
     StudentHome(onNavigate: (index) {
@@ -67,6 +95,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 onDestinationSelected: (index) => setState(() => _selectedIndex = index),
                 destinations: _destinations,
                 onLogout: _handleLogout,
+                userName: _userName ?? "Loading...",
+                userRole: _userCourse ?? "Student",
               ),
               Expanded(
                 child: Container(
@@ -133,20 +163,40 @@ class _StudentDashboardState extends State<StudentDashboard> {
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
         ),
-        child: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-          height: 70,
-          backgroundColor: AppTheme.darkBackground.withOpacity(0.95),
-          indicatorColor: AppTheme.primaryColor.withOpacity(0.15),
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          elevation: 0,
-          destinations: [
-            _navItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Home"),
-            _navItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, "Attendance"),
-            _navItem(Icons.notifications_outlined, Icons.notifications_rounded, "Notices"),
-            _navItem(Icons.event_outlined, Icons.event_rounded, "Events"),
-          ],
+        child: Theme(
+          data: ThemeData.dark().copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              labelTextStyle: MaterialStateProperty.resolveWith((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  );
+                }
+                return GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.white.withOpacity(0.5),
+                );
+              }),
+            ),
+          ),
+          child: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+            height: 70,
+            backgroundColor: AppTheme.darkBackground.withOpacity(0.95),
+            indicatorColor: AppTheme.primaryColor.withOpacity(0.15),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            elevation: 0,
+            destinations: [
+              _navItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Home"),
+              _navItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, "Attendance"),
+              _navItem(Icons.notifications_outlined, Icons.notifications_rounded, "Notices"),
+              _navItem(Icons.event_outlined, Icons.event_rounded, "Events"),
+            ],
+          ),
         ),
       ),
     );

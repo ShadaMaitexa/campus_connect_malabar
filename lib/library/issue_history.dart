@@ -156,11 +156,9 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
                 ? FirebaseFirestore.instance
                     .collection('issued_books')
                     .where('returned', isEqualTo: false)
-                    .orderBy('issuedAt', descending: true)
                     .snapshots()
                 : FirebaseFirestore.instance
                     .collection('issued_books')
-                    .orderBy('issuedAt', descending: true)
                     .snapshots(),
             builder: (context, snap) {
               if (snap.hasError) {
@@ -179,7 +177,16 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
                 );
               }
 
-              if (snap.data!.docs.isEmpty) {
+              // Sort client side to avoid composite index
+              final docs = List.from(snap.data!.docs);
+              docs.sort((a, b) {
+                final aTime = (a.data() as Map<String, dynamic>)['issuedAt'] as Timestamp?;
+                final bTime = (b.data() as Map<String, dynamic>)['issuedAt'] as Timestamp?;
+                if (aTime == null || bTime == null) return 0;
+                return bTime.compareTo(aTime); // Descending
+              });
+
+              if (docs.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(100),
@@ -213,7 +220,7 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
                 padding: const EdgeInsets.all(24),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final doc = snap.data!.docs[index];
+                    final doc = docs[index];
                     final data = doc.data() as Map<String, dynamic>;
                     final bool isReturned = data['returned'] == true;
                     final issuedAt = (data['issuedAt'] as Timestamp).toDate();
@@ -319,7 +326,7 @@ class _IssueHistoryScreenState extends State<IssueHistoryScreen> {
                         ),
                       ),
                     );
-                  }, childCount: snap.data!.docs.length),
+                  }, childCount: docs.length),
                 ),
               );
             },

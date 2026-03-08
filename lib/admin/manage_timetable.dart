@@ -81,7 +81,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
   }
 
   Future<void> _fetchSubjectsAndTimetable() async {
-    if (_selectedCourse == null || _selectedSemester == null) return;
+    if (_selectedDepartment == null || _selectedCourse == null || _selectedSemester == null) return;
     
     setState(() {
       _subjects = [];
@@ -90,6 +90,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('subjects')
+          .where('department', isEqualTo: _selectedDepartment)
           .where('course', isEqualTo: _selectedCourse)
           .where('semester', isEqualTo: _selectedSemester)
           .get();
@@ -231,7 +232,15 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
             value: _selectedDepartment,
             items: _departments,
             onChanged: (val) {
-              setState(() => _selectedDepartment = val);
+              setState(() {
+                _selectedDepartment = val;
+                _selectedCourse = null;
+                _selectedSemester = null;
+                _selectedDay = null;
+                _courses = [];
+                _subjects = [];
+                _resetPeriods();
+              });
               if (val != null) _fetchCourses(val);
             },
           ),
@@ -245,6 +254,8 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                 _selectedCourse = val;
                 _selectedSemester = null;
                 _selectedDay = null;
+                _subjects = [];
+                _resetPeriods();
               });
             },
           ),
@@ -254,7 +265,11 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
             items: _semesters,
             enabled: _selectedCourse != null,
             onChanged: (val) {
-              setState(() => _selectedSemester = val);
+              setState(() {
+                _selectedSemester = val;
+                _selectedDay = null;
+                _resetPeriods();
+              });
               if (val != null) _fetchSubjectsAndTimetable();
             },
           ),

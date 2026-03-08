@@ -25,6 +25,9 @@ class StudentHome extends StatefulWidget {
 class _StudentHomeState extends State<StudentHome>
     with SingleTickerProviderStateMixin {
   String? _userName;
+  String? _department;
+  String? _course;
+  String? _semester;
   bool _isLoading = true;
 
   @override
@@ -41,8 +44,12 @@ class _StudentHomeState extends State<StudentHome>
           .doc(uid)
           .get();
       if (mounted && doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          _userName = doc.data()?['name'] ?? 'Student';
+          _userName = data['name'] ?? 'Student';
+          _department = data['department'];
+          _course = data['course'];
+          _semester = data['semester'];
           _isLoading = false;
         });
       }
@@ -135,45 +142,80 @@ class _StudentHomeState extends State<StudentHome>
   }
 
   Widget _buildStatsOverview(bool isDesktop) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('attendance_summary')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        double percentage = 0.0;
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final present = data['present'] ?? 0;
-          final total = data['total'] ?? 0;
-          if (total > 0) percentage = (present / total) * 100;
-        }
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    return Column(
+      children: [
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('attendance_summary')
+              .doc(uid)
+              .snapshots(),
+          builder: (context, attendanceSnap) {
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('internal_marks')
+                  .where('studentId', isEqualTo: uid)
+                  .snapshots(),
+              builder: (context, marksSnap) {
+                // Attendance Calculation
+                double attendancePct = 0.0;
+                if (attendanceSnap.hasData && attendanceSnap.data!.exists) {
+                  final data = attendanceSnap.data!.data() as Map<String, dynamic>;
+                  final present = data['present'] ?? 0;
+                  final total = data['total'] ?? 0;
+                  if (total > 0) attendancePct = (present / total) * 100;
+                }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 16) / 2;
-            return Row(
-              children: [
-                _buildModernStatCard(
-                  "Attendance",
-                  "${percentage.toStringAsFixed(1)}%",
-                  Icons.event_available_rounded,
-                  AppGradients.blue,
-                  cardWidth,
-                ),
-                const SizedBox(width: 16),
-                _buildModernStatCard(
-                  "GPA",
-                  "3.8",
-                  Icons.auto_graph_rounded,
-                  AppGradients.purple,
-                  cardWidth,
-                ),
-              ],
+                // Academic Performance Calculation
+                double academicPct = 0.0;
+                bool hasMarks = false;
+                if (marksSnap.hasData && marksSnap.data!.docs.isNotEmpty) {
+                  int totalObtained = 0;
+                  int totalMax = 0;
+                  final docs = marksSnap.data!.docs.where((doc) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    return d['semester'] == _semester;
+                  });
+
+                  for (final doc in docs) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    totalObtained += (d['marks'] ?? 0) as int;
+                    totalMax += (d['maxMarks'] ?? 0) as int;
+                    hasMarks = true;
+                  }
+                  if (totalMax > 0) academicPct = (totalObtained / totalMax) * 100;
+                }
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth = (constraints.maxWidth - 16) / 2;
+                    return Row(
+                      children: [
+                        _buildModernStatCard(
+                          "Attendance",
+                          "${attendancePct.toStringAsFixed(1)}%",
+                          Icons.event_available_rounded,
+                          AppGradients.blue,
+                          cardWidth,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildModernStatCard(
+                          "Academic Performance",
+                          hasMarks ? "${academicPct.toStringAsFixed(1)}%" : "No marks",
+                          Icons.auto_graph_rounded,
+                          AppGradients.purple,
+                          cardWidth,
+                          subtitle: hasMarks ? null : "Not available yet",
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             );
           },
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -182,8 +224,9 @@ class _StudentHomeState extends State<StudentHome>
     String value,
     IconData icon,
     Gradient gradient,
-    double width,
-  ) {
+    double width, {
+    String? subtitle,
+  }) {
     return Container(
       width: width,
       padding: const EdgeInsets.all(20),
@@ -203,21 +246,34 @@ class _StudentHomeState extends State<StudentHome>
         children: [
           Icon(icon, color: Colors.white, size: 28),
           const SizedBox(height: 16),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           Text(
-            title,
+            subtitle ?? title,
             style: GoogleFonts.inter(
-              fontSize: 14,
+              fontSize: 12,
               color: Colors.white.withOpacity(0.8),
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+          if (subtitle != null)
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ),
         ],
       ),
     );

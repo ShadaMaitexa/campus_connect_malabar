@@ -27,6 +27,32 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  String? _adminName;
+  String? _adminRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdminProfile();
+  }
+
+  Future<void> _loadAdminProfile() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (mounted && doc.exists) {
+          final data = doc.data()!;
+          setState(() {
+            _adminName = data['name'];
+            _adminRole = data['role']; // e.g., "Admin" or "Super Admin"
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading admin profile: $e");
+    }
+  }
 
   final List<SidebarDestination> _destinations = [
     const SidebarDestination(icon: Icons.dashboard_rounded, label: "Overview"),
@@ -95,10 +121,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -136,8 +159,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 },
                 destinations: _destinations,
                 onLogout: _handleLogout,
-                userName: "Admin User",
-                userRole: "Super Admin",
+                userName: _adminName ?? "Loading...",
+                userRole: _adminRole ?? "Administrator",
               ),
               Expanded(
                 child: Container(
@@ -201,8 +224,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }
           },
           destinations: _destinations,
-          userName: "Admin User",
-          userRole: "Super Admin",
+          userName: _adminName ?? "Loading...",
+          userRole: _adminRole ?? "Administrator",
         ),
       ),
       body: Stack(
